@@ -1671,7 +1671,10 @@ async function getPasskeyPRF(credentialIdBuf) {
 const API_BASE = '';
 
 async function apiGet(path) {
-  const r = await fetch(API_BASE + path);
+  // 加时间戳避免任何中间缓存
+  const sep = path.includes('?') ? '&' : '?';
+  const url = API_BASE + path + sep + '_t=' + Date.now();
+  const r = await fetch(url, { cache: 'no-store' });
   if (!r.ok) throw new Error('API ' + path + ' 失败: ' + r.status);
   return r.json();
 }
@@ -1680,6 +1683,7 @@ async function apiPost(path, body) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
+    cache: 'no-store',
   });
   if (!r.ok) {
     let msg = 'API ' + path + ' 失败: ' + r.status;
@@ -1870,18 +1874,27 @@ async function persistVault() {
   }, state.masterKey);
   await dbPut('vault', { id: 'main', payload });
 
-  // 回读校验：确保 D1 真的写入了刚才那份 payload
-  // 比较 IV（如果一致说明是同一份密文写进去了）
-  try {
-    const check = await dbGet('vault', 'main');
-    if (!check || !check.payload || check.payload.iv !== payload.iv) {
-      throw new Error('云端写入验证失败：D1 中的数据与刚发送的不一致');
+  // 回读校验：D1 有最终一致性窗口，给最多 3 次重试 + 短延迟
+  let verified = false;
+  let lastErr = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 300 * attempt));
+    try {
+      const check = await dbGet('vault', 'main');
+      if (check && check.payload && check.payload.iv === payload.iv && check.payload.cipher === payload.cipher) {
+        verified = true;
+        break;
+      }
+      lastErr = '云端读到的 IV/cipher 与刚发送的不一致（attempt ' + (attempt + 1) + '）';
+    } catch (e) {
+      lastErr = e.message || String(e);
     }
-  } catch (e) {
-    throw new Error('云端写入校验失败：' + (e.message || e));
+  }
+  if (!verified) {
+    throw new Error('云端写入校验失败：' + lastErr);
   }
 
-  // 同步写本地镜像（保险）
+  // 同步写本地镜像
   try {
     const meta = await dbGet('meta', 'main');
     if (meta) writeLocalMirror(meta, payload);
