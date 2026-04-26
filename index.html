@@ -1729,6 +1729,65 @@ async function dbClearAll() {
 async function openDB() { /* 不再需要；保留空函数让上层 init 流程不变 */ }
 
 // ============================================================
+// 本地镜像 · 防止云端被错误覆盖
+// 每次成功解锁后，把 vault 加密 payload 存一份到 localStorage
+// 只保留最近 1 份（更早的版本已经无意义，因为没有对应密钥）
+// 镜像内容仍是加密的，只有当前 masterKey 能解
+// ============================================================
+const MIRROR_KEY = 'asset-ledger-local-mirror-v1';
+
+function writeLocalMirror(metaObj, vaultPayload) {
+  try {
+    localStorage.setItem(MIRROR_KEY, JSON.stringify({
+      ts: Date.now(),
+      meta: metaObj,         // 包含 salt/verifier/wrappedKey 等所有解锁所需信息
+      payload: vaultPayload, // 加密的 vault payload
+    }));
+  } catch (e) {
+    console.warn('本地镜像写入失败', e);
+  }
+}
+
+function readLocalMirror() {
+  try {
+    const raw = localStorage.getItem(MIRROR_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    // 简单校验
+    if (!obj || !obj.meta || !obj.payload) return null;
+    return obj;
+  } catch (e) {
+    return null;
+  }
+}
+
+function clearLocalMirror() {
+  try { localStorage.removeItem(MIRROR_KEY); } catch {}
+}
+
+// 给用户一个"从本地镜像恢复"的入口
+async function offerLocalRestore(mirror) {
+  const ageHours = ((Date.now() - mirror.ts) / 3600000).toFixed(1);
+  const ok = confirm(
+    `检测到本地保存的备份镜像。\n\n` +
+    `备份时间：${new Date(mirror.ts).toLocaleString('zh-CN')}（${ageHours} 小时前）\n\n` +
+    `点击"确定"会用此备份恢复云端数据。注意：解锁仍需要原 Passkey 或密码。\n\n` +
+    `继续？`
+  );
+  if (!ok) return;
+  try {
+    // 把镜像写回 D1
+    const { _extra, ...verifier } = mirror.meta.verifier || {};
+    await apiPost('/api/meta', { salt: mirror.meta.salt, verifier: { ...verifier, _extra: _extra || {} } });
+    await apiPost('/api/vault', { payload: mirror.payload });
+    showToast('已从本地镜像恢复，请重新解锁');
+    setTimeout(() => location.reload(), 1500);
+  } catch (e) {
+    alert('恢复失败：' + (e.message || e));
+  }
+}
+
+// ============================================================
 // 默认数据
 // ============================================================
 const DEFAULT_GROUP_ORDER = ['美股券商', '港股 / 港币账户', 'A 股券商', '大陆银行', '移动支付', '信用卡', '其他资产'];
@@ -1810,6 +1869,11 @@ async function persistVault() {
     groupOrder: state.groupOrder,
   }, state.masterKey);
   await dbPut('vault', { id: 'main', payload });
+  // 同步写本地镜像（保险）
+  try {
+    const meta = await dbGet('meta', 'main');
+    if (meta) writeLocalMirror(meta, payload);
+  } catch (e) { /* 静默 */ }
 }
 
 // 用一个"包装密钥"加密"主密钥"得到 wrappedKey
@@ -1911,12 +1975,28 @@ async function handleLockSubmit() {
   const meta = await dbGet('meta', 'main');
 
   if (!meta) {
-    // 首次设置（密码模式）
+    // 关键保护：本地有镜像就先恢复，绝不让用户创建新账本覆盖
+    const localMirror = readLocalMirror();
+    if (localMirror) {
+      errEl.innerHTML = '检测到云端数据为空，但本地有备份。<br>请<a href="#" id="restore-from-mirror2" style="color:var(--accent);text-decoration:underline">点此从本地恢复</a>，或导入加密备份文件。';
+      const link = document.getElementById('restore-from-mirror2');
+      if (link) link.addEventListener('click', (e) => {
+        e.preventDefault();
+        offerLocalRestore(localMirror);
+      });
+      return;
+    }
+
+    // 真正的首次设置（密码模式）
     const pwd = document.getElementById('lock-password').value;
     const confirm = document.getElementById('lock-password-confirm').value;
     if (!pwd) { errEl.textContent = '请输入密码'; return; }
     if (pwd.length < 6) { errEl.textContent = '密码至少 6 位字符'; return; }
     if (pwd !== confirm) { errEl.textContent = '两次输入的密码不一致'; return; }
+
+    if (!window.confirm('这将创建一个全新的账本。\n\n如果你之前用过这个应用、有已存在的数据，请取消并先导入加密备份。\n\n确认是首次使用？')) {
+      return;
+    }
 
     // 1. 生成主密钥
     const masterKey = await crypto.subtle.generateKey(
@@ -1979,7 +2059,25 @@ async function handlePasskeyAction() {
   }
 
   if (!meta) {
-    // 首次设置 Passkey
+    // ============================================================
+    // 关键保护：D1 没数据时，先检查本地是否有镜像
+    // 如果本地有镜像，说明用户之前用过这个应用，可能是 D1 被错误清空
+    // 此时绝不让用户继续创建新的 Passkey 覆盖（重复历史的覆盖事故）
+    // ============================================================
+    const localMirror = readLocalMirror();
+    if (localMirror) {
+      errEl.innerHTML = '检测到云端数据为空，但本地有备份。<br>请<a href="#" id="restore-from-mirror" style="color:var(--accent);text-decoration:underline">点此从本地恢复</a>，或导入加密备份文件。';
+      document.getElementById('restore-from-mirror').addEventListener('click', (e) => {
+        e.preventDefault();
+        offerLocalRestore(localMirror);
+      });
+      return;
+    }
+
+    // 真正的首次设置 Passkey —— 二次确认
+    if (!confirm('这将创建一个全新的账本。\n\n如果你确认这是你第一次使用此应用、且没有任何已有数据，请点击"确定"。\n\n如果你之前用过这个应用（即使在另一个域名/设备上），请点击"取消"，然后导入加密备份文件。')) {
+      return;
+    }
     try {
       const { credentialId, prfOutput } = await registerPasskey();
       const wrappingKey = await deriveKeyFromPRF(prfOutput);
@@ -2035,6 +2133,11 @@ async function loadVaultIntoState() {
     state.accounts = data.accounts || [];
     state.snapshots = data.snapshots || [];
     state.groupOrder = data.groupOrder && data.groupOrder.length ? data.groupOrder : [...DEFAULT_GROUP_ORDER];
+    // 解密成功 → 写本地镜像（保留密文 + 解锁所需 meta，不存明文）
+    try {
+      const meta = await dbGet('meta', 'main');
+      if (meta) writeLocalMirror(meta, vault.payload);
+    } catch (e) { /* 静默 */ }
   } else {
     const def = buildDefaultData();
     state.accounts = def.accounts;
