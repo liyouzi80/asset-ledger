@@ -2158,6 +2158,37 @@ async function loadVaultIntoState() {
     state.accounts = data.accounts || [];
     state.snapshots = data.snapshots || [];
     state.groupOrder = data.groupOrder && data.groupOrder.length ? data.groupOrder : [...DEFAULT_GROUP_ORDER];
+
+    // 自动修复历史月份格式不规范的快照（如 '2026-4' → '2026-04'）
+    let needRepersist = false;
+    const seenMonths = new Set();
+    const fixedSnapshots = [];
+    for (const s of state.snapshots) {
+      const fixed = normalizeMonth(s.month);
+      if (fixed !== s.month) {
+        s.month = fixed;
+        needRepersist = true;
+      }
+      // 去重：同一规范化月份只保留最新的（按 updatedAt）
+      if (seenMonths.has(fixed)) {
+        const existingIdx = fixedSnapshots.findIndex(x => x.month === fixed);
+        if (existingIdx >= 0) {
+          if ((s.updatedAt || 0) > (fixedSnapshots[existingIdx].updatedAt || 0)) {
+            fixedSnapshots[existingIdx] = s;
+          }
+          needRepersist = true;
+          continue;
+        }
+      }
+      seenMonths.add(fixed);
+      fixedSnapshots.push(s);
+    }
+    if (needRepersist) {
+      state.snapshots = fixedSnapshots;
+      await persistVault();
+      console.log('已自动修复月份格式');
+    }
+
     // 解密成功 → 写本地镜像（保留密文 + 解锁所需 meta，不存明文）
     try {
       const meta = await dbGet('meta', 'main');
@@ -2227,6 +2258,13 @@ const ymPrev = (ym) => {
   const [y, m] = ym.split('-').map(Number);
   const d = new Date(y, m - 2, 1);
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+};
+// 规范化月份字符串：'2026-4' -> '2026-04'，'2026-04' -> '2026-04'
+const normalizeMonth = (ym) => {
+  if (!ym || typeof ym !== 'string') return ym;
+  const m = ym.match(/^(\d{4})-(\d{1,2})$/);
+  if (!m) return ym;
+  return m[1] + '-' + m[2].padStart(2, '0');
 };
 function getAllGroups() {
   const fromAccs = [...new Set(state.accounts.map(a => a.group))];
@@ -3027,7 +3065,8 @@ function handleEntryAction(action, dataset) {
 }
 
 document.getElementById('entry-month').addEventListener('change', (e) => {
-  state.editingMonth = e.target.value;
+  state.editingMonth = normalizeMonth(e.target.value);
+  e.target.value = state.editingMonth; // 把规范化后的值写回输入框
   renderEntry();
 });
 document.getElementById('entry-prefill').addEventListener('click', () => {
@@ -3074,8 +3113,10 @@ document.getElementById('entry-save').addEventListener('click', async () => {
       const flow = d.flow === '' || d.flow === null || d.flow === undefined ? 0 : Number(d.flow);
       entries[a.id] = { balance, flow };
     }
-    const snap = { month: state.editingMonth, entries, updatedAt: Date.now() };
-    state.snapshots = state.snapshots.filter(s => s.month !== state.editingMonth);
+    const monthKey = normalizeMonth(state.editingMonth);
+    state.editingMonth = monthKey;
+    const snap = { month: monthKey, entries, updatedAt: Date.now() };
+    state.snapshots = state.snapshots.filter(s => s.month !== monthKey);
     state.snapshots.push(snap);
 
     // 1. 写入 vault
