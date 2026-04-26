@@ -14,7 +14,13 @@ export async function onRequest(context) {
     });
   }
 
-  const headers = { 'Content-Type': 'application/json' };
+  const headers = {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+    'CDN-Cache-Control': 'no-store',
+    'Cloudflare-CDN-Cache-Control': 'no-store',
+    'Pragma': 'no-cache',
+  };
 
   if (request.method === 'GET') {
     const row = await env.DB.prepare('SELECT * FROM vault WHERE id = ?').bind('main').first();
