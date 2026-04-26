@@ -1869,6 +1869,18 @@ async function persistVault() {
     groupOrder: state.groupOrder,
   }, state.masterKey);
   await dbPut('vault', { id: 'main', payload });
+
+  // 回读校验：确保 D1 真的写入了刚才那份 payload
+  // 比较 IV（如果一致说明是同一份密文写进去了）
+  try {
+    const check = await dbGet('vault', 'main');
+    if (!check || !check.payload || check.payload.iv !== payload.iv) {
+      throw new Error('云端写入验证失败：D1 中的数据与刚发送的不一致');
+    }
+  } catch (e) {
+    throw new Error('云端写入校验失败：' + (e.message || e));
+  }
+
   // 同步写本地镜像（保险）
   try {
     const meta = await dbGet('meta', 'main');
@@ -3025,33 +3037,72 @@ document.getElementById('entry-cancel').addEventListener('click', () => {
   showToast('已恢复');
 });
 document.getElementById('entry-save').addEventListener('click', async () => {
-  const prev = state.snapshots.find(s => s.month === ymPrev(state.editingMonth));
-  const entries = {};
-  for (const a of state.accounts) {
-    const d = state.editingDraft[a.id];
-    let balance;
-    if (d.balance === '' || d.balance === null || d.balance === undefined) {
-      // 沿用上月（已是带符号的存储值，直接用）
-      if (prev && prev.entries[a.id] && prev.entries[a.id].balance !== '' && prev.entries[a.id].balance !== null && prev.entries[a.id].balance !== undefined) {
-        balance = Number(prev.entries[a.id].balance) || 0;
+  const btn = document.getElementById('entry-save');
+  btn.disabled = true;
+  const origText = btn.textContent;
+  btn.textContent = '保存中...';
+
+  try {
+    const prev = state.snapshots.find(s => s.month === ymPrev(state.editingMonth));
+    const entries = {};
+    for (const a of state.accounts) {
+      const d = state.editingDraft[a.id];
+      let balance;
+      if (d.balance === '' || d.balance === null || d.balance === undefined) {
+        if (prev && prev.entries[a.id] && prev.entries[a.id].balance !== '' && prev.entries[a.id].balance !== null && prev.entries[a.id].balance !== undefined) {
+          balance = Number(prev.entries[a.id].balance) || 0;
+        } else {
+          balance = 0;
+        }
       } else {
-        balance = 0;
+        const absVal = Math.abs(Number(d.balance) || 0);
+        balance = a.type === 'liability' ? -absVal : absVal;
       }
-    } else {
-      // 用户输入的是绝对值；按账户性质决定符号
-      const absVal = Math.abs(Number(d.balance) || 0);
-      balance = a.type === 'liability' ? -absVal : absVal;
+      const flow = d.flow === '' || d.flow === null || d.flow === undefined ? 0 : Number(d.flow);
+      entries[a.id] = { balance, flow };
     }
-    const flow = d.flow === '' || d.flow === null || d.flow === undefined ? 0 : Number(d.flow);
-    entries[a.id] = { balance, flow };
+    const snap = { month: state.editingMonth, entries, updatedAt: Date.now() };
+    state.snapshots = state.snapshots.filter(s => s.month !== state.editingMonth);
+    state.snapshots.push(snap);
+
+    // 1. 写入 vault
+    await persistVault();
+
+    // 2. 立刻回读 + 解密验证（关键的写入确认）
+    const remoteVault = await dbGet('vault', 'main');
+    if (!remoteVault) {
+      throw new Error('保存后回读失败：服务器没有返回数据');
+    }
+    const decrypted = await decryptJSON(remoteVault.payload, state.masterKey);
+    const remoteSnap = (decrypted.snapshots || []).find(s => s.month === state.editingMonth);
+    if (!remoteSnap) {
+      throw new Error('保存验证失败：D1 中找不到刚才保存的快照');
+    }
+    // 抽样检查 1 个账户的数字一致
+    const sampleAcc = state.accounts[0];
+    if (sampleAcc) {
+      const expected = entries[sampleAcc.id];
+      const got = remoteSnap.entries[sampleAcc.id];
+      if (!got || got.balance !== expected.balance || got.flow !== expected.flow) {
+        throw new Error('保存验证失败：D1 中数据与本地不一致');
+      }
+    }
+
+    showToast(state.editingMonth + ' 快照已保存（已验证写入）');
+    renderEntry();
+  } catch (err) {
+    console.error('保存失败:', err);
+    showToast('保存失败：' + (err.message || '未知错误'), 'error');
+    alert(
+      '⚠️ 保存失败！\n\n' +
+      err.message + '\n\n' +
+      '你的输入还在本地，但没成功写入云端。请检查网络后重试。\n' +
+      '建议立刻打开页脚「导出加密备份」保留一份本地副本。'
+    );
+  } finally {
+    btn.disabled = false;
+    btn.textContent = origText;
   }
-  const snap = { month: state.editingMonth, entries, updatedAt: Date.now() };
-  state.snapshots = state.snapshots.filter(s => s.month !== state.editingMonth);
-  state.snapshots.push(snap);
-  await persistVault();
-  showToast(state.editingMonth + ' 快照已保存');
-  // 重渲染让「沿用」状态及时反映出来
-  renderEntry();
 });
 
 // ============================================================
@@ -3428,6 +3479,17 @@ document.getElementById('passkey-remove').addEventListener('click', async () => 
 // ============================================================
 // 启动
 // ============================================================
+
+// 全局错误捕获：任何 persistVault 失败都不会被静默吞掉
+window.addEventListener('unhandledrejection', (e) => {
+  const msg = (e.reason && (e.reason.message || e.reason.toString())) || '';
+  // 只对"写入校验"失败强提示，避免被无关错误干扰
+  if (msg.indexOf('写入') >= 0 || msg.indexOf('校验') >= 0 || msg.indexOf('persistVault') >= 0) {
+    console.error('云端写入失败:', e.reason);
+    alert('⚠️ 云端写入失败！\n\n' + msg + '\n\n你的修改可能没有保存到云端。建议检查网络后重试，并立即导出加密备份保留本地副本。');
+  }
+});
+
 (async function init() {
   const savedTheme = localStorage.getItem('asset-theme') || 'system';
   applyTheme(savedTheme);
