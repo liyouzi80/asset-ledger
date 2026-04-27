@@ -523,28 +523,6 @@
   .pos { color: var(--green) !important; }
   .neg { color: var(--red) !important; }
 
-  /* 微型趋势线 */
-  .kpi-sparkline {
-    margin-top: 16px;
-    height: 44px;
-    opacity: 0.55;
-    transition: opacity 0.35s ease;
-    pointer-events: none;
-  }
-  .kpi-card:hover .kpi-sparkline {
-    opacity: 1;
-  }
-  .hero-sparkline {
-    margin-top: 28px;
-    height: 52px;
-    opacity: 0.45;
-    transition: opacity 0.35s ease;
-    pointer-events: none;
-  }
-  .hero-block:hover .hero-sparkline {
-    opacity: 0.85;
-  }
-
   /* =====================================================
      区块标题
   ===================================================== */
@@ -1614,8 +1592,6 @@
     .kpi-card:hover { transform: none; }
     .kpi-value { font-size: 28px; }
     .kpi-sub { font-size: 12px; }
-    .kpi-sparkline { height: 36px; margin-top: 12px; }
-    .hero-sparkline { height: 40px; margin-top: 20px; }
     .charts-grid { grid-template-columns: 1fr; }
     .chart-card { padding: 20px 16px; border-radius: 16px; }
     .chart-wrap { height: 220px; }
@@ -1672,8 +1648,6 @@
     .hero-meta-text { font-size: 12px; }
     .kpi-card { padding: 14px 16px; }
     .kpi-value { font-size: 24px; }
-    .kpi-sparkline { height: 30px; margin-top: 10px; }
-    .hero-sparkline { height: 32px; margin-top: 16px; }
     .header-right .lock-btn { padding: 5px 10px; font-size: 12px; }
     .chart-card .desc { font-size: 11px; }
     .drawer { width: 98vw; max-height: 90vh; border-radius: 16px; }
@@ -1767,7 +1741,6 @@
       <div class="hero-content">
         <div class="hero-label">总 资 产 <span class="hero-arrow">›</span></div>
         <div class="hero-value" id="kpi-total"><span class="hero-currency">¥</span>—</div>
-        <div class="hero-sparkline" id="spark-hero"></div>
         <div class="hero-meta">
           <span class="hero-pill" id="kpi-total-pill"></span>
           <span class="hero-meta-text" id="kpi-total-sub">尚无数据</span>
@@ -1785,7 +1758,6 @@
           </div>
           <div class="kpi-value" id="kpi-pnl">—</div>
           <div class="kpi-sub" id="kpi-pnl-sub"></div>
-          <div class="kpi-sparkline" id="spark-pnl"></div>
         </div>
       </div>
       <div class="kpi-card clickable" data-drill="flow">
@@ -1797,7 +1769,6 @@
           </div>
           <div class="kpi-value" id="kpi-flow">—</div>
           <div class="kpi-sub" id="kpi-flow-sub"></div>
-          <div class="kpi-sparkline" id="spark-flow"></div>
         </div>
       </div>
       <div class="kpi-card clickable" data-drill="ytd">
@@ -1809,7 +1780,6 @@
           </div>
           <div class="kpi-value" id="kpi-ytd">—</div>
           <div class="kpi-sub" id="kpi-ytd-sub"></div>
-          <div class="kpi-sparkline" id="spark-ytd"></div>
         </div>
       </div>
     </div>
@@ -2740,36 +2710,6 @@ const fmtSign = (n) => {
 };
 
 // 微型趋势线 SVG · 苹果风格
-let _sparkId = 0;
-function sparklineSvg(values, stroke, opts = {}) {
-  if (!values || values.length < 2) return '';
-  const { height = 44, pointWidth = 18, lineWidth = 1.5 } = opts;
-  const id = _sparkId++;
-  const w = Math.max((values.length - 1) * pointWidth, 40);
-  const pad = 2;
-  const plotH = height - pad * 2;
-  const max = Math.max(...values);
-  const min = Math.min(...values);
-  const range = max - min || 1;
-  let line = '';
-  let area = '';
-  for (let i = 0; i < values.length; i++) {
-    const x = (i / (values.length - 1)) * w;
-    const y = pad + (1 - (values[i] - min) / range) * plotH;
-    line += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
-    area += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
-  }
-  area += 'L ' + w.toFixed(1) + ' ' + height + ' L 0 ' + height + ' Z';
-  return '<svg width="100%" height="100%" viewBox="0 0 ' + w + ' ' + height + '" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">' +
-    '<defs><linearGradient id="sg_' + id + '" x1="0" y1="0" x2="0" y2="1">' +
-    '<stop offset="0%" stop-color="' + stroke + '" stop-opacity="0.15" />' +
-    '<stop offset="100%" stop-color="' + stroke + '" stop-opacity="0.01" />' +
-    '</linearGradient></defs>' +
-    '<path d="' + area + '" fill="url(#sg_' + id + ')" />' +
-    '<path d="' + line + '" stroke="' + stroke + '" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round" />' +
-    '</svg>';
-}
-
 // Hero 总资产：拆 ¥ + 整数 + .小数（弱化货币符号）
 function renderHeroValue(n) {
   const el = document.getElementById('kpi-total');
@@ -3561,12 +3501,10 @@ function renderDashboard() {
   const yearOfLatest = latest.month.slice(0, 4);
   const yearSnaps = sorted.filter(s => s.month.startsWith(yearOfLatest));
   let ytd = 0;
-  const ytdCumulValues = [];
   for (let i = 0; i < yearSnaps.length; i++) {
     const idxInAll = sorted.indexOf(yearSnaps[i]);
     const p = idxInAll > 0 ? sorted[idxInAll - 1] : null;
     ytd += monthlyPnL(yearSnaps[i], p);
-    ytdCumulValues.push(ytd);
   }
 
   // Hero 总资产：拆 ¥ + 整数 + .小数
@@ -3856,19 +3794,6 @@ function renderDashboard() {
     },
   });
 
-  // ── 微型趋势线 (sparklines) ──
-  const sparkHero = document.getElementById('spark-hero');
-  if (sparkHero && totals.length >= 2)
-    sparkHero.innerHTML = sparklineSvg(totals, colorAccent, { height: 52, pointWidth: 16 });
-  const sparkPnL = document.getElementById('spark-pnl');
-  if (sparkPnL && pnls.length >= 2)
-    sparkPnL.innerHTML = sparklineSvg(pnls, pnl >= 0 ? colorGreen : colorRed, { height: 44, pointWidth: 16 });
-  const sparkFlow = document.getElementById('spark-flow');
-  if (sparkFlow && flows.length >= 2)
-    sparkFlow.innerHTML = sparklineSvg(flows, colorMute, { height: 44, pointWidth: 16 });
-  const sparkYtd = document.getElementById('spark-ytd');
-  if (sparkYtd && ytdCumulValues.length >= 2)
-    sparkYtd.innerHTML = sparklineSvg(ytdCumulValues, ytd >= 0 ? colorGreen : colorRed, { height: 44, pointWidth: 16 });
 }
 
 // ============================================================
