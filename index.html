@@ -91,6 +91,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     transition: background 0.35s ease, color 0.35s ease;
+    scroll-behavior: smooth;
   }
 
   .app {
@@ -211,10 +212,20 @@
   .page { display: none; }
   .page.active {
     display: block;
-    animation: pageIn 0.3s ease;
+    animation: pageIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   }
   @keyframes pageIn {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .page.active .hero-block { animation: fadeSlideUp 0.4s 0.05s both cubic-bezier(0.16, 1, 0.3, 1); }
+  .page.active .kpi-card { animation: fadeSlideUp 0.4s both cubic-bezier(0.16, 1, 0.3, 1); }
+  .page.active .kpi-card:nth-child(1) { animation-delay: 0.08s; }
+  .page.active .kpi-card:nth-child(2) { animation-delay: 0.14s; }
+  .page.active .kpi-card:nth-child(3) { animation-delay: 0.20s; }
+  .page.active .chart-card { animation: fadeSlideUp 0.4s 0.15s both cubic-bezier(0.16, 1, 0.3, 1); }
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
@@ -280,6 +291,11 @@
     font-size: 13px;
     line-height: 1;
     transition: color 0.25s, transform 0.25s;
+    animation: arrowHint 2s ease-in-out infinite;
+  }
+  @keyframes arrowHint {
+    0%, 100% { transform: translateX(0); }
+    50% { transform: translateX(3px); }
   }
   [data-theme="light"] .hero-arrow { color: rgba(0,0,0,0.3); }
   .hero-value {
@@ -939,9 +955,29 @@
     white-space: nowrap;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow: hidden;
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
   .toast.error { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+  .toast-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 0 1px 1px 0;
+    transition: width linear 2.2s;
+  }
+  .toast.error .toast-bar { background: var(--red); }
+  .toast.show .toast-bar { width: 0; }
+  .toast-icon {
+    flex-shrink: 0;
+    font-size: 16px;
+    line-height: 1;
+  }
 
   /* =====================================================
      空状态
@@ -950,14 +986,107 @@
     text-align: center;
     padding: 64px 20px;
     color: var(--ink-3);
+    position: relative;
   }
-  .empty .glyph { font-size: 48px; margin-bottom: 14px; opacity: 0.5; }
+  .empty::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200px;
+    height: 200px;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, var(--sep) 0%, transparent 70%);
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  .empty .glyph {
+    font-size: 48px;
+    margin-bottom: 14px;
+    opacity: 0.4;
+    display: block;
+  }
   .empty p {
     font-size: 16px;
     line-height: 1.65;
     font-weight: 400;
     color: var(--ink-3);
+    position: relative;
   }
+  .empty .hint {
+    font-size: 13px;
+    color: var(--ink-4);
+    margin-top: 8px;
+    position: relative;
+  }
+  .empty .btn { margin-top: 20px; position: relative; }
+
+  /* =====================================================
+     Skeleton 加载动画
+  ===================================================== */
+  @keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3) 50%, var(--bg-2) 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
+    border-radius: 8px;
+    color: transparent !important;
+    user-select: none;
+    pointer-events: none;
+  }
+  .skeleton-hero {
+    height: 72px;
+    width: 60%;
+    margin-bottom: 12px;
+    border-radius: 12px;
+  }
+  .skeleton-text {
+    height: 16px;
+    width: 40%;
+    border-radius: 6px;
+  }
+  .skeleton-kpi {
+    height: 52px;
+    width: 70%;
+    border-radius: 10px;
+  }
+  .skeleton-chart {
+    height: 280px;
+    border-radius: 16px;
+  }
+
+  /* =====================================================
+     数字滚入动效
+  ===================================================== */
+  @keyframes countUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .num-anim {
+    animation: countUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .num-anim:nth-child(2) { animation-delay: 0.08s; }
+  .num-anim:nth-child(3) { animation-delay: 0.16s; }
+
+  /* =====================================================
+     加载指示器 (Spinner)
+  ===================================================== */
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+  .btn-ghost .spinner { border-color: var(--sep-strong); border-top-color: var(--ink-3); }
 
   /* =====================================================
      底部
@@ -988,6 +1117,38 @@
     padding: 0;
   }
   footer button:hover { color: var(--accent); }
+
+  /* =====================================================
+     微交互 · focus-visible / shake / flicker
+  ===================================================== */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    40% { transform: translateX(4px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+  }
+  .shake {
+    animation: shake 0.35s ease;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .saving-dot {
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse-dot 1s ease-in-out infinite;
+  }
+  .saving-dot:nth-child(2) { animation-delay: 0.15s; }
+  .saving-dot:nth-child(3) { animation-delay: 0.3s; }
 
   /* =====================================================
      drill 箭头 hint（其他地方仍用）
@@ -1218,10 +1379,12 @@
   /* 空态 */
   .drawer-empty {
     text-align: center;
-    padding: 40px 20px;
+    padding: 48px 20px;
     color: var(--ink-3);
     font-size: 14px;
+    line-height: 1.6;
   }
+  .drawer-empty .glyph { font-size: 32px; opacity: 0.35; margin-bottom: 8px; display: block; }
 
   /* 总结块 */
   .summary-grid {
@@ -1309,24 +1472,83 @@
      响应式
   ===================================================== */
   @media (max-width: 900px) {
-    header { padding: 0 16px; }
-    .app { padding: 0 16px 60px; }
-    .hero-block { padding: 40px 28px 32px; border-radius: 22px; }
-    .hero-value { font-size: 60px; }
-    .hero-currency, .hero-decimal { font-size: 28px; }
-    .kpi-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 36px; }
-    .kpi-card { padding: 22px 24px; }
-    .kpi-value { font-size: 32px; }
+    header { padding: 0 12px; gap: 8px; height: 50px; }
+    .app { padding: 0 12px 60px; }
+    .brand { font-size: 15px; }
+    .brand-icon { width: 24px; height: 24px; font-size: 12px; border-radius: 6px; }
+    .hero-block { padding: 32px 20px 28px; border-radius: 18px; margin-bottom: 10px; }
+    .hero-block:hover { transform: none; }
+    .hero-value { font-size: 44px; }
+    .hero-currency, .hero-decimal { font-size: 22px; }
+    .hero-label { font-size: 12px; margin-bottom: 16px; }
+    .hero-meta { margin-top: 20px; gap: 10px; }
+    .kpi-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 28px; }
+    .kpi-card { padding: 18px 20px; border-radius: 16px; }
+    .kpi-card:hover { transform: none; }
+    .kpi-value { font-size: 28px; }
+    .kpi-sub { font-size: 12px; }
     .charts-grid { grid-template-columns: 1fr; }
-    .entry-header { grid-template-columns: 1fr; }
-    .entry-row { grid-template-columns: 1fr; gap: 8px; }
+    .chart-card { padding: 20px 16px; border-radius: 16px; }
+    .chart-wrap { height: 220px; }
+    .chart-wrap.tall { height: 260px; }
+    .section-head h2 { font-size: 20px; }
+    .section-head { margin: 36px 0 16px; }
+    .entry-header { grid-template-columns: 1fr; gap: 12px; padding: 16px; }
+    .entry-header .month-pick { width: 100%; }
+    .entry-header .hint { font-size: 13px; }
+    .entry-row { grid-template-columns: 1fr; gap: 8px; padding: 12px 16px; }
     .entry-row.header-row { display: none; }
-    .nav button { padding: 5px 10px; font-size: 12px; }
+    .entry-row .name { font-size: 14px; }
+    .entry-row input { font-size: 13px; padding: 7px 10px; }
+    .group-title-bar { padding: 12px 16px; }
+    .group-title-bar h4 { font-size: 13px; }
+    .nav { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav button { padding: 5px 10px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
     .theme-toggle { display: none; }
+    .lock-card { padding: 32px 24px 28px; }
+    .lock-card h2 { font-size: 20px; }
+    .glyph-icon { width: 52px; height: 52px; font-size: 22px; border-radius: 14px; }
+    .modal { padding: 20px; }
     .drawer { width: 100%; max-width: 100%; }
-    .drawer-header { padding: 22px 20px 18px; }
-    .drawer-toolbar { padding: 12px 20px; }
-    .drawer-body { padding: 20px; }
+    .drawer-header { padding: 20px 16px 16px; }
+    .drawer-amount { font-size: 24px; }
+    .drawer-toolbar { padding: 10px 16px; }
+    .drawer-body { padding: 16px; }
+    footer { margin-top: 36px; }
+    footer .actions { gap: 10px; }
+    footer button { font-size: 11px; }
+    .data-table td, .data-table th { padding: 10px 10px; font-size: 12px; }
+    .data-table .mono { font-size: 11px; }
+    .summary-grid .stat .val { font-size: 15px; }
+    .month-row { padding: 10px 0; }
+    .month-row .m-label { font-size: 12px; }
+    .month-row .m-amount { font-size: 12px; min-width: 70px; }
+    .lock-screen::before { width: 350px; height: 350px; }
+    .lock-warning { font-size: 12px; padding: 12px 14px; }
+    .empty { padding: 40px 16px; }
+    .entry-actions { flex-direction: column; }
+    .entry-actions .btn { width: 100%; }
+    .kpi-card.clickable:active { transform: scale(0.98); }
+    .hero-block.clickable:active { transform: translateY(-1px); }
+  }
+
+  @media (max-width: 480px) {
+    .app { padding: 0 10px 48px; }
+    header { padding: 0 10px; }
+    .hero-block { padding: 24px 16px 22px; border-radius: 16px; }
+    .hero-value { font-size: 36px; }
+    .hero-currency, .hero-decimal { font-size: 18px; }
+    .hero-label { font-size: 11px; }
+    .hero-meta-text { font-size: 12px; }
+    .kpi-card { padding: 14px 16px; }
+    .kpi-value { font-size: 24px; }
+    .header-right .lock-btn { padding: 5px 10px; font-size: 12px; }
+    .chart-card .desc { font-size: 11px; }
+    .drawer-amount { font-size: 22px; }
+    .section-head .meta { font-size: 11px; }
+    .lock-card { padding: 24px 16px 20px; border-radius: 20px; }
+    .toast { font-size: 13px; padding: 10px 16px; max-width: 90vw; white-space: normal; }
   }
 </style>
 
@@ -2379,11 +2601,12 @@ function renderHeroValue(n) {
   const abs = Math.abs(n);
   const intPart = Math.floor(abs);
   const intStr = intPart.toLocaleString('zh-CN');
-  const decimal = (abs - intPart).toFixed(2).slice(1); // ".20"
+  const decimal = (abs - intPart).toFixed(2).slice(1);
   const showDecimal = decimal !== '.00';
   const sign = n < 0 ? '-' : '';
-  el.innerHTML = '<span class="hero-currency">' + sign + '¥</span>' + intStr +
-    (showDecimal ? '<span class="hero-decimal">' + decimal + '</span>' : '');
+  el.innerHTML = '<span class="hero-currency">' + sign + '¥</span>' +
+    '<span class="num-anim">' + intStr + '</span>' +
+    (showDecimal ? '<span class="hero-decimal num-anim">' + decimal + '</span>' : '');
 }
 
 // 次级 KPI 卡：弱化货币符号 + 正负号
@@ -2397,9 +2620,9 @@ function renderKpiValue(elId, n, withSign) {
   let symbol = '¥';
   if (withSign) {
     if (n > 0) symbol = '+¥';
-    else if (n < 0) symbol = '−¥';  // 注意是真正的减号 −，更精致
+    else if (n < 0) symbol = '−¥';
   }
-  el.innerHTML = '<span class="sym">' + symbol + '</span>' + abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+  el.innerHTML = '<span class="sym">' + symbol + '</span><span class="num-anim">' + abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 }) + '</span>';
 }
 const ymNow = () => {
   const d = new Date();
@@ -2434,10 +2657,13 @@ function groupAccounts() {
 }
 function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.remove('error', 'success');
+  t.classList.remove('show', 'error', 'success');
+  const icon = type === 'error' ? '⚠️' : '✓';
+  t.innerHTML = '<span class="toast-icon">' + icon + '</span>' + escapeHtml(msg) + '<span class="toast-bar" style="width:100%"></span>';
   if (type === 'error') t.classList.add('error');
   else t.classList.add('success');
+  // 触发重排使进度条动画生效
+  void t.offsetWidth;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2400);
 }
@@ -3132,9 +3358,15 @@ function renderDashboard() {
     document.getElementById('kpi-total').innerHTML = '<span class="hero-currency">¥</span>—';
     document.getElementById('kpi-total-sub').textContent = '尚无快照，请先到「录入」页创建第一份记录';
     document.getElementById('kpi-total-pill').classList.remove('show');
+    document.getElementById('kpi-total').closest('.hero-block').style.cursor = 'default';
     ['pnl', 'flow', 'ytd'].forEach(k => {
       document.getElementById('kpi-' + k).textContent = '—';
       document.getElementById('kpi-' + k + '-sub').textContent = '';
+    });
+    // 显示空状态图表区提示
+    document.querySelectorAll('.chart-card').forEach(c => {
+      const desc = c.querySelector('.desc');
+      if (desc) desc.textContent = '暂无数据';
     });
     return;
   }
@@ -3185,14 +3417,14 @@ function renderDashboard() {
   document.getElementById('kpi-ytd-sub').textContent = yearOfLatest + ' 年内 · 仅市场盈亏';
 
   const colorInk = getCSSVar('--ink');
-  const colorMute = getCSSVar('--ink-mute');
-  const colorGrid = getCSSVar('--grid');
+  const colorMute = getCSSVar('--ink-3');
+  const colorGrid = getCSSVar('--chart-grid');
   const colorAccent = getCSSVar('--accent');
   const colorGreen = getCSSVar('--green');
   const colorRed = getCSSVar('--red');
-  const colorBg = getCSSVar('--bg-elev');
+  const colorBg = getCSSVar('--bg-1');
   const colorTooltipBg = getCSSVar('--tooltip-bg');
-  const colorLine = getCSSVar('--line');
+  const colorLine = getCSSVar('--sep-strong');
 
   Chart.defaults.color = colorMute;
   Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
@@ -3420,7 +3652,7 @@ function renderEntry() {
   container.innerHTML = '';
 
   if (Object.keys(grouped).length === 0) {
-    container.innerHTML = '<div class="empty"><div class="glyph">＋</div><p>尚无分组与账户。<br>请点击下方「新增分组」开始。</p></div>';
+    container.innerHTML = '<div class="empty"><div class="glyph">＋</div><p>尚无分组与账户</p><div class="hint">点击下方「新增分组」创建第一个资产分组</div></div>';
     return;
   }
 
@@ -3576,8 +3808,10 @@ document.getElementById('entry-cancel').addEventListener('click', () => {
 document.getElementById('entry-save').addEventListener('click', async () => {
   const btn = document.getElementById('entry-save');
   btn.disabled = true;
-  const origText = btn.textContent;
-  btn.textContent = '保存中...';
+  btn.style.opacity = '0.7';
+  btn.style.pointerEvents = 'none';
+  const origHTML = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner"></span>保存中…';
 
   try {
     const prev = state.snapshots.find(s => s.month === ymPrev(state.editingMonth));
@@ -3640,7 +3874,9 @@ document.getElementById('entry-save').addEventListener('click', async () => {
     );
   } finally {
     btn.disabled = false;
-    btn.textContent = origText;
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    btn.innerHTML = origHTML;
   }
 });
 
@@ -3775,7 +4011,7 @@ function renderHistory() {
   const root = document.getElementById('history-content');
   const sorted = getSortedSnapshots().slice().reverse();
   if (sorted.length === 0) {
-    root.innerHTML = '<div class="empty"><div class="glyph">∅</div><p>历史是耐心的回声。<br>请先录入第一份月度快照。</p></div>';
+    root.innerHTML = '<div class="empty"><div class="glyph">∅</div><p>历史是耐心的回声</p><div class="hint">请先录入第一份月度快照，数据会在这里呈现</div></div>';
     return;
   }
   let html = '<div class="table-card"><table class="data-table"><thead><tr><th>月份</th><th>总资产</th><th>市场盈亏</th><th>净入金</th><th>较上月变动</th><th></th></tr></thead><tbody>';
