@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>资产账本</title>
+<title>资产负债表</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -230,6 +230,24 @@
   }
 
   /* =====================================================
+     跃然纸上 · 滚动浮现动效
+  ===================================================== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px) scale(0.97);
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .reveal.revealed {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  .reveal-delay-1 { transition-delay: 0.05s; }
+  .reveal-delay-2 { transition-delay: 0.12s; }
+  .reveal-delay-3 { transition-delay: 0.20s; }
+  .reveal-delay-4 { transition-delay: 0.28s; }
+
+  /* =====================================================
      Hero · 巨幅资产卡 + 三张次级卡
   ===================================================== */
   .hero-block {
@@ -240,12 +258,15 @@
     margin-bottom: 14px;
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
   }
   .hero-block:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 20px 60px rgba(10,132,255,0.22);
+    transform: translateY(-6px);
+    box-shadow: 0 32px 80px rgba(10,132,255,0.28);
   }
+  .hero-block:active { transform: translateY(-2px); }
   .hero-block:hover .hero-arrow {
     color: var(--accent);
     transform: translateX(3px);
@@ -364,18 +385,43 @@
   .kpi-card {
     background: var(--bg-1);
     border: 0.5px solid var(--sep);
-    border-radius: 22px;
+    border-radius: 24px;
     padding: 28px 30px;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s, box-shadow 0.3s;
     cursor: pointer;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.4s ease,
+                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
   }
   .kpi-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-8px) scale(1.01);
     border-color: var(--sep-strong);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.18);
   }
   [data-theme="light"] .kpi-card:hover {
-    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.08);
+  }
+  .kpi-card:active { transform: translateY(-3px) scale(1); }
+
+  .chart-card {
+    background: var(--bg-1);
+    border-radius: 24px;
+    padding: 28px 30px;
+    border: 0.5px solid var(--sep);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+                border-color 0.4s ease,
+                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+  .chart-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--sep-strong);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.12);
+  }
+  [data-theme="light"] .chart-card:hover {
+    box-shadow: 0 12px 40px rgba(0,0,0,0.06);
   }
   .kpi-card:hover .kpi-arrow { color: var(--accent); transform: translateX(3px); }
   .kpi-head {
@@ -441,20 +487,8 @@
   }
 
   /* =====================================================
-     卡片 (图表 / 内容)
+     卡片内容 (图表 / 内容)
   ===================================================== */
-  .chart-card {
-    background: var(--bg-1);
-    border-radius: 22px;
-    padding: 28px 30px;
-    border: 0.5px solid var(--sep);
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.3s, box-shadow 0.3s;
-  }
-  .chart-card:hover {
-    border-color: var(--sep-strong);
-  }
   .chart-card h3 {
     font-size: 16px;
     font-weight: 600;
@@ -1162,7 +1196,7 @@
   }
 
   /* =====================================================
-     抽屉
+     钻取弹窗 · 苹果 Sheet 风格
   ===================================================== */
   .drawer-backdrop {
     position: fixed;
@@ -1172,37 +1206,43 @@
     -webkit-backdrop-filter: blur(0);
     z-index: 200;
     pointer-events: none;
-    transition: background 0.3s, backdrop-filter 0.3s;
+    transition: background 0.4s, backdrop-filter 0.4s;
   }
   .drawer-backdrop.open {
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(0,0,0,0.45);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     pointer-events: auto;
   }
   .drawer {
     position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 480px;
+    top: 50%;
+    left: 50%;
+    width: 600px;
     max-width: 92vw;
+    max-height: 82vh;
     background: var(--bg-1);
+    border-radius: 24px;
     z-index: 201;
-    transform: translateX(100%);
-    transition: transform 0.36s cubic-bezier(0.32, 0.72, 0, 1);
+    transform: translate(-50%, -50%) scale(0.92);
+    opacity: 0;
+    pointer-events: none;
     display: flex;
     flex-direction: column;
-    box-shadow: -8px 0 32px rgba(0,0,0,0.3);
-    border-left: 1px solid var(--sep);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.35), 0 0 0 1px var(--sep);
+    transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1),
+                opacity 0.3s ease;
   }
-  .drawer.open { transform: translateX(0); }
+  .drawer.open {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
   .drawer-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 26px 28px 22px;
-    border-bottom: 1px solid var(--sep);
+    padding: 28px 32px 20px;
     flex-shrink: 0;
   }
   .drawer-eyebrow {
@@ -1221,7 +1261,7 @@
   }
   .drawer-amount {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 30px;
+    font-size: 34px;
     font-weight: 600;
     letter-spacing: -0.02em;
     margin: 0;
@@ -1240,11 +1280,12 @@
     cursor: pointer;
     transition: all 0.2s;
     flex-shrink: 0;
+    margin-top: 4px;
   }
-  .drawer-close:hover { background: var(--bg-3); color: var(--ink); }
+  .drawer-close:hover { background: var(--bg-3); color: var(--ink); transform: scale(1.05); }
+  .drawer-close:active { transform: scale(0.93); }
   .drawer-toolbar {
-    padding: 14px 28px;
-    border-bottom: 1px solid var(--sep);
+    padding: 0 32px 16px;
     flex-shrink: 0;
   }
   .drawer-mode-tabs {
@@ -1278,13 +1319,19 @@
   [data-theme="light"] .drawer-mode-tabs button.active { background: #fff; }
 
   .drawer-body {
-    padding: 22px 28px 28px;
+    padding: 0 32px 32px;
     overflow-y: auto;
     flex: 1;
     -webkit-overflow-scrolling: touch;
   }
+  .drawer-divider {
+    margin: 0 32px;
+    border: none;
+    border-top: 1px solid var(--sep);
+    flex-shrink: 0;
+  }
   .drawer-section {
-    margin-bottom: 28px;
+    margin-bottom: 24px;
   }
   .drawer-section:last-child { margin-bottom: 0; }
   .drawer-section-title {
@@ -1510,11 +1557,11 @@
     .lock-card h2 { font-size: 20px; }
     .glyph-icon { width: 52px; height: 52px; font-size: 22px; border-radius: 14px; }
     .modal { padding: 20px; }
-    .drawer { width: 100%; max-width: 100%; }
-    .drawer-header { padding: 20px 16px 16px; }
-    .drawer-amount { font-size: 24px; }
-    .drawer-toolbar { padding: 10px 16px; }
-    .drawer-body { padding: 16px; }
+    .drawer { width: 96vw; max-height: 88vh; border-radius: 20px; }
+    .drawer-header { padding: 24px 20px 16px; }
+    .drawer-amount { font-size: 26px; }
+    .drawer-toolbar { padding: 0 20px 14px; }
+    .drawer-body { padding: 0 20px 20px; }
     footer { margin-top: 36px; }
     footer .actions { gap: 10px; }
     footer button { font-size: 11px; }
@@ -1545,6 +1592,10 @@
     .kpi-value { font-size: 24px; }
     .header-right .lock-btn { padding: 5px 10px; font-size: 12px; }
     .chart-card .desc { font-size: 11px; }
+    .drawer { width: 98vw; max-height: 90vh; border-radius: 16px; }
+    .drawer-header { padding: 20px 16px 14px; }
+    .drawer-amount { font-size: 22px; }
+    .drawer-body { padding: 0 16px 16px; }
     .drawer-amount { font-size: 22px; }
     .section-head .meta { font-size: 11px; }
     .lock-card { padding: 24px 16px 20px; border-radius: 20px; }
@@ -1602,9 +1653,9 @@
 <div class="app">
 
   <header>
-    <div class="brand">
+    <div class="brand" id="brand-home" style="cursor:pointer">
       <span class="brand-icon">¥</span>
-      <span>资产账本</span>
+      <span>资产负债表</span>
     </div>
     <div class="header-right">
       <nav class="nav">
@@ -1666,28 +1717,28 @@
       </div>
     </div>
 
-    <div class="section-head">
+    <div class="section-head reveal">
       <h2>资产走势</h2>
       <span class="meta">月度演进</span>
     </div>
     <div class="charts-grid">
-      <div class="chart-card">
+      <div class="chart-card reveal reveal-delay-1">
         <h3>总资产曲线</h3>
         <div class="desc">每月末总资产</div>
         <div class="chart-wrap tall"><canvas id="chart-total"></canvas></div>
       </div>
-      <div class="chart-card">
+      <div class="chart-card reveal reveal-delay-2">
         <h3>资产分布</h3>
         <div class="desc">最新月份各分组占比</div>
         <div class="chart-wrap tall"><canvas id="chart-pie"></canvas></div>
       </div>
     </div>
 
-    <div class="section-head">
+    <div class="section-head reveal">
       <h2>盈亏分析</h2>
       <span class="meta">市场盈亏与现金流</span>
     </div>
-    <div class="chart-card">
+    <div class="chart-card reveal">
       <h3>每月盈亏 vs 净入金</h3>
       <div class="desc">绿/红 为市场盈亏（已剔除入金）　灰为当月净入金</div>
       <div class="chart-wrap tall"><canvas id="chart-pnl"></canvas></div>
@@ -1732,7 +1783,7 @@
   </section>
 
   <footer>
-    <div>资产账本</div>
+    <div>资产负债表</div>
     <div class="actions">
       <button id="manage-passkey">管理 Passkey</button>
       <button id="export-data">导出加密备份</button>
@@ -2707,6 +2758,7 @@ function navTo(page) {
 document.querySelectorAll('.nav button').forEach(b => {
   b.addEventListener('click', () => navTo(b.dataset.page));
 });
+document.getElementById('brand-home').addEventListener('click', () => navTo('dashboard'));
 
 // ============================================================
 // 抽屉 · drill-down 明细
@@ -3446,17 +3498,18 @@ function renderDashboard() {
           const c = ctx.chart.ctx;
           const g = c.createLinearGradient(0, 0, 0, 280);
           const rgb = hexToRgb(colorAccent);
-          g.addColorStop(0, `rgba(${rgb},0.22)`);
+          g.addColorStop(0, `rgba(${rgb},0.20)`);
+          g.addColorStop(0.5, `rgba(${rgb},0.08)`);
           g.addColorStop(1, `rgba(${rgb},0)`);
           return g;
         },
         fill: true,
-        tension: 0.34,
-        borderWidth: 2.4,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointBackgroundColor: colorAccent,
-        pointBorderColor: colorBg,
+        tension: 0.35,
+        borderWidth: 2.6,
+        pointRadius: 4,
+        pointHoverRadius: 7,
+        pointBackgroundColor: colorBg,
+        pointBorderColor: colorAccent,
         pointBorderWidth: 2.5,
         pointHoverBorderWidth: 3,
       }],
@@ -3464,6 +3517,7 @@ function renderDashboard() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: { duration: 1000, easing: 'easeOutQuart' },
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
@@ -3473,18 +3527,29 @@ function renderDashboard() {
           borderWidth: 1,
           titleColor: colorInk,
           bodyColor: colorInk,
-          padding: 12,
-          cornerRadius: 10,
+          padding: 14,
+          cornerRadius: 12,
           displayColors: false,
+          titleFont: { size: 13, weight: '600' },
+          bodyFont: { size: 14, weight: '500' },
           callbacks: { label: (ctx) => fmt(ctx.parsed.y) },
         },
       },
       scales: {
-        x: { grid: { color: 'transparent' }, border: { display: false }, ticks: { color: colorMute } },
-        y: {
-          grid: { color: colorGrid },
+        x: {
+          grid: { display: false },
           border: { display: false },
-          ticks: { color: colorMute, callback: (v) => '¥' + (v / 10000).toFixed(0) + '万' },
+          ticks: { color: colorMute, font: { size: 11 } },
+        },
+        y: {
+          grid: { color: colorGrid, drawBorder: false },
+          border: { display: false },
+          ticks: {
+            color: colorMute,
+            font: { size: 11 },
+            callback: (v) => '¥' + (v / 10000).toFixed(0) + '万',
+            padding: 8,
+          },
         },
       },
     },
@@ -3499,7 +3564,7 @@ function renderDashboard() {
   }
   const pieLabels = Object.keys(groupTotals);
   const pieData = pieLabels.map(l => groupTotals[l]);
-  // 苹果风格调色板
+  // 苹果风格调色板（更柔和）
   const palette = ['#0a84ff', '#30d158', '#ff9f0a', '#ff375f', '#bf5af2', '#5e5ce6', '#64d2ff', '#ffd60a'];
 
   charts.pie = new Chart(document.getElementById('chart-pie'), {
@@ -3508,19 +3573,37 @@ function renderDashboard() {
       labels: pieLabels,
       datasets: [{
         data: pieData,
-        backgroundColor: pieLabels.map((_, i) => palette[i % palette.length]),
+        backgroundColor: pieLabels.map((_, i) => {
+          const c = palette[i % palette.length];
+          // 在深色模式下稍微降低饱和度
+          const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+          return isDark ? c : c;
+        }),
         borderColor: colorBg,
         borderWidth: 3,
+        hoverOffset: 8,
       }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      cutout: '64%',
+      cutout: '68%',
+      animation: {
+        animateRotate: true,
+        duration: 900,
+        easing: 'easeOutQuart',
+      },
       plugins: {
         legend: {
           position: 'bottom',
-          labels: { padding: 14, font: { size: 12, family: "'Inter', sans-serif" }, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle' },
+          labels: {
+            padding: 16,
+            font: { size: 12, family: "'Inter', sans-serif" },
+            boxWidth: 10,
+            boxHeight: 10,
+            usePointStyle: true,
+            pointStyle: 'circle',
+          },
         },
         tooltip: {
           backgroundColor: colorTooltipBg,
@@ -3528,13 +3611,15 @@ function renderDashboard() {
           borderWidth: 1,
           titleColor: colorInk,
           bodyColor: colorInk,
-          padding: 12,
-          cornerRadius: 10,
+          padding: 14,
+          cornerRadius: 12,
+          titleFont: { size: 13, weight: '600' },
+          bodyFont: { size: 13 },
           callbacks: {
             label: (ctx) => {
               const tot = ctx.dataset.data.reduce((a, b) => a + b, 0);
               const pct = tot ? (ctx.parsed / tot * 100).toFixed(1) : 0;
-              return ' ' + ctx.label + '   ' + fmt(ctx.parsed) + '   ' + pct + '%';
+              return ' ' + ctx.label + '  ' + fmt(ctx.parsed) + '  ' + pct + '%';
             },
           },
         },
@@ -3547,6 +3632,7 @@ function renderDashboard() {
   const flows = sorted.map(s => snapshotFlow(s));
   const greenRgb = hexToRgb(colorGreen);
   const redRgb = hexToRgb(colorRed);
+  const greyRgb = '142,142,147';
 
   charts.pnl = new Chart(document.getElementById('chart-pnl'), {
     type: 'bar',
@@ -3556,19 +3642,21 @@ function renderDashboard() {
         {
           label: '市场盈亏',
           data: pnls,
-          backgroundColor: pnls.map(v => v >= 0 ? `rgba(${greenRgb},0.85)` : `rgba(${redRgb},0.85)`),
-          borderRadius: 6,
+          backgroundColor: pnls.map(v => v >= 0 ? `rgba(${greenRgb},0.78)` : `rgba(${redRgb},0.78)`),
+          hoverBackgroundColor: pnls.map(v => v >= 0 ? `rgba(${greenRgb},0.95)` : `rgba(${redRgb},0.95)`),
+          borderRadius: 8,
           borderSkipped: false,
-          barPercentage: 0.55,
+          barPercentage: 0.5,
           categoryPercentage: 0.7,
         },
         {
           label: '净入金',
           data: flows,
-          backgroundColor: 'rgba(142,142,147,0.35)',
-          borderRadius: 6,
+          backgroundColor: `rgba(${greyRgb},0.25)`,
+          hoverBackgroundColor: `rgba(${greyRgb},0.40)`,
+          borderRadius: 8,
           borderSkipped: false,
-          barPercentage: 0.55,
+          barPercentage: 0.5,
           categoryPercentage: 0.7,
         },
       ],
@@ -3576,6 +3664,7 @@ function renderDashboard() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: { duration: 800, easing: 'easeOutQuart' },
       onClick: (evt, elements) => {
         if (!elements || elements.length === 0) return;
         const idx = elements[0].index;
@@ -3589,7 +3678,14 @@ function renderDashboard() {
         legend: {
           position: 'top',
           align: 'end',
-          labels: { boxWidth: 10, boxHeight: 10, padding: 16, font: { size: 12, family: "'Inter', sans-serif" }, usePointStyle: true, pointStyle: 'circle' },
+          labels: {
+            boxWidth: 10,
+            boxHeight: 10,
+            padding: 16,
+            font: { size: 12, family: "'Inter', sans-serif" },
+            usePointStyle: true,
+            pointStyle: 'circle',
+          },
         },
         tooltip: {
           backgroundColor: colorTooltipBg,
@@ -3597,8 +3693,10 @@ function renderDashboard() {
           borderWidth: 1,
           titleColor: colorInk,
           bodyColor: colorInk,
-          padding: 12,
-          cornerRadius: 10,
+          padding: 14,
+          cornerRadius: 12,
+          titleFont: { size: 13, weight: '600' },
+          bodyFont: { size: 13 },
           callbacks: { label: (ctx) => ' ' + ctx.dataset.label + ': ' + fmtSign(ctx.parsed.y) },
         },
       },
@@ -4264,6 +4362,27 @@ window.addEventListener('unhandledrejection', (e) => {
     alert('⚠️ 云端写入失败！\n\n' + msg + '\n\n你的修改可能没有保存到云端。建议检查网络后重试，并立即导出加密备份保留本地副本。');
   }
 });
+
+// ============ 跃然纸上 · 滚动浮现 ============
+function initScrollReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+}
+
+// 在每次页面切换后重新扫描 .reveal 元素
+const origNavTo = navTo;
+navTo = function(page) {
+  origNavTo(page);
+  // 等待 DOM 渲染后扫描新元素
+  requestAnimationFrame(() => { requestAnimationFrame(initScrollReveal); });
+};
 
 (async function init() {
   const savedTheme = localStorage.getItem('asset-theme') || 'system';
