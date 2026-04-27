@@ -187,6 +187,21 @@
   [data-theme="light"] .theme-toggle button.active {
     background: #ffffff;
   }
+  .nav button.dirty::after {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-left: 4px;
+    vertical-align: super;
+    animation: dirtyPulse 1.5s ease-in-out infinite;
+  }
+  @keyframes dirtyPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
 
   .lock-btn {
     display: flex;
@@ -571,6 +586,60 @@
   /* =====================================================
      表格
   ===================================================== */
+  .history-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .history-search {
+    width: 200px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  #history-compare-result {
+    background: var(--bg-1);
+    border-radius: 16px;
+    border: 0.5px solid var(--sep);
+    padding: 20px 24px;
+  }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .compare-card {
+    background: var(--bg-2);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .compare-card .label {
+    font-size: 11px;
+    color: var(--ink-3);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .compare-card .value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+  }
+  .compare-card .sub {
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 2px;
+  }
+  @media (max-width: 900px) {
+    .history-toolbar { flex-direction: column; align-items: stretch; }
+    .history-search { width: 100%; }
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+
   .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -809,6 +878,36 @@
   input.is-carry::placeholder {
     color: var(--ink-2);
     opacity: 0.7;
+  }
+  .archive-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-3);
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: background 0.2s;
+    user-select: none;
+    margin-bottom: 14px;
+  }
+  .archive-toggle:hover { background: var(--bg-2); }
+  .archive-toggle input { width: auto; margin: 0; }
+  .entry-row.archived {
+    opacity: 0.45;
+  }
+  .entry-row.archived .name::after {
+    content: ' 已归档';
+    font-size: 11px;
+    color: var(--ink-4);
+    font-weight: 400;
+  }
+  .entry-row .archived-badge {
+    font-size: 11px;
+    color: var(--ink-4);
+    margin-left: 4px;
+    font-weight: 400;
   }
   .entry-row .delta {
     font-family: 'JetBrains Mono', monospace;
@@ -1059,12 +1158,14 @@
     bottom: 0;
     left: 0;
     height: 2px;
+    width: 100%;
     background: var(--accent);
     border-radius: 0 1px 1px 0;
-    transition: width linear 2.2s;
+    transform-origin: left center;
+    transition: transform linear 2.2s;
   }
   .toast.error .toast-bar { background: var(--red); }
-  .toast.show .toast-bar { width: 0; }
+  .toast.show .toast-bar { transform: scaleX(0); }
   .toast-icon {
     flex-shrink: 0;
     font-size: 16px;
@@ -1828,6 +1929,11 @@
       </div>
     </div>
 
+    <label class="archive-toggle" id="archive-toggle-wrap" style="display:none">
+      <input type="checkbox" id="show-archived">
+      <span>显示已归档账户</span>
+    </label>
+
     <div id="entry-groups"></div>
 
     <div class="add-group-section">
@@ -1846,7 +1952,17 @@
       <h2>历史明细</h2>
       <span class="meta">月度数据</span>
     </div>
+    <div class="history-toolbar">
+      <input type="text" id="history-search" placeholder="搜索月份…" class="history-search">
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="month" id="history-compare-a" class="month-pick" style="width:auto;padding:5px 10px;font-size:12px">
+        <span style="color:var(--ink-3);font-size:12px">vs</span>
+        <input type="month" id="history-compare-b" class="month-pick" style="width:auto;padding:5px 10px;font-size:12px">
+        <button class="btn btn-ghost btn-sm" id="export-csv">CSV</button>
+      </div>
+    </div>
     <div id="history-content"></div>
+    <div id="history-compare-result" style="display:none;margin-top:12px"></div>
   </section>
 
   <footer>
@@ -1906,6 +2022,8 @@
       </select>
     </div>
     <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" id="acc-delete" style="display:none">删除</button>
+      <button class="btn btn-ghost btn-sm" id="acc-archive" style="display:none">归档</button>
       <button class="btn btn-ghost btn-sm" id="acc-cancel">取消</button>
       <button class="btn btn-sm" id="acc-save">保存</button>
     </div>
@@ -2164,6 +2282,7 @@ async function dbGet(store) {
   if (store === 'vault') {
     const r = await apiGet('/api/vault');
     if (!r.exists) return undefined;
+    state.lastKnownUpdatedAt = r.updated_at || 0;
     return { id: 'main', payload: r.payload };
   }
 }
@@ -2296,6 +2415,7 @@ let state = {
   editGroupOriginal: null,
   theme: 'system',
   lockMode: 'passkey',    // 当前 UI 模式：passkey | password
+  lastKnownUpdatedAt: 0,  // 服务器端 vault 最新时间戳（冲突检测用）
 };
 
 // ============================================================
@@ -2325,6 +2445,30 @@ document.querySelectorAll('[data-theme-set]').forEach(b => {
 // 锁屏 / 解锁
 // ============================================================
 async function persistVault() {
+  // 冲突检测：检查云端是否有更新的数据
+  if (state.lastKnownUpdatedAt !== 0) {
+    try {
+      const server = await apiGet('/api/vault');
+      const serverUpdatedAt = server.exists ? (server.updated_at || 0) : 0;
+      if (serverUpdatedAt !== state.lastKnownUpdatedAt) {
+        const ok = confirm(
+          '⚠️ 检测到数据冲突\n\n' +
+          '云端数据已被其他设备修改（' + new Date(serverUpdatedAt).toLocaleString('zh-CN') + '）。\n' +
+          '继续保存将覆盖其他设备上的最新数据。\n\n' +
+          '点击「确定」覆盖保存\n' +
+          '点击「取消」先刷新页面查看最新数据'
+        );
+        if (!ok) {
+          showToast('已取消保存，请刷新页面获取最新数据', 'error');
+          throw new Error('用户取消了保存');
+        }
+      }
+    } catch (e) {
+      // 冲突检测本身失败不阻止写入（可能是网络问题）
+      console.warn('冲突检测失败，继续写入:', e);
+    }
+  }
+
   const payload = await encryptJSON({
     accounts: state.accounts,
     snapshots: state.snapshots,
@@ -2778,7 +2922,7 @@ function showToast(msg, type = 'success') {
   const t = document.getElementById('toast');
   t.classList.remove('show', 'error', 'success');
   const icon = type === 'error' ? '⚠️' : '✓';
-  t.innerHTML = '<span class="toast-icon">' + icon + '</span>' + escapeHtml(msg) + '<span class="toast-bar" style="width:100%"></span>';
+  t.innerHTML = '<span class="toast-icon">' + icon + '</span>' + escapeHtml(msg) + '<span class="toast-bar" style="transform:scaleX(1)"></span>';
   if (type === 'error') t.classList.add('error');
   else t.classList.add('success');
   // 触发重排使进度条动画生效
@@ -3491,12 +3635,22 @@ function renderDashboard() {
     return;
   }
 
+  const activeAccIds = new Set(state.accounts.filter(a => !a.archived).map(a => a.id));
+  function onlyActive(snap) {
+    if (!snap) return null;
+    const entries = {};
+    for (const [id, v] of Object.entries(snap.entries)) {
+      if (activeAccIds.has(id)) entries[id] = v;
+    }
+    return { ...snap, entries };
+  }
+
   const latest = sorted[sorted.length - 1];
   const prev = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
-  const total = snapshotTotal(latest);
-  const prevTotal = prev ? snapshotTotal(prev) : null;
-  const pnl = monthlyPnL(latest, prev);
-  const flow = snapshotFlow(latest);
+  const total = snapshotTotal(onlyActive(latest));
+  const prevTotal = prev ? snapshotTotal(onlyActive(prev)) : null;
+  const pnl = monthlyPnL(onlyActive(latest), onlyActive(prev));
+  const flow = snapshotFlow(onlyActive(latest));
 
   const yearOfLatest = latest.month.slice(0, 4);
   const yearSnaps = sorted.filter(s => s.month.startsWith(yearOfLatest));
@@ -3504,7 +3658,7 @@ function renderDashboard() {
   for (let i = 0; i < yearSnaps.length; i++) {
     const idxInAll = sorted.indexOf(yearSnaps[i]);
     const p = idxInAll > 0 ? sorted[idxInAll - 1] : null;
-    ytd += monthlyPnL(yearSnaps[i], p);
+    ytd += monthlyPnL(onlyActive(yearSnaps[i]), onlyActive(p));
   }
 
   // Hero 总资产：拆 ¥ + 整数 + .小数
@@ -3567,7 +3721,7 @@ function renderDashboard() {
   Chart.defaults.borderColor = colorLine;
 
   const labels = sorted.map(s => s.month);
-  const totals = sorted.map(s => snapshotTotal(s));
+  const totals = sorted.map(s => snapshotTotal(onlyActive(s)));
 
   charts.total = new Chart(document.getElementById('chart-total'), {
     type: 'line',
@@ -3638,10 +3792,12 @@ function renderDashboard() {
     },
   });
 
-  // 饼图
+  // 饼图（仅活跃账户）
   const groupTotals = {};
+  const activeLatest = onlyActive(latest);
   for (const a of state.accounts) {
-    const e = latest.entries[a.id];
+    if (a.archived) continue;
+    const e = activeLatest.entries[a.id];
     if (!e || !e.balance) continue;
     groupTotals[a.group] = (groupTotals[a.group] || 0) + (Number(e.balance) || 0);
   }
@@ -3710,9 +3866,9 @@ function renderDashboard() {
     },
   });
 
-  // 盈亏柱图
-  const pnls = sorted.map((s, i) => monthlyPnL(s, i > 0 ? sorted[i - 1] : null));
-  const flows = sorted.map(s => snapshotFlow(s));
+  // 盈亏柱图（仅活跃账户）
+  const pnls = sorted.map((s, i) => monthlyPnL(onlyActive(s), i > 0 ? onlyActive(sorted[i - 1]) : null));
+  const flows = sorted.map(s => snapshotFlow(onlyActive(s)));
   const greenRgb = hexToRgb(colorGreen);
   const redRgb = hexToRgb(colorRed);
   const greyRgb = '142,142,147';
@@ -3827,6 +3983,11 @@ function renderEntry() {
   monthInput.value = state.editingMonth;
   state.editingDraft = loadDraft(state.editingMonth);
 
+  // Show/hide archive toggle based on whether any account is archived
+  const hasArchived = state.accounts.some(a => a.archived);
+  document.getElementById('archive-toggle-wrap').style.display = hasArchived ? '' : 'none';
+  const showArchived = document.getElementById('show-archived').checked;
+
   const grouped = groupAccounts();
   const prevMonth = ymPrev(state.editingMonth);
   const prevSnap = state.snapshots.find(s => s.month === prevMonth);
@@ -3840,6 +4001,12 @@ function renderEntry() {
 
   for (const group of getAllGroups()) {
     const accs = grouped[group] || [];
+    // Sort: active first, archived at bottom
+    accs.sort((a, b) => {
+      if (a.archived && !b.archived) return 1;
+      if (!a.archived && b.archived) return -1;
+      return 0;
+    });
 
     const section = document.createElement('div');
     section.className = 'group-section';
@@ -3878,8 +4045,9 @@ function renderEntry() {
     }
 
     for (const a of accs) {
+      if (a.archived && !showArchived) continue;
       const row = document.createElement('div');
-      row.className = 'entry-row';
+      row.className = 'entry-row' + (a.archived ? ' archived' : '');
       const draft = state.editingDraft[a.id];
       // 上月余额（存的是有符号值，显示用绝对值）
       const prevBalSigned = prevSnap && prevSnap.entries[a.id] ? Number(prevSnap.entries[a.id].balance) || 0 : null;
@@ -3915,6 +4083,7 @@ function renderEntry() {
       const accId = e.target.dataset.acc;
       const field = e.target.dataset.field;
       state.editingDraft[accId][field] = e.target.value;
+      setEntryDirty(true);
       if (field === 'balance') {
         const prev = state.snapshots.find(s => s.month === ymPrev(state.editingMonth));
         const prevBalSigned = prev && prev.entries[accId] ? Number(prev.entries[accId].balance) || 0 : null;
@@ -3949,11 +4118,24 @@ function renderEntry() {
     });
   });
 
+  // Enter 跳转下一个输入框
+  container.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey && e.target.tagName === 'INPUT') {
+      const inputs = [...container.querySelectorAll('.entry-row:not(.header-row) input')];
+      const idx = inputs.indexOf(e.target);
+      if (idx >= 0 && idx < inputs.length - 1) {
+        e.preventDefault();
+        inputs[idx + 1].focus();
+      }
+    }
+  });
+
   container.querySelectorAll('[data-action]').forEach(b => {
     b.addEventListener('click', () => handleEntryAction(b.dataset.action, b.dataset));
   });
 
   document.getElementById('group-list').innerHTML = getAllGroups().map(g => `<option value="${escapeHtml(g)}">`).join('');
+  setEntryDirty(false);
 }
 
 function handleEntryAction(action, dataset) {
@@ -3963,11 +4145,26 @@ function handleEntryAction(action, dataset) {
   else if (action === 'delete-group') deleteGroup(dataset.group);
 }
 
+function setEntryDirty(dirty) {
+  state.entryDirty = dirty;
+  const btn = document.querySelector('[data-page="entry"]');
+  if (btn) btn.classList.toggle('dirty', dirty);
+}
+
+// Cmd/Ctrl + Enter 保存
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && state.current === 'entry') {
+    e.preventDefault();
+    document.getElementById('entry-save').click();
+  }
+});
+
 document.getElementById('entry-month').addEventListener('change', (e) => {
   state.editingMonth = normalizeMonth(e.target.value);
   e.target.value = state.editingMonth; // 把规范化后的值写回输入框
   renderEntry();
 });
+document.getElementById('show-archived').addEventListener('change', () => renderEntry());
 document.getElementById('entry-prefill').addEventListener('click', () => {
   const prev = state.snapshots.find(s => s.month === ymPrev(state.editingMonth));
   if (!prev) { showToast('上月无数据', 'error'); return; }
@@ -4109,30 +4306,41 @@ document.getElementById('acc-save').addEventListener('click', async () => {
   showToast('已保存');
 });
 
-// 删除按钮加到账户弹窗
-(function addDeleteToAccountModal() {
-  const modal = document.querySelector('#account-modal .modal');
-  const actions = modal.querySelector('.modal-actions');
-  const delBtn = document.createElement('button');
-  delBtn.className = 'btn btn-danger btn-sm';
-  delBtn.id = 'acc-delete';
-  delBtn.textContent = '删除';
-  delBtn.style.marginRight = 'auto';
-  actions.insertBefore(delBtn, actions.firstChild);
-  delBtn.addEventListener('click', async () => {
-    if (!state.editAccId) return;
-    if (!confirm('确认删除此账户？历史快照中该账户的数据将不再显示。')) return;
-    state.accounts = state.accounts.filter(a => a.id !== state.editAccId);
-    await persistVault();
-    document.getElementById('account-modal').classList.remove('active');
-    renderEntry();
-    showToast('已删除');
-  });
+// 账户弹窗按钮显隐
+(function initAccModalButtons() {
+  const modal = document.getElementById('account-modal');
+  const delBtn = document.getElementById('acc-delete');
+  const archBtn = document.getElementById('acc-archive');
+
   const obs = new MutationObserver(() => {
-    delBtn.style.display = state.editAccId ? '' : 'none';
+    const isEdit = !!state.editAccId;
+    delBtn.style.display = isEdit ? '' : 'none';
+    archBtn.style.display = isEdit ? '' : 'none';
+    if (isEdit) {
+      const acc = state.accounts.find(a => a.id === state.editAccId);
+      archBtn.textContent = acc && acc.archived ? '取消归档' : '归档';
+    }
   });
-  obs.observe(document.getElementById('account-modal'), { attributes: true, attributeFilter: ['class'] });
+  obs.observe(modal, { attributes: true, attributeFilter: ['class'] });
 })();
+document.getElementById('acc-delete').addEventListener('click', async () => {
+  if (!state.editAccId) return;
+  if (!confirm('确认删除此账户？历史快照中该账户的数据将不再显示。')) return;
+  state.accounts = state.accounts.filter(a => a.id !== state.editAccId);
+  await persistVault();
+  document.getElementById('account-modal').classList.remove('active');
+  renderEntry();
+  showToast('已删除');
+});
+document.getElementById('acc-archive').addEventListener('click', async () => {
+  if (!state.editAccId) return;
+  const acc = state.accounts.find(a => a.id === state.editAccId);
+  if (!acc) return;
+  acc.archived = !acc.archived;
+  await persistVault();
+  document.getElementById('account-modal').classList.remove('active');
+  showToast(acc.archived ? '已归档（概览中隐藏）' : '已取消归档');
+});
 
 // ============================================================
 // 分组管理
@@ -4191,11 +4399,16 @@ async function deleteGroup(group) {
 // ============================================================
 function renderHistory() {
   const root = document.getElementById('history-content');
-  const sorted = getSortedSnapshots().slice().reverse();
-  if (sorted.length === 0) {
+  const allSorted = getSortedSnapshots().slice().reverse();
+  if (allSorted.length === 0) {
     root.innerHTML = '<div class="empty"><div class="glyph">∅</div><p>历史是耐心的回声</p><div class="hint">请先录入第一份月度快照，数据会在这里呈现</div></div>';
     return;
   }
+
+  // 搜索过滤
+  const query = (document.getElementById('history-search').value || '').trim().toLowerCase();
+  const sorted = query ? allSorted.filter(s => s.month.includes(query)) : allSorted;
+
   let html = '<div class="table-card"><table class="data-table"><thead><tr><th>月份</th><th>总资产</th><th>市场盈亏</th><th>净入金</th><th>较上月变动</th><th></th></tr></thead><tbody>';
   for (let i = 0; i < sorted.length; i++) {
     const s = sorted[i];
@@ -4205,7 +4418,7 @@ function renderHistory() {
     const flow = snapshotFlow(s);
     const change = prev ? total - snapshotTotal(prev) : null;
     html += `<tr>
-      <td>${s.month}</td>
+      <td><span style="cursor:pointer;color:var(--accent)" title="对比此月" data-compare="${s.month}">${s.month}</span></td>
       <td>${fmt(total)}</td>
       <td class="${pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : '')}">${fmtSign(pnl)}</td>
       <td>${fmtSign(flow)}</td>
@@ -4218,6 +4431,12 @@ function renderHistory() {
   }
   html += '</tbody></table></div>';
   root.innerHTML = html;
+
+  // 空搜索结果
+  if (sorted.length === 0) {
+    root.innerHTML = '<div class="empty"><div class="glyph">∅</div><p>无匹配月份</p></div>';
+  }
+
   root.querySelectorAll('[data-edit-month]').forEach(b => b.addEventListener('click', () => {
     state.editingMonth = b.dataset.editMonth;
     navTo('entry');
@@ -4230,7 +4449,96 @@ function renderHistory() {
     renderHistory();
     showToast('已删除');
   }));
+  // 月份名称点击 → 填入对比
+  root.querySelectorAll('[data-compare]').forEach(b => b.addEventListener('click', () => {
+    const m = b.dataset.compare;
+    const a = document.getElementById('history-compare-a');
+    const bEl = document.getElementById('history-compare-b');
+    if (!a.value || a.value === bEl.value) {
+      a.value = m;
+    } else {
+      bEl.value = m;
+    }
+    runHistoryCompare();
+  }));
 }
+
+function runHistoryCompare() {
+  const a = document.getElementById('history-compare-a').value;
+  const b = document.getElementById('history-compare-b').value;
+  const el = document.getElementById('history-compare-result');
+  if (!a || !b || a === b) { el.style.display = 'none'; return; }
+
+  const sorted = getSortedSnapshots();
+  const snapA = sorted.find(s => s.month === a);
+  const snapB = sorted.find(s => s.month === b);
+  if (!snapA || !snapB) { el.style.display = 'none'; return; }
+
+  const totalA = snapshotTotal(snapA);
+  const totalB = snapshotTotal(snapB);
+  const diff = totalB - totalA;
+  const flowA = snapshotFlow(snapA);
+  const flowB = snapshotFlow(snapB);
+  // 期间市场盈亏（从 A 到 B 的累计）
+  const startIdx = sorted.indexOf(snapA);
+  const endIdx = sorted.indexOf(snapB);
+  let cumPnL = 0;
+  for (let i = Math.min(startIdx, endIdx) + 1; i <= Math.max(startIdx, endIdx); i++) {
+    cumPnL += monthlyPnL(sorted[i], sorted[i - 1]);
+  }
+  const months = Math.abs(endIdx - startIdx);
+
+  el.style.display = '';
+  el.innerHTML = '<div style="font-size:13px;font-weight:600;margin-bottom:4px;color:var(--ink-2)">' + a + ' → ' + b + ' (' + months + '个月)</div>' +
+    '<div class="compare-grid">' +
+    '<div class="compare-card"><div class="label">起点总资产</div><div class="value">' + fmt(totalA) + '</div><div class="sub">' + a + '</div></div>' +
+    '<div class="compare-card"><div class="label">终点总资产</div><div class="value">' + fmt(totalB) + '</div><div class="sub">' + b + '</div></div>' +
+    '<div class="compare-card"><div class="label">总变化</div><div class="value ' + (diff > 0 ? 'pos' : (diff < 0 ? 'neg' : '')) + '">' + fmtSign(diff) + '</div><div class="sub">总资产增减</div></div>' +
+    '<div class="compare-card"><div class="label">期间市场盈亏</div><div class="value ' + (cumPnL > 0 ? 'pos' : (cumPnL < 0 ? 'neg' : '')) + '">' + fmtSign(cumPnL) + '</div><div class="sub">已剔除入金</div></div>' +
+    '</div>';
+}
+
+function exportCSV() {
+  const sorted = getSortedSnapshots().slice().reverse();
+  if (sorted.length === 0) { showToast('无数据可导出', 'error'); return; }
+  let csv = '﻿月份,总资产,市场盈亏,净入金,较上月变动\n';
+  for (let i = 0; i < sorted.length; i++) {
+    const s = sorted[i];
+    const prev = sorted[i + 1] || null;
+    const total = snapshotTotal(s);
+    const pnl = monthlyPnL(s, prev);
+    const flow = snapshotFlow(s);
+    const change = prev ? total - snapshotTotal(prev) : 0;
+    csv += s.month + ',' + total + ',' + pnl + ',' + flow + ',' + change + '\n';
+  }
+  // 账户明细行（最新月份各账户余额）
+  const latest = sorted[0];
+  csv += '\n\n最新月份账户明细\n';
+  csv += '账户,分组,类型,余额\n';
+  for (const a of state.accounts) {
+    const e = latest.entries[a.id];
+    if (e && e.balance) {
+      csv += a.name + ',' + a.group + ',' + a.type + ',' + (Number(e.balance) || 0) + '\n';
+    }
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = '资产负债表-' + new Date().toISOString().slice(0, 10) + '.csv';
+  link.click();
+  URL.revokeObjectURL(url);
+  showToast('已导出 CSV');
+}
+
+// ============================================================
+// 历史页事件绑定
+// ============================================================
+document.getElementById('history-search').addEventListener('input', () => renderHistory());
+document.getElementById('history-compare-a').addEventListener('change', runHistoryCompare);
+document.getElementById('history-compare-b').addEventListener('change', runHistoryCompare);
+document.getElementById('export-csv').addEventListener('click', exportCSV);
 
 // ============================================================
 // 导入 / 导出 / 重置 / 改密码
