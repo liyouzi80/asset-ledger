@@ -466,15 +466,7 @@
     font-weight: 500;
     letter-spacing: 0.02em;
   }
-  .kpi-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .kpi-dot.pos { background: var(--green); }
-  .kpi-dot.neg { background: var(--red); }
-  .kpi-dot.neutral { background: var(--ink-4); }
+
 
   .chart-card {
     background: var(--bg-1);
@@ -1893,7 +1885,6 @@
         <div class="kpi-accent pos"></div>
         <div class="kpi-inner">
           <div class="kpi-head">
-            <span class="kpi-dot pos"></span>
             <span class="kpi-label">本月盈亏</span>
           </div>
           <div class="kpi-value" id="kpi-pnl">—</div>
@@ -1904,7 +1895,6 @@
         <div class="kpi-accent neutral"></div>
         <div class="kpi-inner">
           <div class="kpi-head">
-            <span class="kpi-dot neutral"></span>
             <span class="kpi-label">本月净流</span>
           </div>
           <div class="kpi-value" id="kpi-flow">—</div>
@@ -1915,7 +1905,6 @@
         <div class="kpi-accent pos"></div>
         <div class="kpi-inner">
           <div class="kpi-head">
-            <span class="kpi-dot pos"></span>
             <span class="kpi-label">年内累计</span>
           </div>
           <div class="kpi-value" id="kpi-ytd">—</div>
@@ -3878,23 +3867,14 @@ function renderDashboard() {
   // 更新 accent bar 和 dot
   const pnlCard = document.querySelector('[data-drill="pnl"]');
   pnlCard.querySelector('.kpi-accent').className = 'kpi-accent ' + pnlState;
-  pnlCard.querySelector('.kpi-dot').className = 'kpi-dot ' + pnlState;
-  pnlCard.querySelector('.kpi-dot').style.display = pnlState === 'neutral' ? 'none' : '';
-
   document.getElementById('kpi-flow').className = 'kpi-value';
   document.getElementById('kpi-flow-sub').textContent = flow > 0 ? '本月净流入' : (flow < 0 ? '本月净流出' : '无流动');
   const flowCard = document.querySelector('[data-drill="flow"]');
   flowCard.querySelector('.kpi-accent').className = 'kpi-accent ' + flowState;
-  flowCard.querySelector('.kpi-dot').className = 'kpi-dot ' + flowState;
-  flowCard.querySelector('.kpi-dot').style.display = flowState === 'neutral' ? 'none' : '';
-
   document.getElementById('kpi-ytd').className = 'kpi-value ' + ytdState;
   document.getElementById('kpi-ytd-sub').textContent = yearOfLatest + ' 年内 · 仅市场盈亏';
   const ytdCard = document.querySelector('[data-drill="ytd"]');
   ytdCard.querySelector('.kpi-accent').className = 'kpi-accent ' + ytdState;
-  ytdCard.querySelector('.kpi-dot').className = 'kpi-dot ' + ytdState;
-  ytdCard.querySelector('.kpi-dot').style.display = ytdState === 'neutral' ? 'none' : '';
-
   const colorInk = getCSSVar('--ink');
   const colorMute = getCSSVar('--ink-3');
   const colorGrid = getCSSVar('--chart-grid');
