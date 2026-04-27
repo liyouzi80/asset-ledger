@@ -2581,6 +2581,7 @@ let state = {
   theme: 'system',
   lockMode: 'passkey',    // 当前 UI 模式：passkey | password
   lastKnownUpdatedAt: 0,  // 服务器端 vault 最新时间戳（冲突检测用）
+  cachedMeta: null,       // 解锁后缓存的 meta，避免 persistVault 每次额外 fetch
 };
 
 // ============================================================
@@ -2615,6 +2616,7 @@ async function persistVault() {
   return _persistQueue = (async () => {
   // 冲突检测：检查云端是否有更新的数据
   if (state.lastKnownUpdatedAt !== 0) {
+    let userCancelled = false;
     try {
       const server = await apiGet('/api/vault');
       const serverUpdatedAt = server.exists ? (server.updated_at || 0) : 0;
@@ -2627,14 +2629,15 @@ async function persistVault() {
           '点击「取消」先刷新页面查看最新数据'
         );
         if (!ok) {
+          userCancelled = true;
           showToast('已取消保存，请刷新页面获取最新数据', 'error');
-          throw new Error('用户取消了保存');
         }
       }
     } catch (e) {
       // 冲突检测本身失败不阻止写入（可能是网络问题）
       console.warn('冲突检测失败，继续写入:', e);
     }
+    if (userCancelled) return;
   }
 
   const payload = await encryptJSON({
@@ -2650,7 +2653,7 @@ async function persistVault() {
   for (let attempt = 0; attempt < 3; attempt++) {
     if (attempt > 0) await new Promise(r => setTimeout(r, 300 * attempt));
     try {
-      const check = await dbGet('vault', 'main');
+      const check = await dbGet('vault');
       if (check && check.payload && check.payload.iv === payload.iv && check.payload.cipher === payload.cipher) {
         verified = true;
         break;
@@ -2664,9 +2667,9 @@ async function persistVault() {
     throw new Error('云端写入校验失败：' + lastErr);
   }
 
-  // 同步写本地镜像
+  // 同步写本地镜像（优先用缓存的 meta，避免额外网络请求）
   try {
-    const meta = await dbGet('meta', 'main');
+    const meta = state.cachedMeta || await dbGet('meta');
     if (meta) writeLocalMirror(meta, payload);
   } catch (e) { /* 静默 */ }
   })();
@@ -2797,7 +2800,7 @@ async function unlockOrInit() {
   if (cached) {
     state.masterKey = cached;
     try {
-      const vault = await dbGet('vault', 'main');
+      const vault = await dbGet('vault');
       if (vault) {
         const data = await decryptJSON(vault.payload, state.masterKey);
         state.accounts = data.accounts || [];
@@ -2814,7 +2817,7 @@ async function unlockOrInit() {
   }
 
   // 无缓存 → 显示锁屏
-  const meta = await dbGet('meta', 'main');
+  const meta = await dbGet('meta');
   const errEl = document.getElementById('lock-error');
   errEl.textContent = '';
   document.getElementById('lock-screen').classList.add('active');
@@ -2835,7 +2838,7 @@ async function unlockOrInit() {
 document.querySelectorAll('#lock-mode-tabs button').forEach(b => {
   b.addEventListener('click', async () => {
     document.getElementById('lock-error').textContent = '';
-    const meta = await dbGet('meta', 'main');
+    const meta = await dbGet('meta');
     setLockUI(b.dataset.mode, !meta, !!(meta && meta.passkeyCredId));
   });
 });
@@ -2866,7 +2869,7 @@ async function handleLockSubmit() {
   const errEl = document.getElementById('lock-error');
   errEl.textContent = '';
   try {
-  const meta = await dbGet('meta', 'main');
+  const meta = await dbGet('meta');
 
   if (!meta) {
     // 关键保护：本地有镜像就先恢复，绝不让用户创建新账本覆盖
@@ -2955,7 +2958,7 @@ async function handlePasskeyAction() {
   const errEl = document.getElementById('lock-error');
   errEl.textContent = '';
   try {
-  const meta = await dbGet('meta', 'main');
+  const meta = await dbGet('meta');
 
   if (!isPRFSupported()) {
     setLockLoading(false);
@@ -3041,7 +3044,7 @@ async function handlePasskeyAction() {
 }
 
 async function loadVaultIntoState() {
-  const vault = await dbGet('vault', 'main');
+  const vault = await dbGet('vault');
   if (vault) {
     const data = await decryptJSON(vault.payload, state.masterKey);
     state.accounts = data.accounts || [];
@@ -3080,8 +3083,8 @@ async function loadVaultIntoState() {
 
     // 解密成功 → 写本地镜像（保留密文 + 解锁所需 meta，不存明文）
     try {
-      const meta = await dbGet('meta', 'main');
-      if (meta) writeLocalMirror(meta, vault.payload);
+      const meta = await dbGet('meta');
+      if (meta) { state.cachedMeta = meta; writeLocalMirror(meta, vault.payload); }
     } catch (e) { /* 静默 */ }
   } else {
     const def = buildDefaultData();
@@ -3106,9 +3109,13 @@ function lockNow() {
   localStorage.removeItem(LOCAL_KEY_STORAGE);
   state.unlocked = false;
   state.masterKey = null;
+  state.cachedMeta = null;
   state.accounts = [];
   state.snapshots = [];
   state.groupOrder = [];
+  state.editingDraft = null;
+  state.editingMonth = null;
+  state.entryDirty = false;
   destroyCharts();
   unlockOrInit();
 }
@@ -4220,11 +4227,7 @@ function renderDashboard() {
       labels: pieLabels,
       datasets: [{
         data: pieData,
-        backgroundColor: pieLabels.map((_, i) => {
-          const c = palette[i % palette.length];
-          const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-          return isDark ? c : c;
-        }),
+        backgroundColor: pieLabels.map((_, i) => palette[i % palette.length]),
         borderColor: colorBg,
         borderWidth: 3,
         hoverOffset: 8,
@@ -4721,36 +4724,15 @@ document.getElementById('entry-save').addEventListener('click', async () => {
     state.snapshots = state.snapshots.filter(s => s.month !== monthKey);
     state.snapshots.push(snap);
 
-    // 1. 写入 vault
+    // persistVault 内部已做 3 次带重试的 read-back 校验，无需再重复验证
     await persistVault();
 
-    // 2. 立刻回读 + 解密验证（关键的写入确认）
-    const remoteVault = await dbGet('vault', 'main');
-    if (!remoteVault) {
-      throw new Error('保存后回读失败：服务器没有返回数据');
-    }
-    const decrypted = await decryptJSON(remoteVault.payload, state.masterKey);
-    const remoteSnap = (decrypted.snapshots || []).find(s => s.month === state.editingMonth);
-    if (!remoteSnap) {
-      throw new Error('保存验证失败：D1 中找不到刚才保存的快照');
-    }
-    // 抽样检查 1 个账户的数字一致
-    const sampleAcc = state.accounts[0];
-    if (sampleAcc) {
-      const expected = entries[sampleAcc.id];
-      const got = remoteSnap.entries[sampleAcc.id];
-      if (!got || got.balance !== expected.balance || got.flow !== expected.flow) {
-        throw new Error('保存验证失败：D1 中数据与本地不一致');
-      }
-    }
-
     clearPersistedDraft(state.editingMonth);
-    showToast(state.editingMonth + ' 快照已保存（已验证写入）');
+    showToast(state.editingMonth + ' 快照已保存');
     renderEntry();
   } catch (err) {
     console.error('保存失败:', err);
-    showToast('保存失败：' + (err.message || '未知错误'), 'error');
-    showToast('请检查网络后重试，并导出加密备份保留本地副本', 'error');
+    showToast('保存失败：' + (err.message || '未知错误') + '。请检查网络，并导出加密备份。', 'error');
   } finally {
     btn.disabled = false;
     btn.style.opacity = '1';
@@ -4914,11 +4896,12 @@ function renderHistory() {
   let html = '<div class="table-card"><table class="data-table"><thead><tr><th>月份</th><th>总资产</th><th>市场盈亏</th><th>净入金</th><th>较上月变动</th><th></th></tr></thead><tbody>';
   for (let i = 0; i < sorted.length; i++) {
     const s = sorted[i];
-    const prev = sorted[i + 1] || null;
+    // 从全量快照里找上月，而不是从过滤后列表找，避免搜索模式下 PnL 算错
+    const prevInAll = allSorted.find(x => x.month === ymPrev(s.month)) || null;
     const total = snapshotTotal(s);
-    const pnl = monthlyPnL(s, prev);
+    const pnl = monthlyPnL(s, prevInAll);
     const flow = snapshotFlow(s);
-    const change = prev ? total - snapshotTotal(prev) : null;
+    const change = prevInAll ? total - snapshotTotal(prevInAll) : null;
     html += `<tr>
       <td><span style="cursor:pointer;color:var(--accent)" title="对比此月" data-compare="${s.month}">${s.month}</span></td>
       <td>${fmt(total)}</td>
@@ -5029,6 +5012,7 @@ function runHistoryCompare() {
 function exportCSV() {
   const sorted = getSortedSnapshots().slice().reverse();
   if (sorted.length === 0) { showToast('无数据可导出', 'error'); return; }
+  const csvQ = s => '"' + String(s).replace(/"/g, '""') + '"';
   let csv = '﻿月份,总资产,市场盈亏,净入金,较上月变动\n';
   for (let i = 0; i < sorted.length; i++) {
     const s = sorted[i];
@@ -5046,7 +5030,7 @@ function exportCSV() {
   for (const a of state.accounts) {
     const e = latest.entries[a.id];
     if (e && e.balance) {
-      csv += a.name + ',' + a.group + ',' + a.type + ',' + (Number(e.balance) || 0) + '\n';
+      csv += csvQ(a.name) + ',' + csvQ(a.group) + ',' + a.type + ',' + (Number(e.balance) || 0) + '\n';
     }
   }
 
@@ -5072,8 +5056,8 @@ document.getElementById('export-csv').addEventListener('click', exportCSV);
 // 导入 / 导出 / 重置 / 改密码
 // ============================================================
 document.getElementById('export-data').addEventListener('click', async () => {
-  const meta = await dbGet('meta', 'main');
-  const vault = await dbGet('vault', 'main');
+  const meta = await dbGet('meta');
+  const vault = await dbGet('vault');
   const data = {
     type: 'asset-ledger-encrypted-backup',
     version: 2,
@@ -5135,7 +5119,7 @@ document.getElementById('reset-data').addEventListener('click', async () => {
 
 // 修改密码
 document.getElementById('change-password').addEventListener('click', async () => {
-  const meta = await dbGet('meta', 'main');
+  const meta = await dbGet('meta');
   if (!meta || !meta.wrappedKeyByPassword) {
     if (confirm('当前账本未配置密码（仅 Passkey）。是否要添加一个备用密码？')) {
       const np = prompt('设置新的备用密码（至少 6 位）：');
@@ -5149,6 +5133,7 @@ document.getElementById('change-password').addEventListener('click', async () =>
       meta.salt = bufToB64(newSalt);
       meta.wrappedKeyByPassword = wrappedKeyByPassword;
       await dbPut('meta', meta);
+      state.cachedMeta = meta;
       showToast('已添加备用密码');
     }
     return;
@@ -5170,7 +5155,7 @@ document.getElementById('pwd-save').addEventListener('click', async () => {
   if (nw.length < 6) { showToast('新密码至少 6 位', 'error'); return; }
   if (nw !== nwc) { showToast('两次新密码不一致', 'error'); return; }
 
-  const meta = await dbGet('meta', 'main');
+  const meta = await dbGet('meta');
   try {
     const oldSalt = b64ToBuf(meta.salt);
     const oldWKey = await deriveKeyFromPassword(cur, oldSalt);
@@ -5186,6 +5171,7 @@ document.getElementById('pwd-save').addEventListener('click', async () => {
   meta.salt = bufToB64(newSalt);
   meta.wrappedKeyByPassword = wrappedKeyByPassword;
   await dbPut('meta', meta);
+  state.cachedMeta = meta;
 
   document.getElementById('password-modal').classList.remove('active');
   showToast('密码已修改');
@@ -5195,7 +5181,7 @@ document.getElementById('pwd-save').addEventListener('click', async () => {
 // Passkey 管理
 // ============================================================
 document.getElementById('manage-passkey').addEventListener('click', async () => {
-  const meta = await dbGet('meta', 'main');
+  const meta = await dbGet('meta');
   const status = document.getElementById('passkey-status');
   const addBtn = document.getElementById('passkey-add');
   const removeBtn = document.getElementById('passkey-remove');
@@ -5231,10 +5217,11 @@ document.getElementById('passkey-add').addEventListener('click', async () => {
     const wKey = await deriveKeyFromPRF(prfOutput);
     const wrappedKeyByPasskey = await wrapMasterKey(state.masterKey, wKey);
 
-    const meta = await dbGet('meta', 'main');
+    const meta = await dbGet('meta');
     meta.passkeyCredId = credentialId;
     meta.wrappedKeyByPasskey = wrappedKeyByPasskey;
     await dbPut('meta', meta);
+    state.cachedMeta = meta;
 
     document.getElementById('passkey-modal').classList.remove('active');
     showToast('Passkey 已添加');
@@ -5245,7 +5232,7 @@ document.getElementById('passkey-add').addEventListener('click', async () => {
 
 // 移除 Passkey
 document.getElementById('passkey-remove').addEventListener('click', async () => {
-  const meta = await dbGet('meta', 'main');
+  const meta = await dbGet('meta');
   if (!meta.wrappedKeyByPassword) {
     if (!confirm('警告：当前账本仅靠 Passkey 加密。删除前必须先设置一个备用密码，否则数据将无法解锁。\n\n点击确定后将提示设置密码。')) return;
     const np = prompt('设置一个备用密码（至少 6 位）：');
@@ -5259,12 +5246,14 @@ document.getElementById('passkey-remove').addEventListener('click', async () => 
     meta.salt = bufToB64(newSalt);
     meta.wrappedKeyByPassword = wrappedKeyByPassword;
     await dbPut('meta', meta);
+    state.cachedMeta = meta;
     showToast('已设置备用密码');
   }
   if (!confirm('确认删除 Passkey？仅会移除此应用的 Passkey 关联，不会影响系统钥匙串。')) return;
   delete meta.passkeyCredId;
   delete meta.wrappedKeyByPasskey;
   await dbPut('meta', meta);
+  state.cachedMeta = meta;
   document.getElementById('passkey-modal').classList.remove('active');
   showToast('Passkey 已移除');
 });
