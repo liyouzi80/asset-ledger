@@ -1155,6 +1155,7 @@
     content: '';
     position: absolute;
     inset: 0;
+    z-index: 1;
     pointer-events: none;
     background:
       radial-gradient(ellipse 80% 60% at 10% 20%, rgba(10,132,255,0.08) 0%, transparent 60%),
@@ -1166,6 +1167,23 @@
     background:
       radial-gradient(ellipse 80% 60% at 10% 20%, rgba(0,122,255,0.05) 0%, transparent 60%),
       radial-gradient(ellipse 60% 50% at 90% 75%, rgba(94,92,230,0.04) 0%, transparent 55%);
+  }
+  /* 壁纸遮罩 — 毛玻璃去突兀 */
+  .app-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: background 0.5s ease;
+  }
+  [data-theme="light"] .app-bg::after {
+    background: rgba(255,255,255,0.20);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
   }
 
   /* =====================================================
