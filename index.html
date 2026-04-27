@@ -261,6 +261,25 @@
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform;
+    isolation: isolate;
+  }
+  .hero-block::before {
+    content: '';
+    position: absolute; inset: 0; z-index: 0;
+    background-image:
+      radial-gradient(circle at 20% 50%, rgba(10,132,255,0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(94,92,230,0.06) 0%, transparent 40%),
+      radial-gradient(circle at 50% 80%, rgba(255,159,10,0.04) 0%, transparent 40%);
+    pointer-events: none;
+  }
+  .hero-block::after {
+    content: '';
+    position: absolute; inset: 0; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0v40M0 20h40' stroke='rgba(255,255,255,0.02)' stroke-width='0.5'/%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  [data-theme="light"] .hero-block::after {
+    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0v40M0 20h40' stroke='rgba(0,0,0,0.03)' stroke-width='0.5'/%3E%3C/svg%3E");
   }
   .hero-block:hover {
     transform: translateY(-6px);
@@ -283,11 +302,13 @@
     top: -120px; right: -100px;
     width: 460px; height: 460px;
     background: radial-gradient(circle, rgba(10,132,255,0.22), transparent 65%);
+    animation: heroGlow 4s ease-in-out infinite;
   }
   .hero-bg-2 {
     bottom: -100px; left: -80px;
     width: 320px; height: 320px;
     background: radial-gradient(circle, rgba(94,92,230,0.14), transparent 65%);
+    animation: heroGlow 5s ease-in-out infinite 1s;
   }
   [data-theme="light"] .hero-bg-1 {
     background: radial-gradient(circle, rgba(10,132,255,0.20), transparent 65%);
@@ -376,6 +397,11 @@
   [data-theme="light"] .hero-meta-text { color: rgba(0,0,0,0.5); }
 
   /* 三张次级卡 */
+  @keyframes heroGlow {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
   .kpi-row {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
@@ -386,22 +412,54 @@
     background: var(--bg-1);
     border: 0.5px solid var(--sep);
     border-radius: 24px;
-    padding: 28px 30px;
+    padding: 0;
     cursor: pointer;
+    overflow: hidden;
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
                 border-color 0.4s ease,
                 box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform;
   }
   .kpi-card:hover {
-    transform: translateY(-8px) scale(1.01);
+    transform: translateY(-8px) scale(1.015);
     border-color: var(--sep-strong);
-    box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+    box-shadow: 0 20px 56px rgba(0,0,0,0.16);
   }
   [data-theme="light"] .kpi-card:hover {
-    box-shadow: 0 16px 48px rgba(0,0,0,0.08);
+    box-shadow: 0 20px 56px rgba(0,0,0,0.08);
   }
   .kpi-card:active { transform: translateY(-3px) scale(1); }
+  .kpi-accent {
+    height: 3px;
+    border-radius: 0 0 3px 3px;
+  }
+  .kpi-accent.pos { background: var(--green); }
+  .kpi-accent.neg { background: var(--red); }
+  .kpi-accent.neutral { background: var(--ink-4); }
+  .kpi-inner {
+    padding: 24px 28px 26px;
+  }
+  .kpi-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .kpi-label {
+    font-size: 13px;
+    color: var(--ink-3);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .kpi-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .kpi-dot.pos { background: var(--green); }
+  .kpi-dot.neg { background: var(--red); }
+  .kpi-dot.neutral { background: var(--ink-4); }
 
   .chart-card {
     background: var(--bg-1);
@@ -464,6 +522,28 @@
   }
   .pos { color: var(--green) !important; }
   .neg { color: var(--red) !important; }
+
+  /* 微型趋势线 */
+  .kpi-sparkline {
+    margin-top: 16px;
+    height: 44px;
+    opacity: 0.55;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+  .kpi-card:hover .kpi-sparkline {
+    opacity: 1;
+  }
+  .hero-sparkline {
+    margin-top: 28px;
+    height: 52px;
+    opacity: 0.45;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+  .hero-block:hover .hero-sparkline {
+    opacity: 0.85;
+  }
 
   /* =====================================================
      区块标题
@@ -1534,6 +1614,8 @@
     .kpi-card:hover { transform: none; }
     .kpi-value { font-size: 28px; }
     .kpi-sub { font-size: 12px; }
+    .kpi-sparkline { height: 36px; margin-top: 12px; }
+    .hero-sparkline { height: 40px; margin-top: 20px; }
     .charts-grid { grid-template-columns: 1fr; }
     .chart-card { padding: 20px 16px; border-radius: 16px; }
     .chart-wrap { height: 220px; }
@@ -1590,6 +1672,8 @@
     .hero-meta-text { font-size: 12px; }
     .kpi-card { padding: 14px 16px; }
     .kpi-value { font-size: 24px; }
+    .kpi-sparkline { height: 30px; margin-top: 10px; }
+    .hero-sparkline { height: 32px; margin-top: 16px; }
     .header-right .lock-btn { padding: 5px 10px; font-size: 12px; }
     .chart-card .desc { font-size: 11px; }
     .drawer { width: 98vw; max-height: 90vh; border-radius: 16px; }
@@ -1683,6 +1767,7 @@
       <div class="hero-content">
         <div class="hero-label">总 资 产 <span class="hero-arrow">›</span></div>
         <div class="hero-value" id="kpi-total"><span class="hero-currency">¥</span>—</div>
+        <div class="hero-sparkline" id="spark-hero"></div>
         <div class="hero-meta">
           <span class="hero-pill" id="kpi-total-pill"></span>
           <span class="hero-meta-text" id="kpi-total-sub">尚无数据</span>
@@ -1692,28 +1777,40 @@
 
     <div class="kpi-row">
       <div class="kpi-card clickable" data-drill="pnl">
-        <div class="kpi-head">
-          <span class="kpi-label">本月盈亏</span>
-          <span class="kpi-arrow">›</span>
+        <div class="kpi-accent pos"></div>
+        <div class="kpi-inner">
+          <div class="kpi-head">
+            <span class="kpi-dot pos"></span>
+            <span class="kpi-label">本月盈亏</span>
+          </div>
+          <div class="kpi-value" id="kpi-pnl">—</div>
+          <div class="kpi-sub" id="kpi-pnl-sub"></div>
+          <div class="kpi-sparkline" id="spark-pnl"></div>
         </div>
-        <div class="kpi-value" id="kpi-pnl">—</div>
-        <div class="kpi-sub" id="kpi-pnl-sub"></div>
       </div>
       <div class="kpi-card clickable" data-drill="flow">
-        <div class="kpi-head">
-          <span class="kpi-label">本月净流</span>
-          <span class="kpi-arrow">›</span>
+        <div class="kpi-accent neutral"></div>
+        <div class="kpi-inner">
+          <div class="kpi-head">
+            <span class="kpi-dot neutral"></span>
+            <span class="kpi-label">本月净流</span>
+          </div>
+          <div class="kpi-value" id="kpi-flow">—</div>
+          <div class="kpi-sub" id="kpi-flow-sub"></div>
+          <div class="kpi-sparkline" id="spark-flow"></div>
         </div>
-        <div class="kpi-value" id="kpi-flow">—</div>
-        <div class="kpi-sub" id="kpi-flow-sub"></div>
       </div>
       <div class="kpi-card clickable" data-drill="ytd">
-        <div class="kpi-head">
-          <span class="kpi-label">年内累计</span>
-          <span class="kpi-arrow">›</span>
+        <div class="kpi-accent pos"></div>
+        <div class="kpi-inner">
+          <div class="kpi-head">
+            <span class="kpi-dot pos"></span>
+            <span class="kpi-label">年内累计</span>
+          </div>
+          <div class="kpi-value" id="kpi-ytd">—</div>
+          <div class="kpi-sub" id="kpi-ytd-sub"></div>
+          <div class="kpi-sparkline" id="spark-ytd"></div>
         </div>
-        <div class="kpi-value" id="kpi-ytd">—</div>
-        <div class="kpi-sub" id="kpi-ytd-sub"></div>
       </div>
     </div>
 
@@ -2642,6 +2739,37 @@ const fmtSign = (n) => {
   return sign + '¥' + Math.abs(n).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
 };
 
+// 微型趋势线 SVG · 苹果风格
+let _sparkId = 0;
+function sparklineSvg(values, stroke, opts = {}) {
+  if (!values || values.length < 2) return '';
+  const { height = 44, pointWidth = 18, lineWidth = 1.5 } = opts;
+  const id = _sparkId++;
+  const w = Math.max((values.length - 1) * pointWidth, 40);
+  const pad = 2;
+  const plotH = height - pad * 2;
+  const max = Math.max(...values);
+  const min = Math.min(...values);
+  const range = max - min || 1;
+  let line = '';
+  let area = '';
+  for (let i = 0; i < values.length; i++) {
+    const x = (i / (values.length - 1)) * w;
+    const y = pad + (1 - (values[i] - min) / range) * plotH;
+    line += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
+    area += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ' ' + y.toFixed(1) + ' ';
+  }
+  area += 'L ' + w.toFixed(1) + ' ' + height + ' L 0 ' + height + ' Z';
+  return '<svg width="100%" height="100%" viewBox="0 0 ' + w + ' ' + height + '" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<defs><linearGradient id="sg_' + id + '" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="' + stroke + '" stop-opacity="0.15" />' +
+    '<stop offset="100%" stop-color="' + stroke + '" stop-opacity="0.01" />' +
+    '</linearGradient></defs>' +
+    '<path d="' + area + '" fill="url(#sg_' + id + ')" />' +
+    '<path d="' + line + '" stroke="' + stroke + '" stroke-width="' + lineWidth + '" fill="none" stroke-linecap="round" stroke-linejoin="round" />' +
+    '</svg>';
+}
+
 // Hero 总资产：拆 ¥ + 整数 + .小数（弱化货币符号）
 function renderHeroValue(n) {
   const el = document.getElementById('kpi-total');
@@ -3433,10 +3561,12 @@ function renderDashboard() {
   const yearOfLatest = latest.month.slice(0, 4);
   const yearSnaps = sorted.filter(s => s.month.startsWith(yearOfLatest));
   let ytd = 0;
+  const ytdCumulValues = [];
   for (let i = 0; i < yearSnaps.length; i++) {
     const idxInAll = sorted.indexOf(yearSnaps[i]);
     const p = idxInAll > 0 ? sorted[idxInAll - 1] : null;
     ytd += monthlyPnL(yearSnaps[i], p);
+    ytdCumulValues.push(ytd);
   }
 
   // Hero 总资产：拆 ¥ + 整数 + .小数
@@ -3459,14 +3589,29 @@ function renderDashboard() {
   renderKpiValue('kpi-flow', flow, true);
   renderKpiValue('kpi-ytd', ytd, true);
 
-  document.getElementById('kpi-pnl').className = 'kpi-value ' + (pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : ''));
+  // KPI 卡片状态
+  const pnlState = pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : 'neutral');
+  const flowState = flow > 0 ? 'pos' : (flow < 0 ? 'neg' : 'neutral');
+  const ytdState = ytd > 0 ? 'pos' : (ytd < 0 ? 'neg' : 'neutral');
+
+  document.getElementById('kpi-pnl').className = 'kpi-value ' + pnlState;
   document.getElementById('kpi-pnl-sub').textContent = prev ? '已剔除 ' + fmtSign(flow) + ' 净流' : '需上月数据';
+  // 更新 accent bar 和 dot
+  const pnlCard = document.querySelector('[data-drill="pnl"]');
+  pnlCard.querySelector('.kpi-accent').className = 'kpi-accent ' + pnlState;
+  pnlCard.querySelector('.kpi-dot').className = 'kpi-dot ' + pnlState;
 
   document.getElementById('kpi-flow').className = 'kpi-value';
   document.getElementById('kpi-flow-sub').textContent = flow > 0 ? '本月净流入' : (flow < 0 ? '本月净流出' : '无流动');
+  const flowCard = document.querySelector('[data-drill="flow"]');
+  flowCard.querySelector('.kpi-accent').className = 'kpi-accent ' + flowState;
+  flowCard.querySelector('.kpi-dot').className = 'kpi-dot ' + flowState;
 
-  document.getElementById('kpi-ytd').className = 'kpi-value ' + (ytd > 0 ? 'pos' : (ytd < 0 ? 'neg' : ''));
+  document.getElementById('kpi-ytd').className = 'kpi-value ' + ytdState;
   document.getElementById('kpi-ytd-sub').textContent = yearOfLatest + ' 年内 · 仅市场盈亏';
+  const ytdCard = document.querySelector('[data-drill="ytd"]');
+  ytdCard.querySelector('.kpi-accent').className = 'kpi-accent ' + ytdState;
+  ytdCard.querySelector('.kpi-dot').className = 'kpi-dot ' + ytdState;
 
   const colorInk = getCSSVar('--ink');
   const colorMute = getCSSVar('--ink-3');
@@ -3710,6 +3855,20 @@ function renderDashboard() {
       },
     },
   });
+
+  // ── 微型趋势线 (sparklines) ──
+  const sparkHero = document.getElementById('spark-hero');
+  if (sparkHero && totals.length >= 2)
+    sparkHero.innerHTML = sparklineSvg(totals, colorAccent, { height: 52, pointWidth: 16 });
+  const sparkPnL = document.getElementById('spark-pnl');
+  if (sparkPnL && pnls.length >= 2)
+    sparkPnL.innerHTML = sparklineSvg(pnls, pnl >= 0 ? colorGreen : colorRed, { height: 44, pointWidth: 16 });
+  const sparkFlow = document.getElementById('spark-flow');
+  if (sparkFlow && flows.length >= 2)
+    sparkFlow.innerHTML = sparklineSvg(flows, colorMute, { height: 44, pointWidth: 16 });
+  const sparkYtd = document.getElementById('spark-ytd');
+  if (sparkYtd && ytdCumulValues.length >= 2)
+    sparkYtd.innerHTML = sparklineSvg(ytdCumulValues, ytd >= 0 ? colorGreen : colorRed, { height: 44, pointWidth: 16 });
 }
 
 // ============================================================
