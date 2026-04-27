@@ -2580,6 +2580,7 @@ async function persistVault() {
     if (meta) writeLocalMirror(meta, payload);
   } catch (e) { /* 静默 */ }
   })();
+}
 
 // 用一个"包装密钥"加密"主密钥"得到 wrappedKey
 async function wrapMasterKey(masterKey, wrappingKey) {
