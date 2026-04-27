@@ -272,6 +272,8 @@
     margin-bottom: 14px;
     overflow: hidden;
     cursor: pointer;
+    box-shadow: 0 32px 80px rgba(10,132,255,0.10);
+    border: 0.5px solid rgba(255,255,255,0.06);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform;
@@ -297,7 +299,7 @@
   }
   .hero-block:hover {
     transform: translateY(-6px);
-    box-shadow: 0 32px 80px rgba(10,132,255,0.28);
+    box-shadow: 0 40px 100px rgba(10,132,255,0.18);
   }
   .hero-block:active { transform: translateY(-2px); }
   .hero-block:hover .hero-arrow {
@@ -306,6 +308,8 @@
   }
   [data-theme="light"] .hero-block {
     background: linear-gradient(135deg, #f0f6ff 0%, #e0eeff 50%, #f5f9ff 100%);
+    box-shadow: 0 24px 72px rgba(0,122,255,0.08);
+    border: 0.5px solid rgba(255,255,255,0.6);
   }
   .hero-bg-1, .hero-bg-2 {
     position: absolute;
@@ -976,37 +980,22 @@
     position: fixed;
     inset: 0;
     z-index: 1000;
-    background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
+    background: var(--bg);
     align-items: center;
     justify-content: center;
-    overflow: hidden;
   }
   .lock-screen.active { display: flex; }
-  .lock-screen-bg {
-    position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center;
-    opacity: 0;
-    transition: opacity 0.8s ease;
-  }
-  .lock-screen-bg.loaded { opacity: 1; }
-  .lock-screen-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(0,0,0,0.60), rgba(0,0,0,0.25));
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-  }
 
   .lock-card {
     position: relative;
     width: 400px;
-    max-width: 100%;
-    background: var(--bg-1);
-    border-radius: 24px;
-    padding: 44px 36px 36px;
-    box-shadow: var(--shadow-lg);
+    max-width: calc(100vw - 40px);
+    background: var(--bg-glass);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    backdrop-filter: blur(40px) saturate(180%);
+    border-radius: 28px;
+    padding: 40px 32px 32px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
     border: 1px solid var(--sep);
   }
   .lock-card .glyph {
@@ -1430,8 +1419,10 @@
     width: 600px;
     max-width: 92vw;
     max-height: 82vh;
-    background: var(--bg-1);
-    border-radius: 24px;
+    background: var(--bg-glass);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    backdrop-filter: blur(40px) saturate(180%);
+    border-radius: 28px;
     z-index: 201;
     transform: translate(-50%, -50%) scale(0.92);
     opacity: 0;
@@ -1762,7 +1753,7 @@
     .nav::-webkit-scrollbar { display: none; }
     .nav button { padding: 5px 10px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
     .theme-toggle { display: none; }
-    .lock-card { padding: 32px 24px 28px; }
+    .lock-card { padding: 28px 24px 24px; }
     .lock-card h2 { font-size: 20px; }
     .glyph-icon { width: 52px; height: 52px; font-size: 22px; border-radius: 14px; }
     .modal { padding: 20px; }
@@ -1780,7 +1771,6 @@
     .month-row { padding: 10px 0; }
     .month-row .m-label { font-size: 12px; }
     .month-row .m-amount { font-size: 12px; min-width: 70px; }
-    .lock-screen-overlay { backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
     .lock-warning { font-size: 12px; padding: 12px 14px; }
     .empty { padding: 40px 16px; }
     .entry-actions { flex-direction: column; }
@@ -1816,7 +1806,7 @@
     .drawer-body { padding: 0 16px 16px; }
     .drawer-amount { font-size: 22px; }
     .section-head .meta { font-size: 11px; }
-    .lock-card { padding: 24px 16px 20px; border-radius: 20px; }
+    .lock-card { padding: 20px 16px 20px; border-radius: 20px; }
     .lock-card input { font-size: 14px; }
     .toast { font-size: 13px; padding: 10px 16px; max-width: 90vw; white-space: normal; }
   }
@@ -1841,8 +1831,6 @@
 
 <!-- ===== 锁屏 ===== -->
 <div class="lock-screen active" id="lock-screen">
-  <div class="lock-screen-bg" id="lock-screen-bg"></div>
-  <div class="lock-screen-overlay"></div>
   <div class="lock-card">
     <div class="glyph"><span class="glyph-icon">⌘</span></div>
     <h2 id="lock-title">输入主密码</h2>
@@ -2391,6 +2379,30 @@ async function dbClearAll() {
 async function openDB() { /* 不再需要；保留空函数让上层 init 流程不变 */ }
 
 // ============================================================
+// localStorage 主密钥缓存 — 免锁屏自动解锁
+// ============================================================
+const LOCAL_KEY_STORAGE = 'asset-ledger-key-v1';
+
+async function cacheMasterKeyLocally(masterKey) {
+  try {
+    const raw = await crypto.subtle.exportKey('raw', masterKey);
+    localStorage.setItem(LOCAL_KEY_STORAGE, bufToB64(new Uint8Array(raw)));
+  } catch { /* 静默降级 */ }
+}
+
+async function loadCachedMasterKey() {
+  try {
+    const b64 = localStorage.getItem(LOCAL_KEY_STORAGE);
+    if (!b64) return null;
+    const raw = b64ToBuf(b64);
+    return await crypto.subtle.importKey('raw', raw, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+  } catch {
+    localStorage.removeItem(LOCAL_KEY_STORAGE);
+    return null;
+  }
+}
+
+// ============================================================
 // 本地镜像 · 防止云端被错误覆盖
 // 每次成功解锁后，把 vault 加密 payload 存一份到 localStorage
 // 只保留最近 1 份（更早的版本已经无意义，因为没有对应密钥）
@@ -2682,35 +2694,41 @@ function setLockUI(mode, isFirstTime, hasPasskey) {
   });
 }
 
-async function loadBingWallpaper() {
-  const bg = document.getElementById('lock-screen-bg');
-  if (!bg) return;
-  try {
-    const resp = await fetch('/api/bg');
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    if (!data.url) throw new Error('No URL');
-    const img = new Image();
-    img.onload = () => { bg.style.backgroundImage = 'url(' + data.url + ')'; bg.classList.add('loaded'); };
-    img.onerror = () => { /* 静默降级，保留渐变背景 */ };
-    img.src = data.url;
-  } catch { /* 静默降级 */ }
-}
+
 
 async function unlockOrInit() {
-  loadBingWallpaper();
+  // 先尝试从 localStorage 恢复密钥 → 直接进入
+  const cached = await loadCachedMasterKey();
+  if (cached) {
+    state.masterKey = cached;
+    try {
+      const vault = await dbGet('vault', 'main');
+      if (vault) {
+        const data = await decryptJSON(vault.payload, state.masterKey);
+        state.accounts = data.accounts || [];
+        state.snapshots = data.snapshots || [];
+        state.groupOrder = data.groupOrder && data.groupOrder.length ? data.groupOrder : [...DEFAULT_GROUP_ORDER];
+        enterApp();
+        return;
+      }
+    } catch {
+      // 密钥失效 → 降级到锁屏
+      state.masterKey = null;
+      localStorage.removeItem(LOCAL_KEY_STORAGE);
+    }
+  }
+
+  // 无缓存 → 显示锁屏
   const meta = await dbGet('meta', 'main');
   const errEl = document.getElementById('lock-error');
   errEl.textContent = '';
   document.getElementById('lock-screen').classList.add('active');
 
   if (!meta) {
-    // 首次：默认 Passkey 模式（如支持）
     const defaultMode = isPRFSupported() ? 'passkey' : 'password';
     setLockUI(defaultMode, true, false);
     if (defaultMode === 'password') document.getElementById('lock-password').focus();
   } else {
-    // 已有 → 优先选择上次成功的方式（这里简单：有 passkey 就先试 passkey）
     const hasPasskey = !!meta.passkeyCredId;
     const mode = hasPasskey ? 'passkey' : 'password';
     setLockUI(mode, false, hasPasskey);
@@ -2981,6 +2999,7 @@ async function loadVaultIntoState() {
 
 function enterApp() {
   state.unlocked = true;
+  if (state.masterKey) cacheMasterKeyLocally(state.masterKey);
   document.getElementById('lock-screen').classList.remove('active');
   document.getElementById('lock-password').value = '';
   document.getElementById('lock-password-confirm').value = '';
@@ -2989,6 +3008,7 @@ function enterApp() {
 }
 
 function lockNow() {
+  localStorage.removeItem(LOCAL_KEY_STORAGE);
   state.unlocked = false;
   state.masterKey = null;
   state.accounts = [];
