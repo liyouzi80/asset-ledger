@@ -983,11 +983,29 @@
     background: var(--bg);
     align-items: center;
     justify-content: center;
+    overflow: hidden;
   }
   .lock-screen.active { display: flex; }
+  .lock-screen-bg {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+  .lock-screen-bg.loaded { opacity: 1; }
+  .lock-screen-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.40);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
 
   .lock-card {
     position: relative;
+    z-index: 1;
     width: 400px;
     max-width: calc(100vw - 40px);
     background: var(--bg-glass);
@@ -1117,6 +1135,20 @@
     font-weight: 600;
     box-shadow: var(--shadow-sm);
   }
+
+  /* =====================================================
+     主界面背景壁纸
+  ===================================================== */
+  .app-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+  .app-bg.loaded { opacity: 1; }
 
   /* =====================================================
      弹窗 · 苹果 Sheet 风格
@@ -1772,6 +1804,7 @@
     .month-row .m-label { font-size: 12px; }
     .month-row .m-amount { font-size: 12px; min-width: 70px; }
     .lock-warning { font-size: 12px; padding: 12px 14px; }
+    .lock-screen-overlay { backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px); }
     .empty { padding: 40px 16px; }
     .entry-actions { flex-direction: column; }
     .entry-actions .btn { width: 100%; }
@@ -1831,6 +1864,8 @@
 
 <!-- ===== 锁屏 ===== -->
 <div class="lock-screen active" id="lock-screen">
+  <div class="lock-screen-bg" id="lock-screen-bg"></div>
+  <div class="lock-screen-overlay"></div>
   <div class="lock-card">
     <div class="glyph"><span class="glyph-icon">⌘</span></div>
     <h2 id="lock-title">输入主密码</h2>
@@ -1874,6 +1909,7 @@
   </div>
 </div>
 
+<div class="app-bg" id="app-bg"></div>
 <div class="app">
 
   <header>
@@ -2695,6 +2731,29 @@ function setLockUI(mode, isFirstTime, hasPasskey) {
 }
 
 
+
+// ============================================================
+// Bing 每日壁纸 — 锁屏 + 主界面背景
+// ============================================================
+async function loadBingWallpaper() {
+  const targets = ['lock-screen-bg', 'app-bg'];
+  try {
+    const resp = await fetch('/api/bg');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data.url) throw new Error('No URL');
+    const img = new Image();
+    img.onload = () => {
+      const url = 'url(' + data.url + ')';
+      targets.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.style.backgroundImage = url; el.classList.add('loaded'); }
+      });
+    };
+    img.onerror = () => { /* 静默降级 */ };
+    img.src = data.url;
+  } catch { /* 静默降级 */ }
+}
 
 async function unlockOrInit() {
   // 先尝试从 localStorage 恢复密钥 → 直接进入
@@ -5212,6 +5271,7 @@ navTo = function(page) {
 (async function init() {
   const savedTheme = localStorage.getItem('asset-theme') || 'system';
   applyTheme(savedTheme);
+  loadBingWallpaper();
   await openDB();
   await unlockOrInit();
 })();
