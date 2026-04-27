@@ -94,6 +94,8 @@
   }
 
   .app {
+    position: relative;
+    z-index: 1;
     max-width: 1240px;
     margin: 0 auto;
     padding: 0 32px 100px;
@@ -1142,13 +1144,29 @@
   .app-bg {
     position: fixed;
     inset: 0;
-    z-index: -2;
+    z-index: 0;
     background-size: cover;
     background-position: center;
     opacity: 0;
     transition: opacity 0.8s ease;
   }
   .app-bg.loaded { opacity: 1; }
+  .app-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(10,132,255,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 80%, rgba(94,92,230,0.06) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255,159,10,0.04) 0%, transparent 50%);
+    transition: background 0.5s ease;
+  }
+  [data-theme="light"] .app-bg::before {
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(0,122,255,0.05) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 90% 75%, rgba(94,92,230,0.04) 0%, transparent 55%);
+  }
 
   /* =====================================================
      弹窗 · 苹果 Sheet 风格
