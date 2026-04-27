@@ -94,9 +94,9 @@
   }
 
   .app {
-    max-width: 1200px;
+    max-width: 1240px;
     margin: 0 auto;
-    padding: 0 24px 80px;
+    padding: 0 32px 100px;
   }
 
   /* =====================================================
@@ -219,67 +219,186 @@
   }
 
   /* =====================================================
-     KPI 卡片 · 纯苹果灵动岛风格
+     Hero · 巨幅资产卡 + 三张次级卡
   ===================================================== */
-  .hero {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 36px;
-  }
-  .hero .cell {
-    background: var(--bg-1);
-    border-radius: 18px;
-    padding: 22px 22px 20px;
-    box-shadow: var(--shadow-sm);
+  .hero-block {
     position: relative;
+    background: linear-gradient(135deg, #001530 0%, #0a1a2a 50%, #001020 100%);
+    border-radius: 28px;
+    padding: 64px 56px 56px;
+    margin-bottom: 14px;
     overflow: hidden;
-    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s;
   }
-  .hero .cell:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+  .hero-block:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 20px 60px rgba(10,132,255,0.22);
   }
-  .hero .cell::before {
-    content: '';
+  .hero-block:hover .hero-arrow {
+    color: var(--accent);
+    transform: translateX(3px);
+  }
+  [data-theme="light"] .hero-block {
+    background: linear-gradient(135deg, #f0f6ff 0%, #e0eeff 50%, #f5f9ff 100%);
+  }
+  .hero-bg-1, .hero-bg-2 {
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    border: 1px solid var(--sep);
+    border-radius: 50%;
     pointer-events: none;
   }
-  .hero .cell.primary {
-    background: linear-gradient(135deg, #1a2a3a 0%, #0d1b2a 100%);
+  .hero-bg-1 {
+    top: -120px; right: -100px;
+    width: 460px; height: 460px;
+    background: radial-gradient(circle, rgba(10,132,255,0.22), transparent 65%);
   }
-  [data-theme="light"] .hero .cell.primary {
-    background: linear-gradient(135deg, #e8f4ff 0%, #d0e8ff 100%);
+  .hero-bg-2 {
+    bottom: -100px; left: -80px;
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(94,92,230,0.14), transparent 65%);
   }
-  .hero .label {
-    font-size: 12px;
+  [data-theme="light"] .hero-bg-1 {
+    background: radial-gradient(circle, rgba(10,132,255,0.20), transparent 65%);
+  }
+  [data-theme="light"] .hero-bg-2 {
+    background: radial-gradient(circle, rgba(94,92,230,0.14), transparent 65%);
+  }
+  .hero-content { position: relative; }
+  .hero-label {
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
     font-weight: 500;
     letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--ink-3);
-    margin-bottom: 10px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
-  .hero .cell.primary .label { color: rgba(10,132,255,0.8); }
-  .hero .value {
-    font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
-    font-size: 34px;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    color: var(--ink);
-    line-height: 1.1;
+  [data-theme="light"] .hero-label { color: rgba(0,0,0,0.45); }
+  .hero-arrow {
+    color: rgba(255,255,255,0.3);
+    font-size: 13px;
+    line-height: 1;
+    transition: color 0.25s, transform 0.25s;
   }
-  .hero .cell.primary .value {
-    font-size: 44px;
-    color: var(--accent);
+  [data-theme="light"] .hero-arrow { color: rgba(0,0,0,0.3); }
+  .hero-value {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 96px;
+    font-weight: 200;
+    color: white;
+    letter-spacing: -0.05em;
+    line-height: 0.95;
+    /* 数字使用等宽数字属性，刷新时不抖 */
+    font-variant-numeric: tabular-nums;
   }
-  .hero .sub {
+  [data-theme="light"] .hero-value { color: #001530; }
+  .hero-currency {
+    font-size: 40px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.5);
+    margin-right: 6px;
+    vertical-align: 0.5em;
+  }
+  [data-theme="light"] .hero-currency { color: rgba(0,0,0,0.5); }
+  .hero-decimal {
+    font-size: 40px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.5);
+  }
+  [data-theme="light"] .hero-decimal { color: rgba(0,0,0,0.5); }
+  .hero-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 32px;
+    flex-wrap: wrap;
+  }
+  .hero-pill {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 12px;
+    border-radius: 999px;
     font-size: 12px;
+    font-weight: 600;
+  }
+  .hero-pill.show { display: inline-flex; }
+  .hero-pill.pos {
+    background: rgba(48,209,88,0.18);
+    color: #30d158;
+  }
+  .hero-pill.neg {
+    background: rgba(255,69,58,0.18);
+    color: #ff453a;
+  }
+  .hero-meta-text {
+    font-size: 14px;
+    color: rgba(255,255,255,0.5);
+  }
+  [data-theme="light"] .hero-meta-text { color: rgba(0,0,0,0.5); }
+
+  /* 三张次级卡 */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 56px;
+  }
+  .kpi-card {
+    background: var(--bg-1);
+    border: 0.5px solid var(--sep);
+    border-radius: 22px;
+    padding: 28px 30px;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s, box-shadow 0.3s;
+    cursor: pointer;
+  }
+  .kpi-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--sep-strong);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  }
+  [data-theme="light"] .kpi-card:hover {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+  .kpi-card:hover .kpi-arrow { color: var(--accent); transform: translateX(3px); }
+  .kpi-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 22px;
+  }
+  .kpi-label {
+    font-size: 13px;
     color: var(--ink-3);
-    margin-top: 8px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .kpi-arrow {
+    color: var(--ink-4);
+    font-size: 13px;
+    line-height: 1;
+    transition: color 0.25s, transform 0.25s;
+  }
+  .kpi-value {
+    font-family: 'Inter', sans-serif;
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .kpi-value .sym {
+    font-size: 20px;
     font-weight: 400;
+    color: var(--ink-3);
+    margin-right: 3px;
+  }
+  .kpi-sub {
+    font-size: 13px;
+    color: var(--ink-3);
+    margin-top: 14px;
   }
   .pos { color: var(--green) !important; }
   .neg { color: var(--red) !important; }
@@ -291,12 +410,12 @@
     display: flex;
     align-items: baseline;
     justify-content: space-between;
-    margin: 36px 0 16px;
+    margin: 56px 0 22px;
   }
   .section-head h2 {
-    font-size: 22px;
-    font-weight: 700;
-    letter-spacing: -0.03em;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.04em;
     color: var(--ink);
   }
   .section-head .meta {
@@ -310,30 +429,26 @@
   ===================================================== */
   .chart-card {
     background: var(--bg-1);
-    border-radius: 18px;
-    padding: 22px;
-    box-shadow: var(--shadow-sm);
+    border-radius: 22px;
+    padding: 28px 30px;
+    border: 0.5px solid var(--sep);
     position: relative;
     overflow: hidden;
+    transition: border-color 0.3s, box-shadow 0.3s;
   }
-  .chart-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    border: 1px solid var(--sep);
-    pointer-events: none;
+  .chart-card:hover {
+    border-color: var(--sep-strong);
   }
   .chart-card h3 {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     letter-spacing: -0.02em;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
   }
   .chart-card .desc {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--ink-3);
-    margin-bottom: 18px;
+    margin-bottom: 22px;
     font-weight: 400;
   }
   .charts-grid {
@@ -875,31 +990,14 @@
   footer button:hover { color: var(--accent); }
 
   /* =====================================================
-     KPI 可点击 drill-down
+     drill 箭头 hint（其他地方仍用）
   ===================================================== */
-  .hero .cell.clickable {
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-  }
-  .hero .cell.clickable:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-md);
-  }
-  .hero .cell.clickable .label {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
   .drill-hint {
     color: var(--ink-4);
     font-weight: 600;
     font-size: 14px;
     line-height: 1;
     transition: transform 0.2s, color 0.2s;
-  }
-  .hero .cell.clickable:hover .drill-hint {
-    color: var(--accent);
-    transform: translateX(2px);
   }
 
   /* =====================================================
@@ -1213,9 +1311,12 @@
   @media (max-width: 900px) {
     header { padding: 0 16px; }
     .app { padding: 0 16px 60px; }
-    .hero { grid-template-columns: 1fr 1fr; }
-    .hero .cell.primary { grid-column: span 2; }
-    .hero .cell.primary .value { font-size: 36px; }
+    .hero-block { padding: 40px 28px 32px; border-radius: 22px; }
+    .hero-value { font-size: 60px; }
+    .hero-currency, .hero-decimal { font-size: 28px; }
+    .kpi-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 36px; }
+    .kpi-card { padding: 22px 24px; }
+    .kpi-value { font-size: 32px; }
     .charts-grid { grid-template-columns: 1fr; }
     .entry-header { grid-template-columns: 1fr; }
     .entry-row { grid-template-columns: 1fr; gap: 8px; }
@@ -1303,26 +1404,43 @@
 
   <!-- 概览 -->
   <section id="page-dashboard" class="page active">
-    <div class="hero">
-      <div class="cell primary">
-        <div class="label">总资产</div>
-        <div class="value" id="kpi-total">—</div>
-        <div class="sub" id="kpi-total-sub">尚无数据</div>
+    <div class="hero-block clickable" data-drill="returns">
+      <div class="hero-bg-1"></div>
+      <div class="hero-bg-2"></div>
+      <div class="hero-content">
+        <div class="hero-label">总 资 产 <span class="hero-arrow">›</span></div>
+        <div class="hero-value" id="kpi-total"><span class="hero-currency">¥</span>—</div>
+        <div class="hero-meta">
+          <span class="hero-pill" id="kpi-total-pill"></span>
+          <span class="hero-meta-text" id="kpi-total-sub">尚无数据</span>
+        </div>
       </div>
-      <div class="cell clickable" data-drill="pnl">
-        <div class="label">本月盈亏 <span class="drill-hint">›</span></div>
-        <div class="value" id="kpi-pnl">—</div>
-        <div class="sub" id="kpi-pnl-sub"></div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card clickable" data-drill="pnl">
+        <div class="kpi-head">
+          <span class="kpi-label">本月盈亏</span>
+          <span class="kpi-arrow">›</span>
+        </div>
+        <div class="kpi-value" id="kpi-pnl">—</div>
+        <div class="kpi-sub" id="kpi-pnl-sub"></div>
       </div>
-      <div class="cell clickable" data-drill="flow">
-        <div class="label">本月净流 <span class="drill-hint">›</span></div>
-        <div class="value" id="kpi-flow">—</div>
-        <div class="sub" id="kpi-flow-sub"></div>
+      <div class="kpi-card clickable" data-drill="flow">
+        <div class="kpi-head">
+          <span class="kpi-label">本月净流</span>
+          <span class="kpi-arrow">›</span>
+        </div>
+        <div class="kpi-value" id="kpi-flow">—</div>
+        <div class="kpi-sub" id="kpi-flow-sub"></div>
       </div>
-      <div class="cell clickable" data-drill="ytd">
-        <div class="label">年内累计 <span class="drill-hint">›</span></div>
-        <div class="value" id="kpi-ytd">—</div>
-        <div class="sub" id="kpi-ytd-sub"></div>
+      <div class="kpi-card clickable" data-drill="ytd">
+        <div class="kpi-head">
+          <span class="kpi-label">年内累计</span>
+          <span class="kpi-arrow">›</span>
+        </div>
+        <div class="kpi-value" id="kpi-ytd">—</div>
+        <div class="kpi-sub" id="kpi-ytd-sub"></div>
       </div>
     </div>
 
@@ -2250,6 +2368,39 @@ const fmtSign = (n) => {
   const sign = n > 0 ? '+' : (n < 0 ? '-' : '');
   return sign + '¥' + Math.abs(n).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
 };
+
+// Hero 总资产：拆 ¥ + 整数 + .小数（弱化货币符号）
+function renderHeroValue(n) {
+  const el = document.getElementById('kpi-total');
+  if (n === null || n === undefined || isNaN(n)) {
+    el.innerHTML = '<span class="hero-currency">¥</span>—';
+    return;
+  }
+  const abs = Math.abs(n);
+  const intPart = Math.floor(abs);
+  const intStr = intPart.toLocaleString('zh-CN');
+  const decimal = (abs - intPart).toFixed(2).slice(1); // ".20"
+  const showDecimal = decimal !== '.00';
+  const sign = n < 0 ? '-' : '';
+  el.innerHTML = '<span class="hero-currency">' + sign + '¥</span>' + intStr +
+    (showDecimal ? '<span class="hero-decimal">' + decimal + '</span>' : '');
+}
+
+// 次级 KPI 卡：弱化货币符号 + 正负号
+function renderKpiValue(elId, n, withSign) {
+  const el = document.getElementById(elId);
+  if (n === null || n === undefined || isNaN(n)) {
+    el.textContent = '—';
+    return;
+  }
+  const abs = Math.abs(n);
+  let symbol = '¥';
+  if (withSign) {
+    if (n > 0) symbol = '+¥';
+    else if (n < 0) symbol = '−¥';  // 注意是真正的减号 −，更精致
+  }
+  el.innerHTML = '<span class="sym">' + symbol + '</span>' + abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+}
 const ymNow = () => {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
@@ -2437,6 +2588,19 @@ function renderDrawer() {
     toolbar.style.display = 'none';
 
     body.innerHTML = renderYtdView(year, yearSnaps, sorted);
+  } else if (type === 'returns') {
+    const latest = sorted[sorted.length - 1];
+    eyebrow.textContent = '收益率分析';
+    title.textContent = '总资产 ' + fmt(snapshotTotal(latest));
+    toolbar.style.display = 'none';
+
+    const metrics = computeReturnMetrics(sorted);
+    amountEl.textContent = formatPct(metrics.ytdTWR);
+    amountEl.className = 'drawer-amount ' + (metrics.ytdTWR > 0 ? 'pos' : metrics.ytdTWR < 0 ? 'neg' : '');
+
+    body.innerHTML = renderReturnsView(metrics, sorted);
+    // 渲染图表（需要在 DOM 插入后执行）
+    setTimeout(() => renderReturnChart(metrics), 50);
   }
 }
 
@@ -2556,6 +2720,251 @@ function renderFlowView(snap) {
   return html;
 }
 
+// ============================================================
+// 收益率计算 · 自然年闭区间
+// 2026 年 = 2025-12 月末快照 → 2026-12 月末快照（期间净入金扣除）
+// 期初取上一年 12 月快照；不存在则退回当年第一份快照（YTD 视角）
+// ============================================================
+function formatPct(v, digits = 2) {
+  if (v === null || v === undefined || isNaN(v) || !isFinite(v)) return '—';
+  const sign = v > 0 ? '+' : '';
+  return sign + (v * 100).toFixed(digits) + '%';
+}
+
+function computeReturnMetrics(allSorted) {
+  if (allSorted.length === 0) {
+    return { ytdSimple: null, ytdTWR: null, ytdAnn: null, ttmTWR: null, ttmTWRAnn: null,
+             ttmMonths: 0, monthsElapsed: 0, ytdPnL: 0, startBalance: 0, series: [], hasYearStart: false };
+  }
+  const latest = allSorted[allSorted.length - 1];
+  const year = latest.month.slice(0, 4);
+  const prevYear = String(Number(year) - 1);
+  const prevDecMonth = prevYear + '-12';
+
+  const yearSnaps = allSorted.filter(s => s.month.startsWith(year));
+  if (yearSnaps.length === 0) {
+    return { ytdSimple: null, ytdTWR: null, ytdAnn: null, ttmTWR: null, ttmTWRAnn: null,
+             ttmMonths: 0, monthsElapsed: 0, ytdPnL: 0, startBalance: 0, series: [], hasYearStart: false };
+  }
+
+  // 期初快照：优先用上一年 12 月
+  const yearStartSnap = allSorted.find(s => s.month === prevDecMonth);
+  const hasYearStart = !!yearStartSnap;
+  const startBalance = yearStartSnap ? snapshotTotal(yearStartSnap) : snapshotTotal(yearSnaps[0]);
+
+  // 计算每段的 prev：
+  // - 第一份快照的 prev = yearStartSnap（如果有）
+  // - 后续每份 = 前一份
+  function prevOf(snap) {
+    const idx = allSorted.indexOf(snap);
+    return idx > 0 ? allSorted[idx - 1] : null;
+  }
+
+  // ========== 年内累计盈亏（市场盈亏，剔除净入金）==========
+  let ytdPnL = 0;
+  for (const s of yearSnaps) {
+    ytdPnL += monthlyPnL(s, prevOf(s));
+  }
+
+  // ========== 年内简单收益率 ==========
+  const ytdSimple = startBalance > 0 ? ytdPnL / startBalance : null;
+
+  // ========== 年内 TWR ==========
+  let twrFactor = 1;
+  let twrValid = false;
+  for (const s of yearSnaps) {
+    const p = prevOf(s);
+    const periodStart = p ? snapshotTotal(p) : snapshotTotal(s);
+    if (periodStart <= 0) continue;
+    const r = monthlyPnL(s, p) / periodStart;
+    twrFactor *= (1 + r);
+    twrValid = true;
+  }
+  const ytdTWR = twrValid ? twrFactor - 1 : null;
+
+  // ========== 年化（基于已记录月数复利推算）==========
+  const monthsElapsed = yearSnaps.length;
+  const ytdAnn = (ytdTWR !== null && monthsElapsed > 0)
+    ? Math.pow(1 + ytdTWR, 12 / monthsElapsed) - 1
+    : null;
+
+  // ========== 近 12 个月 TWR + 年化 ==========
+  const recent = allSorted.slice(-13);
+  let ttmFactor = 1;
+  let ttmValid = false;
+  let ttmMonths = 0;
+  for (let i = 1; i < recent.length; i++) {
+    const periodStart = snapshotTotal(recent[i - 1]);
+    if (periodStart <= 0) continue;
+    const r = monthlyPnL(recent[i], recent[i - 1]) / periodStart;
+    ttmFactor *= (1 + r);
+    ttmValid = true;
+    ttmMonths++;
+  }
+  const ttmTWR = ttmValid ? ttmFactor - 1 : null;
+  const ttmTWRAnn = (ttmTWR !== null && ttmMonths > 0)
+    ? Math.pow(1 + ttmTWR, 12 / ttmMonths) - 1
+    : null;
+
+  // ========== 累计曲线（年内每月）==========
+  const series = [];
+  let cumFactor = 1;
+  let cumPnL = 0;
+  for (const s of yearSnaps) {
+    const p = prevOf(s);
+    const periodStart = p ? snapshotTotal(p) : snapshotTotal(s);
+    const periodPnL = monthlyPnL(s, p);
+    if (periodStart > 0) cumFactor *= (1 + periodPnL / periodStart);
+    cumPnL += periodPnL;
+    series.push({
+      month: s.month,
+      twrCum: cumFactor - 1,
+      simpleCum: startBalance > 0 ? cumPnL / startBalance : 0,
+    });
+  }
+
+  return { ytdSimple, ytdTWR, ytdAnn, ttmTWR, ttmTWRAnn, ttmMonths, monthsElapsed,
+           ytdPnL, startBalance, series, hasYearStart, year };
+}
+
+function renderReturnsView(m, sorted) {
+  const latestTotal = snapshotTotal(sorted[sorted.length - 1]);
+  let html = '';
+
+  // 顶部对比卡：简单 vs TWR
+  html += `<div class="drawer-section">
+    <div class="drawer-section-title">${m.year} 年内</div>
+    <div class="summary-grid">
+      <div class="stat">
+        <div class="lbl">简单收益率</div>
+        <div class="val ${m.ytdSimple > 0 ? 'pos' : m.ytdSimple < 0 ? 'neg' : ''}">${formatPct(m.ytdSimple)}</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">时间加权 TWR</div>
+        <div class="val ${m.ytdTWR > 0 ? 'pos' : m.ytdTWR < 0 ? 'neg' : ''}">${formatPct(m.ytdTWR)}</div>
+      </div>
+    </div>
+    <p style="font-size:11px; color: var(--ink-3); margin-top:10px; line-height:1.55;">
+      简单收益率 = 累计盈亏 / 期初总资产<br>
+      TWR 剔除入金/出金，更接近真实投资回报<br>
+      ${m.hasYearStart ? '期初取 ' + (Number(m.year) - 1) + '-12 月末快照' : '⚠️ 无上年 12 月快照，期初用当年首份快照（YTD 视角）'}
+    </p>
+  </div>`;
+
+  // 趋势图
+  html += `<div class="drawer-section">
+    <div class="drawer-section-title">收益率走势</div>
+    <div style="position: relative; height: 240px;"><canvas id="return-chart"></canvas></div>
+  </div>`;
+
+  // 年化
+  html += `<div class="drawer-section">
+    <div class="drawer-section-title">年化收益率（推算）</div>
+    <div class="summary-grid">
+      <div class="stat">
+        <div class="lbl">年内推算年化</div>
+        <div class="val ${m.ytdAnn > 0 ? 'pos' : m.ytdAnn < 0 ? 'neg' : ''}">${formatPct(m.ytdAnn)}</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">近 12 月年化</div>
+        <div class="val ${m.ttmTWRAnn > 0 ? 'pos' : m.ttmTWRAnn < 0 ? 'neg' : ''}">${formatPct(m.ttmTWRAnn)}</div>
+      </div>
+    </div>
+    <p style="font-size:11px; color: var(--ink-3); margin-top:10px; line-height:1.55;">
+      年化 = (1 + 累计 TWR) ^ (12 / 月数) − 1<br>
+      ${m.monthsElapsed < 6 ? '⚠️ 数据不足 6 个月时年化波动较大，仅供参考' : '基于现有数据复利推算'}
+    </p>
+  </div>`;
+
+  // 关键参数
+  html += `<div class="drawer-section">
+    <div class="drawer-section-title">参考</div>
+    <table class="contrib-table"><tbody>
+      <tr><td>期初总资产</td><td class="num">${fmt(m.startBalance)}</td></tr>
+      <tr><td>当前总资产</td><td class="num">${fmt(latestTotal)}</td></tr>
+      <tr><td>年内累计盈亏</td><td class="num ${m.ytdPnL >= 0 ? 'pos' : 'neg'}">${fmtSign(m.ytdPnL)}</td></tr>
+      <tr><td>年内已记录月数</td><td class="num">${m.monthsElapsed}</td></tr>
+    </tbody></table>
+  </div>`;
+
+  return html;
+}
+
+let returnChart = null;
+function renderReturnChart(metrics) {
+  if (returnChart) { returnChart.destroy(); returnChart = null; }
+  const canvas = document.getElementById('return-chart');
+  if (!canvas || !metrics.series || metrics.series.length === 0) return;
+
+  const colorMute = getCSSVar('--ink-3');
+  const colorGrid = getCSSVar('--chart-grid');
+  const colorAccent = getCSSVar('--accent');
+  const colorBg = getCSSVar('--bg-1');
+  const colorTooltipBg = getCSSVar('--tooltip-bg');
+  const colorLine = getCSSVar('--sep-strong');
+  const colorInk = getCSSVar('--ink');
+
+  const labels = metrics.series.map(p => p.month.slice(5) + '月');
+  const twrData = metrics.series.map(p => p.twrCum * 100);
+  const simpleData = metrics.series.map(p => p.simpleCum * 100);
+
+  returnChart = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'TWR 累计',
+          data: twrData,
+          borderColor: colorAccent,
+          backgroundColor: 'transparent',
+          tension: 0.3,
+          borderWidth: 2,
+          pointRadius: 3,
+          pointBackgroundColor: colorAccent,
+          pointBorderColor: colorBg,
+          pointBorderWidth: 1.5,
+        },
+        {
+          label: '简单累计',
+          data: simpleData,
+          borderColor: colorMute,
+          backgroundColor: 'transparent',
+          tension: 0.3,
+          borderWidth: 1.5,
+          borderDash: [4, 4],
+          pointRadius: 2,
+          pointBackgroundColor: colorMute,
+          pointBorderColor: colorBg,
+          pointBorderWidth: 1,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top', align: 'end',
+          labels: { boxWidth: 10, boxHeight: 10, padding: 12, font: { size: 12, family: "'Inter', sans-serif" }, usePointStyle: true, pointStyle: 'circle' },
+        },
+        tooltip: {
+          backgroundColor: colorTooltipBg, borderColor: colorLine, borderWidth: 1,
+          titleColor: colorInk, bodyColor: colorInk, padding: 12, cornerRadius: 10,
+          callbacks: { label: (ctx) => '  ' + ctx.dataset.label + ': ' + (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y.toFixed(2) + '%' },
+        },
+      },
+      scales: {
+        x: { grid: { display: false }, border: { display: false }, ticks: { color: colorMute } },
+        y: {
+          grid: { color: colorGrid }, border: { display: false },
+          ticks: { color: colorMute, callback: (v) => (v >= 0 ? '+' : '') + v.toFixed(1) + '%' },
+        },
+      },
+    },
+  });
+}
+
 function renderYtdView(year, yearSnaps, allSorted) {
   if (yearSnaps.length === 0) {
     return '<div class="drawer-empty">' + year + ' 年尚无快照</div>';
@@ -2599,6 +3008,67 @@ function renderYtdView(year, yearSnaps, allSorted) {
       <div class="stat"><div class="lbl">累计净流</div><div class="val">${fmtSign(totalFlow)}</div></div>
     </div>
   </div>`;
+
+  // 账户级累计盈亏拆解
+  // 对年内每个月，对每个账户算出当月市场盈亏（变化 - 入金），然后跨月累加
+  const accPnL = {};  // accId -> 累计盈亏
+  for (const s of yearSnaps) {
+    const idx = allSorted.indexOf(s);
+    const prev = idx > 0 ? allSorted[idx - 1] : null;
+    for (const a of state.accounts) {
+      const currE = s.entries[a.id];
+      const prevE = prev ? prev.entries[a.id] : null;
+      if (!currE && !prevE) continue;
+      const currBal = currE ? Number(currE.balance) || 0 : 0;
+      const prevBal = prevE ? Number(prevE.balance) || 0 : 0;
+      const flow = currE ? Number(currE.flow) || 0 : 0;
+      const pnl = (currBal - prevBal) - flow;
+      if (pnl === 0) continue;
+      accPnL[a.id] = (accPnL[a.id] || 0) + pnl;
+    }
+  }
+  const accRows = Object.entries(accPnL)
+    .map(([accId, pnl]) => {
+      const acc = state.accounts.find(a => a.id === accId);
+      return acc ? { name: acc.name, pnl } : null;
+    })
+    .filter(r => r && Math.abs(r.pnl) > 0.5);
+
+  if (accRows.length > 0) {
+    const winners = accRows.filter(r => r.pnl > 0).sort((a, b) => b.pnl - a.pnl);
+    const losers = accRows.filter(r => r.pnl < 0).sort((a, b) => a.pnl - b.pnl);
+    const maxAccAbs = Math.max(...accRows.map(r => Math.abs(r.pnl)), 1);
+
+    const renderAccBlock = (rows, isWin) => {
+      let h = '';
+      for (const r of rows) {
+        const widthPct = (Math.abs(r.pnl) / maxAccAbs) * 50;
+        h += `<div class="contrib-row">
+          <div class="contrib-row-head">
+            <span class="contrib-name">${escapeHtml(r.name)}</span>
+            <span class="contrib-amount ${isWin ? 'pos' : 'neg'}">${fmtSign(r.pnl)}</span>
+          </div>
+          <div class="contrib-bar">
+            <div class="fill ${isWin ? 'pos' : 'neg'}" style="${isWin ? 'left:50%' : 'right:50%'}; width:${widthPct.toFixed(2)}%"></div>
+          </div>
+        </div>`;
+      }
+      return h;
+    };
+
+    if (winners.length > 0) {
+      html += '<div class="drawer-section">';
+      html += '<div class="drawer-section-title">盈利账户</div>';
+      html += renderAccBlock(winners, true);
+      html += '</div>';
+    }
+    if (losers.length > 0) {
+      html += '<div class="drawer-section">';
+      html += '<div class="drawer-section-title">亏损账户</div>';
+      html += renderAccBlock(losers, false);
+      html += '</div>';
+    }
+  }
 
   return html;
 }
@@ -2659,8 +3129,9 @@ function renderDashboard() {
   const sorted = getSortedSnapshots();
 
   if (sorted.length === 0) {
-    document.getElementById('kpi-total').textContent = '—';
+    document.getElementById('kpi-total').innerHTML = '<span class="hero-currency">¥</span>—';
     document.getElementById('kpi-total-sub').textContent = '尚无快照，请先到「录入」页创建第一份记录';
+    document.getElementById('kpi-total-pill').classList.remove('show');
     ['pnl', 'flow', 'ytd'].forEach(k => {
       document.getElementById('kpi-' + k).textContent = '—';
       document.getElementById('kpi-' + k + '-sub').textContent = '';
@@ -2671,6 +3142,7 @@ function renderDashboard() {
   const latest = sorted[sorted.length - 1];
   const prev = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
   const total = snapshotTotal(latest);
+  const prevTotal = prev ? snapshotTotal(prev) : null;
   const pnl = monthlyPnL(latest, prev);
   const flow = snapshotFlow(latest);
 
@@ -2683,20 +3155,33 @@ function renderDashboard() {
     ytd += monthlyPnL(yearSnaps[i], p);
   }
 
-  document.getElementById('kpi-total').textContent = fmt(total);
+  // Hero 总资产：拆 ¥ + 整数 + .小数
+  renderHeroValue(total);
   document.getElementById('kpi-total-sub').textContent = '截至 ' + latest.month;
 
-  const pnlEl = document.getElementById('kpi-pnl');
-  pnlEl.textContent = fmtSign(pnl);
-  pnlEl.className = 'value ' + (pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : ''));
+  // Hero pill: 月对月变化百分比
+  const pill = document.getElementById('kpi-total-pill');
+  if (prevTotal && prevTotal > 0) {
+    const pct = (total - prevTotal) / prevTotal * 100;
+    const isPos = pct >= 0;
+    pill.className = 'hero-pill show ' + (isPos ? 'pos' : 'neg');
+    pill.textContent = (isPos ? '↑ ' : '↓ ') + Math.abs(pct).toFixed(1) + '%';
+  } else {
+    pill.classList.remove('show');
+  }
+
+  // 三张次级卡：弱化货币符号
+  renderKpiValue('kpi-pnl', pnl, true);
+  renderKpiValue('kpi-flow', flow, true);
+  renderKpiValue('kpi-ytd', ytd, true);
+
+  document.getElementById('kpi-pnl').className = 'kpi-value ' + (pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : ''));
   document.getElementById('kpi-pnl-sub').textContent = prev ? '已剔除 ' + fmtSign(flow) + ' 净流' : '需上月数据';
 
-  document.getElementById('kpi-flow').textContent = fmtSign(flow);
+  document.getElementById('kpi-flow').className = 'kpi-value';
   document.getElementById('kpi-flow-sub').textContent = flow > 0 ? '本月净流入' : (flow < 0 ? '本月净流出' : '无流动');
 
-  const ytdEl = document.getElementById('kpi-ytd');
-  ytdEl.textContent = fmtSign(ytd);
-  ytdEl.className = 'value ' + (ytd > 0 ? 'pos' : (ytd < 0 ? 'neg' : ''));
+  document.getElementById('kpi-ytd').className = 'kpi-value ' + (ytd > 0 ? 'pos' : (ytd < 0 ? 'neg' : ''));
   document.getElementById('kpi-ytd-sub').textContent = yearOfLatest + ' 年内 · 仅市场盈亏';
 
   const colorInk = getCSSVar('--ink');
