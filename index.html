@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
   /* =====================================================
      CSS 变量系统 · 苹果设计语言
@@ -1069,6 +1068,26 @@
     text-align: center;
     min-height: 18px;
   }
+  .lock-spinner {
+    text-align: center;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--ink-3);
+    min-height: 18px;
+  }
+  .lock-spinner .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--sep-strong);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .lock-warning {
     margin-top: 20px;
     padding: 14px 16px;
@@ -1767,6 +1786,15 @@
     .hero-block.clickable:active { transform: translateY(-1px); }
   }
 
+  @media (min-width: 1400px) {
+    .app { max-width: 1400px; padding: 0 48px 100px; }
+    .charts-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
+    .chart-wrap { height: 300px; }
+    .hero-block { padding: 48px 32px 36px; }
+    .hero-value { font-size: 56px; }
+    .kpi-row { gap: 20px; }
+  }
+
   @media (max-width: 480px) {
     .app { padding: 0 10px 48px; }
     header { padding: 0 10px; }
@@ -1787,6 +1815,20 @@
     .section-head .meta { font-size: 11px; }
     .lock-card { padding: 24px 16px 20px; border-radius: 20px; }
     .toast { font-size: 13px; padding: 10px 16px; max-width: 90vw; white-space: normal; }
+  }
+  @media (max-width: 374px) {
+    .app { padding: 0 8px 40px; }
+    header { padding: 0 8px; gap: 4px; }
+    .hero-value { font-size: 28px; }
+    .hero-currency, .hero-decimal { font-size: 14px; }
+    .hero-block { padding: 20px 12px 18px; border-radius: 14px; }
+    .kpi-value { font-size: 20px; }
+    .kpi-card { padding: 12px 14px; }
+    .drawer { width: 100vw; max-height: 92vh; border-radius: 14px; }
+    .nav button { font-size: 11px; padding: 4px 8px; }
+    .entry-row { padding: 10px 12px; gap: 6px; }
+    .data-table td, .data-table th { padding: 8px 6px; font-size: 11px; }
+    .chart-wrap { height: 180px; }
   }
 </style>
 
@@ -1829,6 +1871,7 @@
       </div>
     </div>
 
+    <div class="lock-spinner" id="lock-spinner" style="display:none"><div class="spinner"></div><span id="lock-spinner-text">处理中…</span></div>
     <div class="lock-error" id="lock-error"></div>
 
     <div class="lock-warning" id="lock-warning" style="display:none">
@@ -2396,7 +2439,7 @@ async function offerLocalRestore(mirror) {
     showToast('已从本地镜像恢复，请重新解锁');
     setTimeout(() => location.reload(), 1500);
   } catch (e) {
-    alert('恢复失败：' + (e.message || e));
+    showToast('恢复失败：' + (e.message || e), 'error');
   }
 }
 
@@ -2476,7 +2519,10 @@ document.querySelectorAll('[data-theme-set]').forEach(b => {
 // ============================================================
 // 锁屏 / 解锁
 // ============================================================
+let _persistQueue = Promise.resolve();
 async function persistVault() {
+  await _persistQueue;
+  return _persistQueue = (async () => {
   // 冲突检测：检查云端是否有更新的数据
   if (state.lastKnownUpdatedAt !== 0) {
     try {
@@ -2533,7 +2579,7 @@ async function persistVault() {
     const meta = await dbGet('meta', 'main');
     if (meta) writeLocalMirror(meta, payload);
   } catch (e) { /* 静默 */ }
-}
+  })();
 
 // 用一个"包装密钥"加密"主密钥"得到 wrappedKey
 async function wrapMasterKey(masterKey, wrappingKey) {
@@ -2658,7 +2704,29 @@ document.querySelectorAll('#lock-mode-tabs button').forEach(b => {
   });
 });
 
+function setLockLoading(loading) {
+  const spinner = document.getElementById('lock-spinner');
+  const submitBtn = document.getElementById('lock-submit');
+  const passkeyBtn = document.getElementById('passkey-action');
+  const errEl = document.getElementById('lock-error');
+  if (loading) {
+    errEl.textContent = '';
+    spinner.style.display = 'flex';
+    submitBtn.disabled = true;
+    passkeyBtn.disabled = true;
+    submitBtn.style.opacity = '0.5';
+    passkeyBtn.style.opacity = '0.5';
+  } else {
+    spinner.style.display = 'none';
+    submitBtn.disabled = false;
+    passkeyBtn.disabled = false;
+    submitBtn.style.opacity = '';
+    passkeyBtn.style.opacity = '';
+  }
+}
+
 async function handleLockSubmit() {
+  setLockLoading(true);
   const errEl = document.getElementById('lock-error');
   errEl.textContent = '';
   const meta = await dbGet('meta', 'main');
@@ -2679,11 +2747,12 @@ async function handleLockSubmit() {
     // 真正的首次设置（密码模式）
     const pwd = document.getElementById('lock-password').value;
     const confirm = document.getElementById('lock-password-confirm').value;
-    if (!pwd) { errEl.textContent = '请输入密码'; return; }
-    if (pwd.length < 6) { errEl.textContent = '密码至少 6 位字符'; return; }
-    if (pwd !== confirm) { errEl.textContent = '两次输入的密码不一致'; return; }
+    if (!pwd) { setLockLoading(false); errEl.textContent = '请输入密码'; return; }
+    if (pwd.length < 6) { setLockLoading(false); errEl.textContent = '密码至少 6 位字符'; return; }
+    if (pwd !== confirm) { setLockLoading(false); errEl.textContent = '两次输入的密码不一致'; return; }
 
     if (!window.confirm('这将创建一个全新的账本。\n\n如果你之前用过这个应用、有已存在的数据，请取消并先导入加密备份。\n\n确认是首次使用？')) {
+      setLockLoading(false);
       return;
     }
 
@@ -2731,6 +2800,7 @@ async function handleLockSubmit() {
       enterApp();
     } catch {
       errEl.textContent = '密码错误';
+      setLockLoading(false);
       document.getElementById('lock-password').value = '';
       document.getElementById('lock-password').focus();
     }
@@ -2738,11 +2808,13 @@ async function handleLockSubmit() {
 }
 
 async function handlePasskeyAction() {
+  setLockLoading(true);
   const errEl = document.getElementById('lock-error');
   errEl.textContent = '';
   const meta = await dbGet('meta', 'main');
 
   if (!isPRFSupported()) {
+    setLockLoading(false);
     errEl.textContent = '此浏览器不支持 Passkey PRF';
     return;
   }
@@ -2756,6 +2828,7 @@ async function handlePasskeyAction() {
     const localMirror = readLocalMirror();
     if (localMirror) {
       errEl.innerHTML = '检测到云端数据为空，但本地有备份。<br>请<a href="#" id="restore-from-mirror" style="color:var(--accent);text-decoration:underline">点此从本地恢复</a>，或导入加密备份文件。';
+      setLockLoading(false);
       document.getElementById('restore-from-mirror').addEventListener('click', (e) => {
         e.preventDefault();
         offerLocalRestore(localMirror);
@@ -2765,7 +2838,8 @@ async function handlePasskeyAction() {
 
     // 真正的首次设置 Passkey —— 二次确认
     if (!confirm('这将创建一个全新的账本。\n\n如果你确认这是你第一次使用此应用、且没有任何已有数据，请点击"确定"。\n\n如果你之前用过这个应用（即使在另一个域名/设备上），请点击"取消"，然后导入加密备份文件。')) {
-      return;
+      setLockLoading(false);
+      return;return;
     }
     try {
       const { credentialId, prfOutput } = await registerPasskey();
@@ -2794,6 +2868,7 @@ async function handlePasskeyAction() {
       enterApp();
       showToast('Passkey 注册成功');
     } catch (err) {
+      setLockLoading(false);
       errEl.textContent = 'Passkey 注册失败：' + (err.message || '未知错误');
     }
   } else if (meta.passkeyCredId && meta.wrappedKeyByPasskey) {
@@ -2810,6 +2885,7 @@ async function handlePasskeyAction() {
       await loadVaultIntoState();
       enterApp();
     } catch (err) {
+      setLockLoading(false);
       errEl.textContent = 'Passkey 解锁失败：' + (err.message || '请重试');
     }
   }
@@ -3034,12 +3110,19 @@ function monthlyPnL(curr, prev) {
 // 导航
 // ============================================================
 function navTo(page) {
+  // 离开旧页面前清理图表实例，防止内存泄漏
+  const prev = state.current;
+  if (prev === 'dashboard') destroyCharts();
+  if (prev === 'history' && returnChart) { returnChart.destroy(); returnChart = null; }
   state.current = page;
   document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
   if (page === 'dashboard') renderDashboard();
   if (page === 'entry') renderEntry();
   if (page === 'history') renderHistory();
+  // 切换页面时关闭抽屉（清理趋势图）
+  const drawer = document.getElementById('drawer');
+  if (drawer && drawer.classList.contains('open')) closeDrawer();
 }
 document.querySelectorAll('.nav button').forEach(b => {
   b.addEventListener('click', () => navTo(b.dataset.page));
@@ -4516,12 +4599,7 @@ document.getElementById('entry-save').addEventListener('click', async () => {
   } catch (err) {
     console.error('保存失败:', err);
     showToast('保存失败：' + (err.message || '未知错误'), 'error');
-    alert(
-      '⚠️ 保存失败！\n\n' +
-      err.message + '\n\n' +
-      '你的输入还在本地，但没成功写入云端。请检查网络后重试。\n' +
-      '建议立刻打开页脚「导出加密备份」保留一份本地副本。'
-    );
+    showToast('请检查网络后重试，并导出加密备份保留本地副本', 'error');
   } finally {
     btn.disabled = false;
     btn.style.opacity = '1';
@@ -5050,7 +5128,7 @@ window.addEventListener('unhandledrejection', (e) => {
   // 只对"写入校验"失败强提示，避免被无关错误干扰
   if (msg.indexOf('写入') >= 0 || msg.indexOf('校验') >= 0 || msg.indexOf('persistVault') >= 0) {
     console.error('云端写入失败:', e.reason);
-    alert('⚠️ 云端写入失败！\n\n' + msg + '\n\n你的修改可能没有保存到云端。建议检查网络后重试，并立即导出加密备份保留本地副本。');
+    showToast('⚠️ 云端写入失败。请检查网络后重试，并导出加密备份。', 'error');
   }
 });
 
@@ -5082,5 +5160,6 @@ navTo = function(page) {
   await unlockOrInit();
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </body>
 </html>
