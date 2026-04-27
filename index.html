@@ -582,14 +582,6 @@
   }
   .chart-wrap { position: relative; height: 280px; }
   .chart-wrap.tall { height: 320px; }
-  #pie-detail {
-    background: var(--bg-2);
-    border-radius: 12px;
-    padding: 12px 16px;
-    border: 0.5px solid var(--sep);
-    max-height: 260px;
-    overflow-y: auto;
-  }
 
   /* =====================================================
      表格
@@ -880,6 +872,7 @@
     align-items: center;
     gap: 8px;
   }
+  .entry-row .name:hover { color: var(--accent); }
   .type-badge {
     font-size: 10px;
     font-weight: 600;
@@ -1943,10 +1936,7 @@
       <div class="chart-card reveal reveal-delay-2">
         <h3>资产分布</h3>
         <div class="desc">最新月份各分组占比</div>
-        <div class="chart-wrap tall" id="pie-wrap">
-          <canvas id="chart-pie"></canvas>
-          <div id="pie-detail" style="display:none;margin-top:8px"></div>
-        </div>
+        <div class="chart-wrap tall"><canvas id="chart-pie"></canvas></div>
       </div>
     </div>
 
@@ -3088,6 +3078,108 @@ function closeDrawer() {
   document.getElementById('drawer').classList.remove('open');
   document.getElementById('drawer-backdrop').classList.remove('open');
   document.body.style.overflow = '';
+  if (accountTrendChart) { accountTrendChart.destroy(); accountTrendChart = null; }
+}
+
+function openPieDrilldown(group, accounts, total) {
+  const sorted = getSortedSnapshots();
+  const latest = sorted[sorted.length - 1];
+  document.getElementById('drawer-eyebrow').textContent = '资产分布';
+  document.getElementById('drawer-title').textContent = group;
+  document.getElementById('drawer-amount').textContent = fmt(total);
+  document.getElementById('drawer-amount').className = 'drawer-amount';
+  document.getElementById('drawer-toolbar').style.display = 'none';
+  const body = document.getElementById('drawer-body');
+  const palette = ['#0a84ff','#30d158','#ff9f0a','#ff375f','#bf5af2','#5e5ce6'];
+  body.innerHTML = '<div class="drawer-section"><div class="drawer-section-title">账户余额</div></div>' +
+    accounts.map((a, i) => {
+      const pct = total ? (Math.abs(a.balance) / total * 100).toFixed(1) : 0;
+      const color = palette[i % palette.length];
+      return '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:0.5px solid var(--sep)">' +
+        '<span style="width:10px;height:10px;border-radius:50%;background:' + color + ';flex-shrink:0"></span>' +
+        '<span style="flex:1;font-size:14px">' + escapeHtml(a.name) + '</span>' +
+        '<span style="font-family:JetBrains Mono,monospace;font-size:14px;color:' + (a.type === 'liability' ? 'var(--red)' : 'var(--ink)') + '">' + fmt(Math.abs(a.balance)) + '</span>' +
+        '<span style="font-size:12px;color:var(--ink-4);min-width:44px;text-align:right">' + pct + '%</span>' +
+        '</div>';
+    }).join('') +
+    '<div style="display:flex;justify-content:space-between;padding:10px 0 0;font-size:14px;font-weight:600"><span>合计</span><span style="font-family:JetBrains Mono,monospace">' + fmt(total) + '</span></div>';
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+let accountTrendChart = null;
+function openAccountTrend(accId) {
+  const acc = state.accounts.find(a => a.id === accId);
+  if (!acc) return;
+  const sorted = getSortedSnapshots();
+  const labels = sorted.map(s => s.month);
+  const data = sorted.map(s => {
+    const e = s.entries[accId];
+    return e ? (Number(e.balance) || 0) : null;
+  });
+  const latestBal = data[data.length - 1] || 0;
+  document.getElementById('drawer-eyebrow').textContent = '余额趋势';
+  document.getElementById('drawer-title').textContent = acc.name + (acc.type === 'liability' ? '（负债）' : '');
+  document.getElementById('drawer-amount').textContent = fmt(Math.abs(latestBal));
+  document.getElementById('drawer-amount').className = 'drawer-amount';
+  document.getElementById('drawer-toolbar').style.display = 'none';
+  const body = document.getElementById('drawer-body');
+  body.innerHTML = '<div style="margin-bottom:4px;font-size:13px;font-weight:600;color:var(--ink-3)">各月余额</div>' +
+    '<div style="position:relative;height:220px"><canvas id="trend-canvas"></canvas></div>' +
+    '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px">' +
+    labels.map((l, i) => {
+      const v = data[i];
+      if (v === null) return '';
+      return '<div style="background:var(--bg-2);border-radius:8px;padding:6px 10px;text-align:center"><div style="font-size:11px;color:var(--ink-3)">' + l + '</div><div style="font-family:JetBrains Mono,monospace;font-size:13px;font-weight:600;margin-top:2px">' + fmt(Math.abs(v)) + '</div></div>';
+    }).join('') + '</div>';
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  // 绘制折线图（渲染后绘制）
+  setTimeout(() => {
+    const canvas = document.getElementById('trend-canvas');
+    if (!canvas) return;
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const colorLine = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+    const colorText = isDark ? '#e5e5ea' : '#1c1c1e';
+    if (accountTrendChart) accountTrendChart.destroy();
+    const valid = labels.map((l, i) => ({ l, v: data[i] })).filter(d => d.v !== null);
+    if (valid.length < 2) {
+      canvas.parentNode.innerHTML = '<div style="text-align:center;padding:60px 0;color:var(--ink-mute);font-size:14px">数据不足，至少需要 2 个月</div>';
+      return;
+    }
+    accountTrendChart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: valid.map(d => d.l),
+        datasets: [{
+          data: valid.map(d => d.v),
+          borderColor: '#0a84ff',
+          backgroundColor: 'rgba(10,132,255,0.1)',
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 4,
+          pointBackgroundColor: '#0a84ff',
+          pointBorderColor: isDark ? '#1c1c1e' : '#fff',
+          pointBorderWidth: 2,
+          pointHoverRadius: 6,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 600 },
+        scales: {
+          x: { display: true, grid: { display: false }, ticks: { color: colorText, font: { size: 11 } } },
+          y: { display: true, grid: { color: colorLine }, ticks: { color: colorText, font: { size: 11 }, callback: v => fmt(v) } },
+        },
+        plugins: { legend: { display: false }, tooltip: { backgroundColor: isDark ? '#2c2c2e' : '#fff', borderColor: colorLine, borderWidth: 1, padding: 12, cornerRadius: 10, callbacks: { label: ctx => ' ' + fmt(ctx.parsed.y) } } },
+      },
+    });
+  }, 50);
 }
 
 function renderDrawer() {
@@ -3904,9 +3996,6 @@ function renderDashboard() {
   // 苹果风格调色板（更柔和）
   const palette = ['#0a84ff', '#30d158', '#ff9f0a', '#ff375f', '#bf5af2', '#5e5ce6', '#64d2ff', '#ffd60a'];
 
-  // 饼图点击钻取
-  document.getElementById('pie-detail').style.display = 'none';
-
   charts.pie = new Chart(document.getElementById('chart-pie'), {
     type: 'doughnut',
     data: {
@@ -3928,16 +4017,12 @@ function renderDashboard() {
       maintainAspectRatio: false,
       cutout: '68%',
       onClick: (e, els) => {
-        if (els.length === 0) { document.getElementById('pie-detail').style.display = 'none'; return; }
+        if (els.length === 0) return;
         const idx = els[0].index;
         const group = pieLabels[idx];
         const accs = pieGroupMap[group] || [];
         accs.sort((a, b) => Math.abs(b.balance) - Math.abs(a.balance));
-        const el = document.getElementById('pie-detail');
-        el.style.display = '';
-        el.innerHTML = '<div style="font-size:12px;font-weight:600;color:var(--ink-3);margin-bottom:6px">' + escapeHtml(group) + ' 明细</div>' +
-          accs.map(a => '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:0.5px solid var(--sep)"><span>' + escapeHtml(a.name) + '</span><span style="font-family:JetBrains Mono,monospace;color:' + (a.type === 'liability' ? 'var(--red)' : 'var(--ink)') + '">' + fmt(Math.abs(a.balance)) + '</span></div>').join('') +
-          '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:13px;font-weight:600;border-top:1.5px solid var(--sep-strong);margin-top:4px"><span>合计</span><span style="font-family:JetBrains Mono,monospace">' + fmt(groupTotals[group]) + '</span></div>';
+        openPieDrilldown(group, accs, groupTotals[group]);
       },
       animation: {
         animateRotate: true,
@@ -4223,7 +4308,7 @@ function renderEntry() {
       const carryBadge = isCarryOver ? '<span class="carry-badge">沿用</span>' : '';
 
       row.innerHTML = `
-        <div class="name">${escapeHtml(a.name)}${liabilityBadge}${carryBadge}</div>
+        <div class="name" style="cursor:pointer" data-acc-trend="${a.id}" title="查看余额趋势">${escapeHtml(a.name)}${liabilityBadge}${carryBadge}</div>
         <input type="number" step="0.01" min="0" data-acc="${a.id}" data-field="balance" value="${draft.balance}" placeholder="${balPlaceholder}" class="${isCarryOver ? 'is-carry' : ''}">
         <input type="number" step="0.01" data-acc="${a.id}" data-field="flow" value="${draft.flow}" placeholder="0">
         <div class="delta" data-delta="${a.id}">${delta !== null ? (delta >= 0 ? '+' : '') + Math.round(delta).toLocaleString('zh-CN') : '—'}</div>
@@ -4294,6 +4379,14 @@ function renderEntry() {
 
   container.querySelectorAll('[data-action]').forEach(b => {
     b.addEventListener('click', () => handleEntryAction(b.dataset.action, b.dataset));
+  });
+
+  // 账户名点击 → 余额趋势图
+  container.querySelectorAll('[data-acc-trend]').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openAccountTrend(el.dataset.accTrend);
+    });
   });
 
   document.getElementById('group-list').innerHTML = getAllGroups().map(g => `<option value="${escapeHtml(g)}">`).join('');
