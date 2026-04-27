@@ -976,24 +976,27 @@
     position: fixed;
     inset: 0;
     z-index: 1000;
-    background: var(--bg);
+    background: linear-gradient(135deg, #0a0a0a, #1a1a2e);
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    overflow: hidden;
   }
   .lock-screen.active { display: flex; }
-  /* 背景光晕 */
-  .lock-screen::before {
-    content: '';
+  .lock-screen-bg {
     position: absolute;
-    width: 500px;
-    height: 500px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(10,132,255,0.12) 0%, transparent 70%);
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -60%);
-    pointer-events: none;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+  }
+  .lock-screen-bg.loaded { opacity: 1; }
+  .lock-screen-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.60), rgba(0,0,0,0.25));
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
   }
 
   .lock-card {
@@ -1777,7 +1780,7 @@
     .month-row { padding: 10px 0; }
     .month-row .m-label { font-size: 12px; }
     .month-row .m-amount { font-size: 12px; min-width: 70px; }
-    .lock-screen::before { width: 350px; height: 350px; }
+    .lock-screen-overlay { backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px); }
     .lock-warning { font-size: 12px; padding: 12px 14px; }
     .empty { padding: 40px 16px; }
     .entry-actions { flex-direction: column; }
@@ -1814,6 +1817,7 @@
     .drawer-amount { font-size: 22px; }
     .section-head .meta { font-size: 11px; }
     .lock-card { padding: 24px 16px 20px; border-radius: 20px; }
+    .lock-card input { font-size: 14px; }
     .toast { font-size: 13px; padding: 10px 16px; max-width: 90vw; white-space: normal; }
   }
   @media (max-width: 374px) {
@@ -1837,6 +1841,8 @@
 
 <!-- ===== 锁屏 ===== -->
 <div class="lock-screen active" id="lock-screen">
+  <div class="lock-screen-bg" id="lock-screen-bg"></div>
+  <div class="lock-screen-overlay"></div>
   <div class="lock-card">
     <div class="glyph"><span class="glyph-icon">⌘</span></div>
     <h2 id="lock-title">输入主密码</h2>
@@ -2676,7 +2682,23 @@ function setLockUI(mode, isFirstTime, hasPasskey) {
   });
 }
 
+async function loadBingWallpaper() {
+  const bg = document.getElementById('lock-screen-bg');
+  if (!bg) return;
+  try {
+    const resp = await fetch('/api/bg');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    if (!data.url) throw new Error('No URL');
+    const img = new Image();
+    img.onload = () => { bg.style.backgroundImage = 'url(' + data.url + ')'; bg.classList.add('loaded'); };
+    img.onerror = () => { /* 静默降级，保留渐变背景 */ };
+    img.src = data.url;
+  } catch { /* 静默降级 */ }
+}
+
 async function unlockOrInit() {
+  loadBingWallpaper();
   const meta = await dbGet('meta', 'main');
   const errEl = document.getElementById('lock-error');
   errEl.textContent = '';
@@ -2730,6 +2752,7 @@ async function handleLockSubmit() {
   setLockLoading(true);
   const errEl = document.getElementById('lock-error');
   errEl.textContent = '';
+  try {
   const meta = await dbGet('meta', 'main');
 
   if (!meta) {
@@ -2737,6 +2760,7 @@ async function handleLockSubmit() {
     const localMirror = readLocalMirror();
     if (localMirror) {
       errEl.innerHTML = '检测到云端数据为空，但本地有备份。<br>请<a href="#" id="restore-from-mirror2" style="color:var(--accent);text-decoration:underline">点此从本地恢复</a>，或导入加密备份文件。';
+      setLockLoading(false);
       const link = document.getElementById('restore-from-mirror2');
       if (link) link.addEventListener('click', (e) => {
         e.preventDefault();
@@ -2787,8 +2811,8 @@ async function handleLockSubmit() {
   } else {
     // 已有：用密码解锁
     const pwd = document.getElementById('lock-password').value;
-    if (!pwd) { errEl.textContent = '请输入密码'; return; }
-    if (!meta.wrappedKeyByPassword) { errEl.textContent = '此账本未配置密码，请使用 Passkey'; return; }
+    if (!pwd) { setLockLoading(false); errEl.textContent = '请输入密码'; return; }
+    if (!meta.wrappedKeyByPassword) { setLockLoading(false); errEl.textContent = '此账本未配置密码，请使用 Passkey'; return; }
     try {
       const salt = b64ToBuf(meta.salt);
       const wrappingKey = await deriveKeyFromPassword(pwd, salt);
@@ -2806,12 +2830,18 @@ async function handleLockSubmit() {
       document.getElementById('lock-password').focus();
     }
   }
+  } catch (e) {
+    setLockLoading(false);
+    errEl.textContent = '解锁失败：' + (e.message || '未知错误');
+    console.error('handleLockSubmit error:', e);
+  }
 }
 
 async function handlePasskeyAction() {
   setLockLoading(true);
   const errEl = document.getElementById('lock-error');
   errEl.textContent = '';
+  try {
   const meta = await dbGet('meta', 'main');
 
   if (!isPRFSupported()) {
@@ -2840,7 +2870,7 @@ async function handlePasskeyAction() {
     // 真正的首次设置 Passkey —— 二次确认
     if (!confirm('这将创建一个全新的账本。\n\n如果你确认这是你第一次使用此应用、且没有任何已有数据，请点击"确定"。\n\n如果你之前用过这个应用（即使在另一个域名/设备上），请点击"取消"，然后导入加密备份文件。')) {
       setLockLoading(false);
-      return;return;
+      return;
     }
     try {
       const { credentialId, prfOutput } = await registerPasskey();
@@ -2889,6 +2919,11 @@ async function handlePasskeyAction() {
       setLockLoading(false);
       errEl.textContent = 'Passkey 解锁失败：' + (err.message || '请重试');
     }
+  }
+  } catch (e) {
+    setLockLoading(false);
+    errEl.textContent = '解锁失败：' + (e.message || '未知错误');
+    console.error('handlePasskeyAction error:', e);
   }
 }
 
