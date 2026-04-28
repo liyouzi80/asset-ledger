@@ -288,10 +288,10 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   .page.active .hero-block { animation: fadeSlideUp 0.4s 0.05s both cubic-bezier(0.16, 1, 0.3, 1); }
-  .page.active .kpi-card { animation: fadeSlideUp 0.4s both cubic-bezier(0.16, 1, 0.3, 1); }
-  .page.active .kpi-card:nth-child(1) { animation-delay: 0.08s; }
-  .page.active .kpi-card:nth-child(2) { animation-delay: 0.14s; }
-  .page.active .kpi-card:nth-child(3) { animation-delay: 0.20s; }
+  .page.active .hero-stat-item { animation: fadeSlideUp 0.4s both cubic-bezier(0.16, 1, 0.3, 1); }
+  .page.active .hero-stat-item:nth-child(1) { animation-delay: 0.08s; }
+  .page.active .hero-stat-item:nth-child(2) { animation-delay: 0.14s; }
+  .page.active .hero-stat-item:nth-child(3) { animation-delay: 0.20s; }
   .page.active .chart-card { animation: fadeSlideUp 0.4s 0.15s both cubic-bezier(0.16, 1, 0.3, 1); }
   @keyframes fadeSlideUp {
     from { opacity: 0; transform: translateY(20px); }
@@ -630,63 +630,73 @@
     .returns-indicator-pick button { padding: 5px 10px; font-size: 12px; }
   }
 
-  /* 三张次级卡 */
+  /* Hero 内嵌统计 */
   @keyframes heroGlow {
     0%, 100% { opacity: 0.6; transform: scale(1); }
     50% { opacity: 1; transform: scale(1.05); }
   }
 
-  .kpi-row {
+  .hero-stats {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-bottom: 56px;
+    gap: 20px;
+    width: 100%;
+    margin-top: 2px;
+    padding-top: 28px;
+    border-top: 0.5px solid rgba(255,255,255,0.08);
   }
-  .kpi-card {
-    background: var(--bg-1);
-    border: 0.5px solid var(--sep);
-    border-radius: 28px;
-    padding: 0;
+  [data-theme="light"] .hero-stats {
+    border-top-color: rgba(0,0,0,0.06);
+  }
+  .hero-stat-item {
     cursor: pointer;
-    overflow: hidden;
-    box-shadow: var(--card-highlight);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
-                border-color 0.35s ease,
-                box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: transform;
+    transition: opacity 0.25s;
   }
-  .kpi-card:hover {
-    transform: translateY(-6px) scale(1.01);
-    border-color: var(--sep-strong);
-    box-shadow: var(--card-highlight), 0 16px 48px var(--accent-glow);
-  }
-  [data-theme="light"] .kpi-card:hover {
-    box-shadow: var(--card-highlight), 0 16px 48px rgba(0,0,0,0.06);
-  }
-  .kpi-card:active { transform: translateY(-2px) scale(0.99); }
-  .kpi-accent {
-    height: 3px;
-    border-radius: 0 0 3px 3px;
-  }
-  .kpi-accent.pos { background: var(--green); }
-  .kpi-accent.neg { background: var(--red); }
-  .kpi-accent.neutral { background: var(--ink-4); }
-  .kpi-inner {
-    padding: 24px 28px 28px;
-  }
-  .kpi-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 18px;
-  }
-  .kpi-label {
-    font-size: 13px;
-    color: var(--ink-3);
+  .hero-stat-item:hover { opacity: 0.78; }
+  .hero-stat-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.42);
     font-weight: 500;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
+    margin-bottom: 10px;
   }
-
+  [data-theme="light"] .hero-stat-label { color: rgba(0,0,0,0.45); }
+  .hero-stat-value {
+    font-family: 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 250;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+    color: white;
+    font-variant-numeric: tabular-nums;
+  }
+  [data-theme="light"] .hero-stat-value { color: #001530; }
+  .hero-stat-value .hsym {
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.4);
+    margin-right: 3px;
+  }
+  [data-theme="light"] .hero-stat-value .hsym { color: rgba(0,0,0,0.45); }
+  .hero-stat-value.pos { color: var(--green); }
+  .hero-stat-value.neg { color: var(--red); }
+  .pos { color: var(--green) !important; }
+  .neg { color: var(--red) !important; }
+  .hero-stat-trend {
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 5px;
+    letter-spacing: -0.01em;
+  }
+  .hero-stat-trend.up { color: var(--green); }
+  .hero-stat-trend.down { color: var(--red); }
+  .hero-stat-trend.flat { color: var(--ink-3); }
+  .hero-stat-sub {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    margin-top: 4px;
+  }
+  [data-theme="light"] .hero-stat-sub { color: rgba(0,0,0,0.3); }
 
   .chart-card {
     background: var(--bg-1);
@@ -709,56 +719,7 @@
   [data-theme="light"] .chart-card:hover {
     box-shadow: var(--card-highlight), 0 12px 40px rgba(0,0,0,0.04);
   }
-  .kpi-card:hover .kpi-arrow { color: var(--accent); transform: translateX(3px); }
-  .kpi-head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 22px;
-  }
-  .kpi-label {
-    font-size: 13px;
-    color: var(--ink-3);
-    font-weight: 500;
-    letter-spacing: 0.02em;
-  }
-  .kpi-arrow {
-    color: var(--ink-4);
-    font-size: 13px;
-    line-height: 1;
-    transition: color 0.25s, transform 0.25s;
-  }
-  .kpi-value {
-    font-family: 'Inter', sans-serif;
-    font-size: 36px;
-    font-weight: 300;
-    letter-spacing: -0.04em;
-    line-height: 1;
-    color: var(--ink);
-    font-variant-numeric: tabular-nums;
-  }
-  .kpi-value .sym {
-    font-size: 20px;
-    font-weight: 400;
-    color: var(--ink-3);
-    margin-right: 3px;
-  }
-  .kpi-trend {
-    font-size: 14px;
-    font-weight: 600;
-    margin-top: 8px;
-    letter-spacing: -0.01em;
-  }
-  .kpi-trend.up { color: var(--green); }
-  .kpi-trend.down { color: var(--red); }
-  .kpi-trend.flat { color: var(--ink-3); }
-  .kpi-sub {
-    font-size: 12px;
-    color: var(--ink-4);
-    margin-top: 6px;
-  }
-  .pos { color: var(--green) !important; }
-  .neg { color: var(--red) !important; }
+
 
   /* 投资视图切换 */
   .view-toggle {
@@ -2147,11 +2108,9 @@
     .hero-currency, .hero-decimal { font-size: 22px; }
     .hero-label { font-size: 12px; margin-bottom: 16px; }
     .hero-meta { margin-top: 20px; gap: 10px; }
-    .kpi-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 28px; }
-    .kpi-card { padding: 18px 20px; border-radius: 16px; }
-    .kpi-card:hover { transform: none; }
-    .kpi-value { font-size: 28px; }
-    .kpi-sub { font-size: 12px; }
+    .hero-stats { gap: 12px; padding-top: 20px; }
+    .hero-stat-value { font-size: 22px; }
+    .hero-stat-sub { font-size: 11px; }
     .charts-grid { grid-template-columns: 1fr; }
     .chart-card { padding: 20px 16px; border-radius: 16px; }
     .chart-wrap { height: 220px; }
@@ -2194,7 +2153,7 @@
     .empty { padding: 40px 16px; }
     .entry-actions { flex-direction: column; }
     .entry-actions .btn { width: 100%; }
-    .kpi-card.clickable:active { transform: scale(0.98); }
+    .hero-stat-item:active { opacity: 0.6; }
     .hero-block.clickable:active { transform: translateY(-1px); }
   }
 
@@ -2204,7 +2163,7 @@
     .chart-wrap { height: 300px; }
     .hero-block { padding: 48px 32px 36px; }
     .hero-value { font-size: 56px; }
-    .kpi-row { gap: 20px; }
+
   }
 
   @media (max-width: 480px) {
@@ -2215,8 +2174,8 @@
     .hero-currency, .hero-decimal { font-size: 18px; }
     .hero-label { font-size: 11px; }
     .hero-meta-text { font-size: 12px; }
-    .kpi-card { padding: 14px 16px; }
-    .kpi-value { font-size: 24px; }
+    .hero-stats { gap: 10px; padding-top: 16px; }
+    .hero-stat-value { font-size: 20px; }
     .header-right .lock-btn { padding: 5px 10px; font-size: 12px; }
     .chart-card .desc { font-size: 11px; }
     .drawer { width: 98vw; max-height: 90vh; border-radius: 16px; }
@@ -2235,8 +2194,7 @@
     .hero-value { font-size: 28px; }
     .hero-currency, .hero-decimal { font-size: 14px; }
     .hero-block { padding: 20px 12px 18px; border-radius: 14px; }
-    .kpi-value { font-size: 20px; }
-    .kpi-card { padding: 12px 14px; }
+
     .drawer { width: 100vw; max-height: 92vh; border-radius: 14px; }
     .nav button { font-size: 11px; padding: 4px 8px; }
     .entry-row { padding: 10px 12px; gap: 6px; }
@@ -2334,6 +2292,26 @@
         <div class="hero-meta">
           <span class="hero-pill" id="kpi-total-pill"></span>
           <span class="hero-meta-text" id="kpi-total-sub">尚无数据</span>
+          <div class="hero-stats">
+            <div class="hero-stat-item" data-drill="pnl">
+              <div class="hero-stat-label">本月盈亏</div>
+              <div class="hero-stat-value" id="hero-stat-pnl">—</div>
+              <div class="hero-stat-trend" id="hero-stat-pnl-trend"></div>
+              <div class="hero-stat-sub" id="hero-stat-pnl-sub"></div>
+            </div>
+            <div class="hero-stat-item" data-drill="flow">
+              <div class="hero-stat-label">本月净流</div>
+              <div class="hero-stat-value" id="hero-stat-flow">—</div>
+              <div class="hero-stat-trend" id="hero-stat-flow-trend"></div>
+              <div class="hero-stat-sub" id="hero-stat-flow-sub"></div>
+            </div>
+            <div class="hero-stat-item" data-drill="ytd">
+              <div class="hero-stat-label">年内累计</div>
+              <div class="hero-stat-value" id="hero-stat-ytd">—</div>
+              <div class="hero-stat-trend" id="hero-stat-ytd-trend"></div>
+              <div class="hero-stat-sub" id="hero-stat-ytd-sub"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -2341,42 +2319,6 @@
     <div class="view-toggle" id="view-toggle">
       <button data-view="all" class="active">总览</button>
       <button data-view="investment">仅投资资产</button>
-    </div>
-
-    <div class="kpi-row">
-      <div class="kpi-card clickable" data-drill="pnl">
-        <div class="kpi-accent pos"></div>
-        <div class="kpi-inner">
-          <div class="kpi-head">
-            <span class="kpi-label">本月盈亏</span>
-          </div>
-          <div class="kpi-value" id="kpi-pnl">—</div>
-          <div class="kpi-trend" id="kpi-pnl-trend"></div>
-          <div class="kpi-sub" id="kpi-pnl-sub"></div>
-        </div>
-      </div>
-      <div class="kpi-card clickable" data-drill="flow">
-        <div class="kpi-accent neutral"></div>
-        <div class="kpi-inner">
-          <div class="kpi-head">
-            <span class="kpi-label">本月净流</span>
-          </div>
-          <div class="kpi-value" id="kpi-flow">—</div>
-          <div class="kpi-trend" id="kpi-flow-trend"></div>
-          <div class="kpi-sub" id="kpi-flow-sub"></div>
-        </div>
-      </div>
-      <div class="kpi-card clickable" data-drill="ytd">
-        <div class="kpi-accent pos"></div>
-        <div class="kpi-inner">
-          <div class="kpi-head">
-            <span class="kpi-label">年内累计</span>
-          </div>
-          <div class="kpi-value" id="kpi-ytd">—</div>
-          <div class="kpi-trend" id="kpi-ytd-trend"></div>
-          <div class="kpi-sub" id="kpi-ytd-sub"></div>
-        </div>
-      </div>
     </div>
 
     <div class="section-head reveal">
@@ -2390,6 +2332,14 @@
           <button data-period="3m">近 3 月</button>
           <button data-period="6m">近 6 月</button>
           <button data-period="ytd" class="active">年初至今</button>
+          <button data-period="custom" id="returns-custom-btn">自定义</button>
+        </div>
+        <div id="returns-custom-range" style="display:none;align-items:center;gap:6px">
+          <input type="month" id="returns-custom-start" class="month-pick" style="width:auto;font-size:12px">
+          <span style="color:var(--ink-4);font-size:12px">→</span>
+          <input type="month" id="returns-custom-end" class="month-pick" style="width:auto;font-size:12px">
+          <button class="btn btn-ghost btn-sm" id="returns-custom-apply">应用</button>
+          <button class="btn btn-ghost btn-sm" id="returns-custom-clear">取消</button>
         </div>
         <div class="returns-indicator-pick" id="returns-indicator-pick">
           <button data-indicator="twr" class="active">TWR</button>
@@ -2466,19 +2416,6 @@
       <div class="chart-wrap tall"><canvas id="chart-pnl"></canvas></div>
     </div>
 
-    <div class="section-head reveal">
-      <h2>收益走势</h2>
-      <span class="meta">TWR 剔除资金进出影响</span>
-    </div>
-    <div class="chart-card reveal reveal-delay-3">
-      <div class="card-header">
-        <div class="card-header-left">
-          <h3>累计收益率</h3>
-          <div class="desc">TWR (时间加权) vs 简单累计</div>
-        </div>
-      </div>
-      <div class="chart-wrap tall"><canvas id="chart-returns-dashboard"></canvas></div>
-    </div>
   </section>
 
   <!-- 录入 -->
@@ -3059,8 +2996,10 @@ let state = {
   targetAllocation: {},   // { [groupName]: percentage } —— 目标配置占比
   anomalyThreshold: 0.2,  // 重大变化提醒阈值，默认 ±20%
   historyView: 'list',    // 'list' | 'matrix' —— 历史页视图模式
-  returnPeriod: 'ytd',    // '1m' | '3m' | '6m' | 'ytd' —— 收益率模块默认期间
+  returnPeriod: 'ytd',    // '1m' | '3m' | '6m' | 'ytd' | 'custom' —— 收益率模块默认期间
   returnIndicator: 'twr', // 'twr' | 'simple' | 'amount' —— 默认指标
+  returnCustomStart: null, // 自定义期间起始 YYYY-MM
+  returnCustomEnd: null,   // 自定义期间结束 YYYY-MM
 };
 
 function migrateAccounts(accounts) {
@@ -3679,6 +3618,23 @@ function renderKpiValue(elId, n, withSign) {
   }
   el.innerHTML = '<span class="sym">' + symbol + '</span><span class="num-anim">' + abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 }) + '</span>';
 }
+
+// Hero 内嵌统计值渲染
+function renderHeroStatValue(elId, n, withSign) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (n === null || n === undefined || isNaN(n)) {
+    el.textContent = '—';
+    return;
+  }
+  const abs = Math.abs(n);
+  let symbol = '¥';
+  if (withSign) {
+    if (n > 0) symbol = '+¥';
+    else if (n < 0) symbol = '−¥';
+  }
+  el.innerHTML = '<span class="hsym">' + symbol + '</span>' + abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+}
 const ymNow = () => {
   const d = new Date();
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
@@ -3830,10 +3786,57 @@ document.querySelectorAll('#view-toggle button').forEach(b => {
 // 收益率模块 · 期间切换
 document.querySelectorAll('#returns-period-tabs button').forEach(b => {
   b.addEventListener('click', () => {
-    state.returnPeriod = b.dataset.period;
+    const period = b.dataset.period;
+    if (period === 'custom') {
+      // 显示自定义日期范围输入
+      const rangeEl = document.getElementById('returns-custom-range');
+      if (rangeEl) {
+        const isVisible = rangeEl.style.display !== 'none';
+        rangeEl.style.display = isVisible ? 'none' : 'flex';
+        if (!isVisible) {
+          // 默认填入最近 3 个月
+          const sorted = getSortedSnapshots();
+          if (sorted.length >= 2) {
+            document.getElementById('returns-custom-start').value = sorted[Math.max(0, sorted.length - 4)].month;
+            document.getElementById('returns-custom-end').value = sorted[sorted.length - 1].month;
+          }
+        }
+      }
+      return;
+    }
+    state.returnPeriod = period;
+    // 隐藏自定义范围输入
+    const rangeEl = document.getElementById('returns-custom-range');
+    if (rangeEl) rangeEl.style.display = 'none';
     renderDashboard();
   });
 });
+
+// 自定义日期范围 · 应用
+const customApplyBtn = document.getElementById('returns-custom-apply');
+if (customApplyBtn) {
+  customApplyBtn.addEventListener('click', () => {
+    const start = document.getElementById('returns-custom-start').value;
+    const end = document.getElementById('returns-custom-end').value;
+    if (!start || !end) { showToast('请选择起止月份'); return; }
+    if (start > end) { showToast('起始月份不能晚于结束月份'); return; }
+    state.returnPeriod = 'custom';
+    state.returnCustomStart = start;
+    state.returnCustomEnd = end;
+    document.getElementById('returns-custom-range').style.display = 'none';
+    renderDashboard();
+  });
+}
+
+// 自定义日期范围 · 取消
+const customClearBtn = document.getElementById('returns-custom-clear');
+if (customClearBtn) {
+  customClearBtn.addEventListener('click', () => {
+    document.getElementById('returns-custom-range').style.display = 'none';
+    state.returnPeriod = 'ytd';
+    renderDashboard();
+  });
+}
 
 // 收益率模块 · 指标切换
 document.querySelectorAll('#returns-indicator-pick button').forEach(b => {
@@ -4393,9 +4396,13 @@ function renderReturnsModule(allSorted, onlyActive) {
   const filtered = allSorted.map(s => onlyActive(s));
   const periodSnaps = sliceSnapshotsByPeriod(filtered, period);
 
-  // 同步按钮 active 状态
+  // 同步按钮 active 状态（custom 按钮特殊处理）
   document.querySelectorAll('#returns-period-tabs button').forEach(b => {
-    b.classList.toggle('active', b.dataset.period === period);
+    if (b.dataset.period === 'custom') {
+      b.classList.toggle('active', period === 'custom');
+    } else {
+      b.classList.toggle('active', b.dataset.period === period);
+    }
   });
   document.querySelectorAll('#returns-indicator-pick button').forEach(b => {
     b.classList.toggle('active', b.dataset.indicator === indicator);
@@ -4473,6 +4480,22 @@ function renderReturnsModule(allSorted, onlyActive) {
 // 按 period 切出 snapshots：第一份是"期初"，后面是各个数据点
 function sliceSnapshotsByPeriod(allSorted, period) {
   if (allSorted.length === 0) return null;
+
+  if (period === 'custom') {
+    const cs = state.returnCustomStart;
+    const ce = state.returnCustomEnd;
+    if (!cs || !ce) return { points: [] };
+    // 找到起始月份的前一个快照作为期初
+    const startIdx = allSorted.findIndex(s => s.month === cs);
+    if (startIdx < 0) return { points: [] };
+    const inception = startIdx > 0 ? allSorted[startIdx - 1] : null;
+    const range = allSorted.filter(s => s.month >= cs && s.month <= ce);
+    if (range.length === 0) return { points: [] };
+    return {
+      points: [inception, ...range].filter(Boolean),
+      hasInception: !!inception,
+    };
+  }
 
   if (period === 'ytd') {
     const latest = allSorted[allSorted.length - 1];
@@ -4571,7 +4594,7 @@ function drawReturnsChart(svg, points, indicator) {
   const yZero = yOf(0);
 
   // 路径：曲线
-  const pathPoints = points.map((p, i) => ({ x: xOf(i), y: yOf(valueOf(p)) }));
+  const pathPoints = points.map((p, i) => ({ x: xOf(i), y: yOf(valueOf(p)), month: p.month }));
   const linePath = smoothPath(pathPoints);
   // 闭合路径用于零线分段填充
   const areaPath = linePath + ` L ${pathPoints[pathPoints.length - 1].x} ${yZero} L ${pathPoints[0].x} ${yZero} Z`;
@@ -4583,20 +4606,34 @@ function drawReturnsChart(svg, points, indicator) {
   // 简化：用整体颜色 = 终值正负
   const lineColorClass = lastClass;
 
+  // 生成工具提示数据
+  const tooltipData = pathPoints.map((pp, i) => ({
+    x: pp.x, y: pp.y,
+    month: points[i].month,
+    raw: values[i],
+    label: indicator === 'amount'
+      ? fmtSign(values[i])
+      : (values[i] >= 0 ? '+' : '') + (values[i] * 100).toFixed(1) + '%',
+  }));
+
   // SVG 内容
   let svgContent = '';
-  // clipPath: 上方（>=0 的部分）
+  // clipPath: 上方（>=0 的部分）- 使用唯一 ID 避免多实例冲突
+  const clipIdPos = 'clip-pos-' + (indicator || 'twr');
+  const clipIdNeg = 'clip-neg-' + (indicator || 'twr');
   svgContent += `<defs>
-    <clipPath id="clip-pos"><rect x="0" y="0" width="${W}" height="${yZero}"/></clipPath>
-    <clipPath id="clip-neg"><rect x="0" y="${yZero}" width="${W}" height="${H - yZero}"/></clipPath>
+    <clipPath id="${clipIdPos}"><rect x="0" y="0" width="${W}" height="${yZero}"/></clipPath>
+    <clipPath id="${clipIdNeg}"><rect x="0" y="${yZero}" width="${W}" height="${H - yZero}"/></clipPath>
   </defs>`;
   // 双色填充
-  svgContent += `<path d="${areaPath}" class="returns-area-pos" clip-path="url(#clip-pos)"/>`;
-  svgContent += `<path d="${areaPath}" class="returns-area-neg" clip-path="url(#clip-neg)"/>`;
+  svgContent += `<path d="${areaPath}" class="returns-area-pos" clip-path="url(#${clipIdPos})"/>`;
+  svgContent += `<path d="${areaPath}" class="returns-area-neg" clip-path="url(#${clipIdNeg})"/>`;
   // 零线
   svgContent += `<line x1="${PAD_LEFT}" y1="${yZero.toFixed(2)}" x2="${(W - PAD_RIGHT).toFixed(2)}" y2="${yZero.toFixed(2)}" class="returns-zero-line"/>`;
   // 曲线
   svgContent += `<path d="${linePath}" class="returns-line ${lineColorClass}"/>`;
+  // 不可见的宽点击区域用于 hover
+  svgContent += `<path d="${linePath}" fill="none" stroke="transparent" stroke-width="22" class="returns-hover-track"/>`;
   // 终点圆点
   const endP = pathPoints[pathPoints.length - 1];
   svgContent += `<circle cx="${endP.x.toFixed(2)}" cy="${endP.y.toFixed(2)}" class="returns-end-dot ${lastClass}"/>`;
@@ -4608,7 +4645,100 @@ function drawReturnsChart(svg, points, indicator) {
   // 零线右侧标签
   svgContent += `<text x="${W - PAD_RIGHT + 4}" y="${yZero.toFixed(2)}" dominant-baseline="middle" class="returns-axis-text">0%</text>`;
 
+  // 工具提示圆（默认隐藏）
+  svgContent += `<circle cx="0" cy="0" r="5" class="returns-tooltip-dot" style="display:none;fill:var(--ink);stroke:var(--bg-1);stroke-width:2;pointer-events:none"/>`;
+  // 工具提示文字
+  svgContent += `<g class="returns-tooltip-group" style="display:none;pointer-events:none">
+    <rect x="0" y="0" width="100" height="40" rx="6" fill="var(--tooltip-bg)" stroke="var(--sep-strong)" stroke-width="0.5"/>
+    <text x="50" y="16" class="returns-axis-text" text-anchor="middle" style="font-weight:600;fill:var(--ink-2)"></text>
+    <text x="50" y="30" class="returns-axis-text" text-anchor="middle" style="font-size:11px;fill:var(--ink-3)"></text>
+  </g>`;
+
   svg.innerHTML = svgContent;
+
+  // 鼠标事件：hover 显示数据点
+  const hoverTrack = svg.querySelector('.returns-hover-track');
+  const tooltipDot = svg.querySelector('.returns-tooltip-dot');
+  const tooltipGroup = svg.querySelector('.returns-tooltip-group');
+  if (!hoverTrack || !tooltipDot || !tooltipGroup) return;
+
+  const tooltipRect = tooltipGroup.querySelector('rect');
+  const tooltipTexts = tooltipGroup.querySelectorAll('text');
+
+  function hideTooltip() {
+    tooltipDot.style.display = 'none';
+    tooltipGroup.style.display = 'none';
+  }
+
+  svg.addEventListener('mousemove', function(e) {
+    const rect = svg.getBoundingClientRect();
+    const scaleX = W / rect.width;
+    const scaleY = H / rect.height;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top) * scaleY;
+
+    // 找最近的数据点
+    let bestIdx = -1;
+    let bestDist = Infinity;
+    for (let i = 0; i < tooltipData.length; i++) {
+      const d = tooltipData[i];
+      const dx = d.x - mx;
+      const dy = d.y - my;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestIdx = i;
+      }
+    }
+
+    // 阈值：hover 范围
+    const hoverThreshold = 30;
+    if (bestIdx >= 0 && bestDist < hoverThreshold) {
+      const d = tooltipData[bestIdx];
+      tooltipDot.style.display = '';
+      tooltipDot.setAttribute('cx', d.x.toFixed(2));
+      tooltipDot.setAttribute('cy', d.y.toFixed(2));
+
+      tooltipGroup.style.display = '';
+      const tw = 110, th = 42;
+      let tx = d.x - tw / 2;
+      let ty = d.y - th - 14;
+      if (tx < 4) tx = 4;
+      if (tx + tw > W - 4) tx = W - tw - 4;
+      if (ty < 4) ty = d.y + 14;
+      tooltipGroup.setAttribute('transform', `translate(${tx.toFixed(0)},${ty.toFixed(0)})`);
+      tooltipRect.setAttribute('width', tw);
+      tooltipRect.setAttribute('height', th);
+      tooltipTexts[0].textContent = d.label;
+      tooltipTexts[1].textContent = d.month;
+    } else {
+      hideTooltip();
+    }
+  });
+
+  svg.addEventListener('mouseleave', hideTooltip);
+  svg.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 1) {
+      // 模拟 mouse 事件用于移动端
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      });
+      svg.dispatchEvent(mouseEvent);
+    }
+  }, { passive: true });
+  svg.addEventListener('touchmove', function(e) {
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+      });
+      svg.dispatchEvent(mouseEvent);
+    }
+  }, { passive: true });
+  svg.addEventListener('touchend', hideTooltip);
 }
 
 // 平滑曲线生成器（Catmull-Rom 转 Bezier）
@@ -4973,9 +5103,12 @@ function renderDashboard() {
     document.getElementById('kpi-total-sub').textContent = '尚无快照，请先到「录入」页创建第一份记录';
     document.getElementById('kpi-total-pill').classList.remove('show');
     ['pnl', 'flow', 'ytd'].forEach(k => {
-      document.getElementById('kpi-' + k).textContent = '—';
-      document.getElementById('kpi-' + k + '-trend').textContent = '';
-      document.getElementById('kpi-' + k + '-sub').textContent = '';
+      const el = document.getElementById('hero-stat-' + k);
+      if (el) el.textContent = '—';
+      const trEl = document.getElementById('hero-stat-' + k + '-trend');
+      if (trEl) { trEl.textContent = ''; trEl.className = 'hero-stat-trend'; }
+      const subEl = document.getElementById('hero-stat-' + k + '-sub');
+      if (subEl) subEl.textContent = '';
     });
     // 收益率模块清空
     document.getElementById('returns-primary-value').textContent = '—';
@@ -5032,10 +5165,10 @@ function renderDashboard() {
   // 收益率模块
   renderReturnsModule(sorted, onlyActive);
 
-  // 三张次级卡：弱化货币符号
-  renderKpiValue('kpi-pnl', pnl, true);
-  renderKpiValue('kpi-flow', flow, true);
-  renderKpiValue('kpi-ytd', ytd, true);
+  // Hero 内嵌统计
+  renderHeroStatValue('hero-stat-pnl', pnl, true);
+  renderHeroStatValue('hero-stat-flow', flow, false);
+  renderHeroStatValue('hero-stat-ytd', ytd, true);
 
   // 较上月对比 (MoM)
   const prevMonthPnl = prev ? monthlyPnL(onlyActive(prev), sorted.length >= 3 ? onlyActive(sorted[sorted.length - 3]) : null) : null;
@@ -5049,42 +5182,43 @@ function renderDashboard() {
   }
   function renderTrend(elId, current, previous) {
     const el = document.getElementById(elId);
-    if (previous === null || previous === undefined || previous === 0) { el.textContent = ''; el.className = 'kpi-trend'; return; }
+    if (!el) return;
+    if (previous === null || previous === undefined || previous === 0) { el.textContent = ''; el.className = 'hero-stat-trend'; return; }
     const change = ((current - previous) / Math.abs(previous)) * 100;
-    if (Math.abs(change) < 0.5) { el.textContent = '→ 持平'; el.className = 'kpi-trend flat'; }
-    else if (change > 0) { el.textContent = '↑ ' + Math.abs(change).toFixed(1) + '% 较上月'; el.className = 'kpi-trend up'; }
-    else { el.textContent = '↓ ' + Math.abs(change).toFixed(1) + '% 较上月'; el.className = 'kpi-trend down'; }
+    if (Math.abs(change) < 0.5) { el.textContent = '→ 持平'; el.className = 'hero-stat-trend flat'; }
+    else if (change > 0) { el.textContent = '↑ ' + Math.abs(change).toFixed(1) + '% 较上月'; el.className = 'hero-stat-trend up'; }
+    else { el.textContent = '↓ ' + Math.abs(change).toFixed(1) + '% 较上月'; el.className = 'hero-stat-trend down'; }
   }
-  renderTrend('kpi-pnl-trend', pnl, prevMonthPnl);
-  renderTrend('kpi-flow-trend', flow, prevMonthFlow);
+  renderTrend('hero-stat-pnl-trend', pnl, prevMonthPnl);
+  renderTrend('hero-stat-flow-trend', flow, prevMonthFlow);
   // YTD: compare to same period last year
   (function(){
-    const el = document.getElementById('kpi-ytd-trend');
-    if (prevYtd === 0) { el.textContent = ''; el.className = 'kpi-trend'; return; }
+    const el = document.getElementById('hero-stat-ytd-trend');
+    if (!el) return;
+    if (prevYtd === 0) { el.textContent = ''; el.className = 'hero-stat-trend'; return; }
     const change = ((ytd - prevYtd) / Math.abs(prevYtd)) * 100;
-    if (Math.abs(change) < 1) { el.textContent = '→ 同比持平'; el.className = 'kpi-trend flat'; }
-    else if (change > 0) { el.textContent = '↑ ' + Math.abs(change).toFixed(1) + '% 同比'; el.className = 'kpi-trend up'; }
-    else { el.textContent = '↓ ' + Math.abs(change).toFixed(1) + '% 同比'; el.className = 'kpi-trend down'; }
+    if (Math.abs(change) < 1) { el.textContent = '→ 同比持平'; el.className = 'hero-stat-trend flat'; }
+    else if (change > 0) { el.textContent = '↑ ' + Math.abs(change).toFixed(1) + '% 同比'; el.className = 'hero-stat-trend up'; }
+    else { el.textContent = '↓ ' + Math.abs(change).toFixed(1) + '% 同比'; el.className = 'hero-stat-trend down'; }
   })();
 
-  // KPI 卡片状态
-  const pnlState = pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : 'neutral');
-  const flowState = flow > 0 ? 'pos' : (flow < 0 ? 'neg' : 'neutral');
-  const ytdState = ytd > 0 ? 'pos' : (ytd < 0 ? 'neg' : 'neutral');
+  // Hero 统计颜色状态
+  const pnlState = pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : '');
+  const flowState = flow > 0 ? 'pos' : (flow < 0 ? 'neg' : '');
+  const ytdState = ytd > 0 ? 'pos' : (ytd < 0 ? 'neg' : '');
 
-  document.getElementById('kpi-pnl').className = 'kpi-value ' + pnlState;
-  document.getElementById('kpi-pnl-sub').textContent = (prev ? '已剔除 ' + fmtSign(flow) + ' 净流' : '需上月数据') + (isInvestmentView ? '（仅投资）' : '');
-  // 更新 accent bar 和 dot
-  const pnlCard = document.querySelector('[data-drill="pnl"]');
-  pnlCard.querySelector('.kpi-accent').className = 'kpi-accent ' + pnlState;
-  document.getElementById('kpi-flow').className = 'kpi-value';
-  document.getElementById('kpi-flow-sub').textContent = (flow > 0 ? '本月净流入' : (flow < 0 ? '本月净流出' : '无流动')) + (isInvestmentView ? '（仅投资）' : '');
-  const flowCard = document.querySelector('[data-drill="flow"]');
-  flowCard.querySelector('.kpi-accent').className = 'kpi-accent ' + flowState;
-  document.getElementById('kpi-ytd').className = 'kpi-value ' + ytdState;
-  document.getElementById('kpi-ytd-sub').textContent = yearOfLatest + ' 年内 · 仅市场盈亏' + (isInvestmentView ? '（仅投资）' : '');
-  const ytdCard = document.querySelector('[data-drill="ytd"]');
-  ytdCard.querySelector('.kpi-accent').className = 'kpi-accent ' + ytdState;
+  const pnlEl = document.getElementById('hero-stat-pnl');
+  if (pnlEl) pnlEl.className = 'hero-stat-value ' + pnlState;
+  const pnlSubEl = document.getElementById('hero-stat-pnl-sub');
+  if (pnlSubEl) pnlSubEl.textContent = (prev ? '已剔除 ' + fmtSign(flow) + ' 净流' : '需上月数据') + (isInvestmentView ? '（仅投资）' : '');
+  const flowEl = document.getElementById('hero-stat-flow');
+  if (flowEl) flowEl.className = 'hero-stat-value ' + flowState;
+  const flowSubEl = document.getElementById('hero-stat-flow-sub');
+  if (flowSubEl) flowSubEl.textContent = (flow > 0 ? '本月净流入' : (flow < 0 ? '本月净流出' : '无流动')) + (isInvestmentView ? '（仅投资）' : '');
+  const ytdEl = document.getElementById('hero-stat-ytd');
+  if (ytdEl) ytdEl.className = 'hero-stat-value ' + ytdState;
+  const ytdSubEl = document.getElementById('hero-stat-ytd-sub');
+  if (ytdSubEl) ytdSubEl.textContent = yearOfLatest + ' 年内 · 仅市场盈亏' + (isInvestmentView ? '（仅投资）' : '');
   const colorInk = getCSSVar('--ink');
   const colorMute = getCSSVar('--ink-3');
   const colorGrid = getCSSVar('--chart-grid');
@@ -5339,77 +5473,6 @@ function renderDashboard() {
     },
   });
 
-  // 收益走势 · Dashboard 图表
-  const retCanvas = document.getElementById('chart-returns-dashboard');
-  if (retCanvas && retMetrics.series && retMetrics.series.length > 0) {
-    const retLabels = retMetrics.series.map(p => p.month.slice(5) + '月');
-    const retTwr = retMetrics.series.map(p => p.twrCum * 100);
-    const retSimple = retMetrics.series.map(p => p.simpleCum * 100);
-    charts.returnsDash = new Chart(retCanvas, {
-      type: 'line',
-      data: {
-        labels: retLabels,
-        datasets: [
-          {
-            label: 'TWR 累计',
-            data: retTwr,
-            borderColor: colorAccent,
-            backgroundColor: (ctx) => {
-              const c = ctx.chart.ctx;
-              const g = c.createLinearGradient(0, 0, 0, 280);
-              const rgb = hexToRgb(colorAccent);
-              g.addColorStop(0, `rgba(${rgb},0.12)`);
-              g.addColorStop(1, `rgba(${rgb},0)`);
-              return g;
-            },
-            fill: true,
-            tension: 0.3,
-            borderWidth: 2.5,
-            pointRadius: 3,
-            pointBackgroundColor: colorAccent,
-            pointBorderColor: colorBg,
-            pointBorderWidth: 2,
-          },
-          {
-            label: '简单累计',
-            data: retSimple,
-            borderColor: '#38bdf8',
-            backgroundColor: 'rgba(56,189,248,0.04)',
-            fill: true,
-            tension: 0.3,
-            borderWidth: 2,
-            pointRadius: 2,
-            pointBackgroundColor: '#38bdf8',
-            pointBorderColor: colorBg,
-            pointBorderWidth: 1.5,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 1000, easing: 'easeOutQuart' },
-        plugins: {
-          legend: {
-            position: 'top', align: 'end',
-            labels: { boxWidth: 16, boxHeight: 4, padding: 16, font: { size: 12, family: "'Inter', sans-serif" }, usePointStyle: true, pointStyle: 'line' },
-          },
-          tooltip: {
-            backgroundColor: colorTooltipBg, borderColor: colorLine, borderWidth: 1,
-            titleColor: colorInk, bodyColor: colorInk, padding: 12, cornerRadius: 10,
-            callbacks: { label: (ctx) => '  ' + ctx.dataset.label + ': ' + (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y.toFixed(2) + '%' },
-          },
-        },
-        scales: {
-          x: { grid: { display: false }, border: { display: false }, ticks: { color: colorMute } },
-          y: {
-            grid: { color: colorGrid }, border: { display: false },
-            ticks: { color: colorMute, callback: (v) => (v >= 0 ? '+' : '') + v.toFixed(1) + '%' },
-          },
-        },
-      },
-    });
-  }
 
 }
 
