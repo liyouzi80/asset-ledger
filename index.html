@@ -3429,6 +3429,23 @@ function monthlyPnL(curr, prev) {
   return snapshotTotal(curr) - prevTotal - snapshotFlow(curr);
 }
 
+function getActiveAccountIds() {
+  return new Set(state.accounts.filter(a => {
+    if (a.archived) return false;
+    if (state.viewMode === 'investment') return a.tag === 'investment' || a.tag === 'credit' || a.tag === 'long-term';
+    return true;
+  }).map(a => a.id));
+}
+
+function filterSnapshotEntries(snap, idSet) {
+  if (!snap) return null;
+  const entries = {};
+  for (const [id, v] of Object.entries(snap.entries)) {
+    if (idSet.has(id)) entries[id] = v;
+  }
+  return { ...snap, entries };
+}
+
 // ============================================================
 // 导航
 // ============================================================
@@ -3709,18 +3726,21 @@ function renderDrawer() {
       body.innerHTML = '<div class="drawer-empty">该月份无数据</div>';
       return;
     }
-    const flow = snapshotFlow(curr);
+    const activeIds = getActiveAccountIds();
+    const filteredCurr = filterSnapshotEntries(curr, activeIds);
+    const flow = snapshotFlow(filteredCurr);
     amountEl.textContent = fmtSign(flow);
     amountEl.className = 'drawer-amount ' + (flow > 0 ? 'pos' : flow < 0 ? 'neg' : '');
 
-    body.innerHTML = renderFlowView(curr);
+    body.innerHTML = renderFlowView(filteredCurr);
   } else if (type === 'ytd') {
     const year = (month || sorted[sorted.length - 1].month).slice(0, 4);
     const yearSnaps = sorted.filter(s => s.month.startsWith(year));
+    const activeIdsYtd = getActiveAccountIds();
     let ytdPnL = 0;
     for (const s of yearSnaps) {
       const p = sorted[sorted.indexOf(s) - 1] || null;
-      ytdPnL += monthlyPnL(s, p);
+      ytdPnL += monthlyPnL(filterSnapshotEntries(s, activeIdsYtd), filterSnapshotEntries(p, activeIdsYtd));
     }
     eyebrow.textContent = '年内累计盈亏';
     title.textContent = year + ' 年';
@@ -3745,10 +3765,12 @@ function renderDrawer() {
   }
 }
 
-// 计算每个账户对当月盈亏的贡献（只列有变化或入金的账户）
+// 计算每个账户对当月盈亏的贡献（只列有变化或入金的账户，遵循当前视图过滤）
 function computePnLRows(curr, prev) {
+  const activeIds = getActiveAccountIds();
   const rows = [];
   for (const a of state.accounts) {
+    if (!activeIds.has(a.id)) continue;
     const currE = curr.entries[a.id];
     const prevE = prev ? prev.entries[a.id] : null;
     if (!currE && !prevE) continue;
@@ -3845,9 +3867,11 @@ function renderPnLByGroup(rows) {
 }
 
 function renderFlowView(snap) {
+  const activeIds = getActiveAccountIds();
   const inflows = [];
   const outflows = [];
   for (const a of state.accounts) {
+    if (!activeIds.has(a.id)) continue;
     const e = snap.entries[a.id];
     if (!e || !e.flow) continue;
     const f = Number(e.flow) || 0;
@@ -4151,14 +4175,17 @@ function renderYtdView(year, yearSnaps, allSorted) {
   if (yearSnaps.length === 0) {
     return '<div class="drawer-empty">' + year + ' 年尚无快照</div>';
   }
-  // 计算每月数据
+  const activeIds = getActiveAccountIds();
+  // 计算每月数据（过滤视图）
   const monthRows = yearSnaps.map(s => {
     const idx = allSorted.indexOf(s);
     const prev = idx > 0 ? allSorted[idx - 1] : null;
+    const filteredS = filterSnapshotEntries(s, activeIds);
+    const filteredP = filterSnapshotEntries(prev, activeIds);
     return {
       month: s.month,
-      pnl: monthlyPnL(s, prev),
-      flow: snapshotFlow(s),
+      pnl: monthlyPnL(filteredS, filteredP),
+      flow: snapshotFlow(filteredS),
     };
   });
   monthRows.sort((a, b) => b.month.localeCompare(a.month)); // 最新在前
@@ -4198,6 +4225,7 @@ function renderYtdView(year, yearSnaps, allSorted) {
     const idx = allSorted.indexOf(s);
     const prev = idx > 0 ? allSorted[idx - 1] : null;
     for (const a of state.accounts) {
+      if (!activeIds.has(a.id)) continue;
       const currE = s.entries[a.id];
       const prevE = prev ? prev.entries[a.id] : null;
       if (!currE && !prevE) continue;
@@ -4327,20 +4355,9 @@ function renderDashboard() {
     return;
   }
 
-  const activeAccIds = new Set(state.accounts.filter(a => {
-    if (a.archived) return false;
-    if (state.viewMode === 'investment') return a.tag === 'investment' || a.tag === 'credit' || a.tag === 'long-term';
-    return true;
-  }).map(a => a.id));
+  const activeAccIds = getActiveAccountIds();
   const isInvestmentView = state.viewMode === 'investment';
-  function onlyActive(snap) {
-    if (!snap) return null;
-    const entries = {};
-    for (const [id, v] of Object.entries(snap.entries)) {
-      if (activeAccIds.has(id)) entries[id] = v;
-    }
-    return { ...snap, entries };
-  }
+  function onlyActive(snap) { return filterSnapshotEntries(snap, activeAccIds); }
 
   const latest = sorted[sorted.length - 1];
   const prev = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
