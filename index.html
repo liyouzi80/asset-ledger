@@ -2440,7 +2440,7 @@
     </div>
     <div class="history-toolbar">
       <input type="text" id="history-search" placeholder="搜索月份…" class="history-search">
-      <div style="display:flex;gap:6px;align-items:center">
+      <div style="display:flex;gap:6px;align-items:center;margin-left:auto;">
         <div class="nav" id="history-view-toggle" style="margin-right:4px">
           <button data-hview="list" class="active">列表</button>
           <button data-hview="matrix">对照表</button>
@@ -2829,12 +2829,11 @@ async function dbPut(store, obj) {
 }
 
 async function dbClearAll() {
-  // 写入随机垃圾让原密码无法解开 → 等同于"重置"
-  // （没做 DELETE 端点是为了保持后端代码极简）
   const dummySalt = bufToB64(randomBytes(16));
   const dummyVerifier = { iv: bufToB64(randomBytes(12)), cipher: bufToB64(randomBytes(32)) };
   await apiPost('/api/meta', { salt: dummySalt, verifier: dummyVerifier });
   await apiPost('/api/vault', { payload: { iv: bufToB64(randomBytes(12)), cipher: bufToB64(randomBytes(16)) } });
+  clearLocalMirror();
 }
 
 async function openDB() { /* 不再需要；保留空函数让上层 init 流程不变 */ }
@@ -3684,18 +3683,21 @@ function debounce(fn, ms) {
 // ============================================================
 // 计算
 // ============================================================
+// 计算（直接解析字符串进入 Big 引擎，拦截 null/undefined）
+// ============================================================
+function toBig(val) {
+  return new Big(val || 0);
+}
 function getSortedSnapshots() {
   return [...state.snapshots].sort((a, b) => a.month.localeCompare(b.month));
 }
 function snapshotTotal(snap) {
   if (!snap) return 0;
-  const sum = Object.values(snap.entries || {}).reduce((s, e) => s.plus(new Big(e.balance || '0')), Big(0));
-  return sum.toNumber();
+  return Object.values(snap.entries || {}).reduce((s, e) => s.plus(toBig(e.balance)), Big(0)).toNumber();
 }
 function snapshotFlow(snap) {
   if (!snap) return 0;
-  const sum = Object.values(snap.entries || {}).reduce((s, e) => s.plus(new Big(e.flow || '0')), Big(0));
-  return sum.toNumber();
+  return Object.values(snap.entries || {}).reduce((s, e) => s.plus(toBig(e.flow)), Big(0)).toNumber();
 }
 function monthlyPnL(curr, prev) {
   if (!curr) return 0;
@@ -3934,9 +3936,9 @@ function openAccountTrend(accId) {
       const startBal = new Big(prevE.balance || '0').abs();
       const endBal = new Big(e.balance || '0').abs();
       const flow = new Big(e.flow || '0');
-      const halfFlow = flow.abs().div(2);
-      if (startBal.plus(halfFlow).gt(0)) {
-        accumReturn = accumReturn.times(endBal.minus(flow.div(2)).div(startBal.plus(flow.div(2))));
+      const denominator = startBal.plus(flow.div(2));
+      if (!denominator.eq(0)) {
+        accumReturn = accumReturn.times(endBal.minus(flow.div(2)).div(denominator));
       }
     }
     twr = accumReturn.minus(1).toNumber();
@@ -4391,6 +4393,16 @@ function valueOfIndicator(p, indicator) {
 }
 function renderReturnsModule(allSorted, onlyActive) {
   if (!allSorted || allSorted.length === 0) return;
+
+  // 补齐图表需要的颜色变量，防止作用域穿透导致的 ReferenceError
+  const colorGreen = getCSSVar('--green');
+  const colorRed = getCSSVar('--red');
+  const colorBg = getCSSVar('--bg-1');
+  const colorTooltipBg = getCSSVar('--tooltip-bg');
+  const colorLine = getCSSVar('--sep-strong');
+  const colorInk = getCSSVar('--ink');
+  const colorMute = getCSSVar('--ink-3');
+  const colorGrid = getCSSVar('--chart-grid');
 
   // 1. 切片：按 returnPeriod 取所需 snapshots（含期初）
   const period = state.returnPeriod || 'ytd';
@@ -5402,11 +5414,12 @@ function loadDraft(month) {
 }
 
 let draftSaveTimer = null;
-function autoSaveDraft() {
+// monthKey 参数通过闭包锁定，防止切月份时草稿错位串台
+function autoSaveDraft(monthKey) {
   if (draftSaveTimer) clearTimeout(draftSaveTimer);
   draftSaveTimer = setTimeout(() => {
     try {
-      localStorage.setItem(draftKey(state.editingMonth), JSON.stringify(state.editingDraft));
+      localStorage.setItem(draftKey(monthKey), JSON.stringify(state.editingDraft));
     } catch {}
   }, 500);
 }
@@ -5567,18 +5580,19 @@ function renderEntry() {
     }
   }, 250);
 
-  container.querySelectorAll('input').forEach(inp => {
-    inp.addEventListener('input', (e) => {
+  // 事件委托：替代循环绑定，防止内存泄漏并确保动态添加的输入框也生效
+  container.oninput = (e) => {
+    if (e.target.tagName === 'INPUT' && e.target.hasAttribute('data-acc')) {
       const accId = e.target.dataset.acc;
       const field = e.target.dataset.field;
       state.editingDraft[accId][field] = e.target.value;
       setEntryDirty(true);
-      autoSaveDraft();
+      autoSaveDraft(state.editingMonth);
       if (field === 'balance') {
         debouncedBalanceUpdate(accId, e.target.value, e.target);
       }
-    });
-  });
+    }
+  };
 
   // Enter 跳转下一个输入框
   container.addEventListener('keydown', (e) => {
