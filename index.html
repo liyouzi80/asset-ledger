@@ -537,6 +537,132 @@
   .pos { color: var(--green) !important; }
   .neg { color: var(--red) !important; }
 
+  /* 投资视图切换 */
+  .view-toggle {
+    display: inline-flex;
+    background: var(--bg-2);
+    border-radius: 9px;
+    padding: 2px;
+    margin-bottom: 20px;
+  }
+  [data-theme="light"] .view-toggle { background: var(--bg-3); }
+  .view-toggle button {
+    background: none;
+    border: none;
+    color: var(--ink-3);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    padding: 6px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .view-toggle button:hover { color: var(--ink-2); }
+  .view-toggle button.active {
+    background: var(--bg-1);
+    color: var(--ink);
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+  }
+  [data-theme="light"] .view-toggle button.active { background: #ffffff; }
+
+  /* 标签徽章 */
+  .tag-badge {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 2px 7px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+  .tag-badge.investment { background: var(--accent-soft); color: var(--accent); }
+  .tag-badge.cash { background: var(--green-soft); color: var(--green); }
+  .tag-badge.liability { background: var(--red-soft); color: var(--red); }
+
+  /* 目标偏离提示 */
+  .alloc-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; }
+  .alloc-row .label { flex: 1; color: var(--ink-2); font-weight: 500; }
+  .alloc-row .bar-wrap { flex: 2; height: 6px; background: var(--bg-3); border-radius: 3px; overflow: hidden; position: relative; }
+  .alloc-row .bar-fill { height: 100%; border-radius: 3px; position: absolute; left: 0; }
+  .alloc-row .bar-fill.current { background: var(--accent); z-index: 2; }
+  .alloc-row .bar-fill.target { background: var(--ink-4); width: 3px; z-index: 3; border-radius: 0; }
+  .alloc-row .pct { min-width: 50px; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-3); }
+  .alloc-row.deviated .label { color: var(--yellow); }
+  .alloc-row.deviated .bar-fill.current { background: var(--yellow); }
+
+  /* 备份提醒徽章 */
+  .backup-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: var(--yellow);
+    color: #000;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    white-space: nowrap;
+    animation: badgePulse 2s ease-in-out infinite;
+  }
+  @keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+  }
+  .btn-badge-wrap { position: relative; display: inline-flex; }
+
+  /* 对照表容器 */
+  .matrix-wrap {
+    overflow-x: auto;
+    background: var(--bg-1);
+    border: 0.5px solid var(--sep);
+    border-radius: 16px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .matrix-table { border-collapse: collapse; font-size: 12px; min-width: 100%; }
+  .matrix-table th, .matrix-table td {
+    padding: 8px 12px;
+    text-align: right;
+    border-bottom: 0.5px solid var(--sep);
+    white-space: nowrap;
+  }
+  .matrix-table th {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--ink-3);
+    position: sticky;
+    top: 0;
+    background: var(--bg-1);
+    z-index: 2;
+  }
+  .matrix-table th.group-header {
+    text-align: center;
+    background: var(--bg-2);
+    font-size: 12px;
+    color: var(--ink-2);
+    letter-spacing: 0.04em;
+  }
+  .matrix-table td:first-child, .matrix-table th:first-child {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: var(--bg-1);
+    z-index: 1;
+    font-weight: 500;
+  }
+  .matrix-table th:first-child { z-index: 3; }
+  .matrix-table tbody tr:hover td {
+    background: var(--bg-2);
+  }
+  .matrix-table td.mono {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .matrix-table td.neg-val { color: var(--red); }
+
   /* =====================================================
      区块标题
   ===================================================== */
@@ -2006,6 +2132,11 @@
       </div>
     </div>
 
+    <div class="view-toggle" id="view-toggle">
+      <button data-view="all" class="active">总览</button>
+      <button data-view="investment">仅投资资产</button>
+    </div>
+
     <div class="kpi-row">
       <div class="kpi-card clickable" data-drill="pnl">
         <div class="kpi-accent pos"></div>
@@ -2050,9 +2181,10 @@
         <div class="chart-wrap tall"><canvas id="chart-total"></canvas></div>
       </div>
       <div class="chart-card reveal reveal-delay-2">
-        <h3>资产分布</h3>
+        <div style="display:flex;align-items:center;justify-content:space-between"><h3>资产分布</h3><button class="icon-btn" id="open-target-config" title="目标配置" style="padding:2px 8px">⚙ 目标</button></div>
         <div class="desc">最新月份各分组占比</div>
         <div class="chart-wrap tall"><canvas id="chart-pie"></canvas></div>
+        <div id="target-deviation" style="margin-top:16px"></div>
       </div>
     </div>
 
@@ -2113,6 +2245,10 @@
     <div class="history-toolbar">
       <input type="text" id="history-search" placeholder="搜索月份…" class="history-search">
       <div style="display:flex;gap:6px;align-items:center">
+        <div class="nav" id="history-view-toggle" style="margin-right:4px">
+          <button data-hview="list" class="active">列表</button>
+          <button data-hview="matrix">对照表</button>
+        </div>
         <input type="month" id="history-compare-a" class="month-pick" style="width:auto;padding:5px 10px;font-size:12px">
         <span style="color:var(--ink-3);font-size:12px">vs</span>
         <input type="month" id="history-compare-b" class="month-pick" style="width:auto;padding:5px 10px;font-size:12px">
@@ -2127,7 +2263,7 @@
     <div>资产负债表</div>
     <div class="actions">
       <button id="manage-passkey">管理 Passkey</button>
-      <button id="export-data">导出加密备份</button>
+      <span class="btn-badge-wrap" id="export-data-wrap"><button id="export-data">导出加密备份</button></span>
       <button id="import-data">导入加密备份</button>
       <input type="file" id="import-file" accept=".json,.enc" style="display:none">
       <button id="change-password">修改主密码</button>
@@ -2154,6 +2290,7 @@
     <div class="drawer-mode-tabs">
       <button data-drawer-mode="brief" class="active">简明</button>
       <button data-drawer-mode="full">完整</button>
+      <button data-drawer-mode="grouped">按分组</button>
     </div>
   </div>
   <div class="drawer-body" id="drawer-body"></div>
@@ -2177,6 +2314,14 @@
       <select id="acc-type">
         <option value="asset">资产</option>
         <option value="liability">负债（自动从总资产扣除）</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>资金属性</label>
+      <select id="acc-tag">
+        <option value="investment">投资资产</option>
+        <option value="cash">生活流动资金</option>
+        <option value="liability">负债</option>
       </select>
     </div>
     <div class="modal-actions">
@@ -2235,6 +2380,33 @@
       <button class="btn btn-ghost btn-sm" id="passkey-modal-cancel">关闭</button>
       <button class="btn btn-sm" id="passkey-add" style="display:none">＋ 添加 Passkey</button>
       <button class="btn btn-danger btn-sm" id="passkey-remove" style="display:none">删除 Passkey</button>
+    </div>
+  </div>
+</div>
+
+<!-- 重大变化确认弹窗 -->
+<div class="modal-backdrop" id="anomaly-modal">
+  <div class="modal">
+    <h3>⚠️ 重大变化提醒</h3>
+    <p style="font-size:13px;color:var(--ink-3);margin-bottom:8px">以下账户较上月变化超过 <span id="anomaly-threshold-pct" style="font-weight:700;color:var(--yellow)">20%</span>，请确认数据无误：</p>
+    <div id="anomaly-list" style="margin-bottom:16px;max-height:240px;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="anomaly-cancel">返回修改</button>
+      <button class="btn btn-sm" id="anomaly-confirm">确认无误，保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 目标配置弹窗 -->
+<div class="modal-backdrop" id="target-modal">
+  <div class="modal">
+    <h3>目标配置占比</h3>
+    <p style="font-size:13px;color:var(--ink-3);margin-bottom:12px">设定每个分组的理想占比。当实际偏离超过 5% 时，概览页会提示。</p>
+    <div id="target-inputs"></div>
+    <div style="font-size:13px;margin-top:8px;text-align:right;font-weight:600" id="target-total-hint">合计：<span id="target-total-pct">100</span>%</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="target-cancel">取消</button>
+      <button class="btn btn-sm" id="target-save">保存</button>
     </div>
   </div>
 </div>
@@ -2555,30 +2727,30 @@ async function offerLocalRestore(mirror) {
 // ============================================================
 const DEFAULT_GROUP_ORDER = ['美股券商', '港股 / 港币账户', 'A 股券商', '大陆银行', '移动支付', '信用卡', '其他资产'];
 const DEFAULT_ACCOUNTS = [
-  { group: '美股券商', name: '美股账户 1', type: 'asset' },
-  { group: '美股券商', name: '美股账户 2', type: 'asset' },
-  { group: '美股券商', name: '美股账户 3', type: 'asset' },
-  { group: '美股券商', name: '美股账户 4', type: 'asset' },
-  { group: '港股 / 港币账户', name: '香港银行 1', type: 'asset' },
-  { group: '港股 / 港币账户', name: '香港银行 2', type: 'asset' },
-  { group: '港股 / 港币账户', name: '香港银行 3', type: 'asset' },
-  { group: 'A 股券商', name: 'A 股账户 1', type: 'asset' },
-  { group: 'A 股券商', name: 'A 股账户 2', type: 'asset' },
-  { group: 'A 股券商', name: 'A 股账户 3', type: 'asset' },
-  { group: '大陆银行', name: '大陆银行 1', type: 'asset' },
-  { group: '移动支付', name: '支付宝', type: 'asset' },
-  { group: '移动支付', name: '微信', type: 'asset' },
-  { group: '信用卡', name: '大陆信用卡 1', type: 'liability' },
-  { group: '信用卡', name: '大陆信用卡 2', type: 'liability' },
-  { group: '其他资产', name: '其他收入', type: 'asset' },
-  { group: '其他资产', name: '外部欠款（应收）', type: 'asset' },
+  { group: '美股券商', name: '美股账户 1', type: 'asset', tag: 'investment' },
+  { group: '美股券商', name: '美股账户 2', type: 'asset', tag: 'investment' },
+  { group: '美股券商', name: '美股账户 3', type: 'asset', tag: 'investment' },
+  { group: '美股券商', name: '美股账户 4', type: 'asset', tag: 'investment' },
+  { group: '港股 / 港币账户', name: '香港银行 1', type: 'asset', tag: 'investment' },
+  { group: '港股 / 港币账户', name: '香港银行 2', type: 'asset', tag: 'investment' },
+  { group: '港股 / 港币账户', name: '香港银行 3', type: 'asset', tag: 'investment' },
+  { group: 'A 股券商', name: 'A 股账户 1', type: 'asset', tag: 'investment' },
+  { group: 'A 股券商', name: 'A 股账户 2', type: 'asset', tag: 'investment' },
+  { group: 'A 股券商', name: 'A 股账户 3', type: 'asset', tag: 'investment' },
+  { group: '大陆银行', name: '大陆银行 1', type: 'asset', tag: 'cash' },
+  { group: '移动支付', name: '支付宝', type: 'asset', tag: 'cash' },
+  { group: '移动支付', name: '微信', type: 'asset', tag: 'cash' },
+  { group: '信用卡', name: '大陆信用卡 1', type: 'liability', tag: 'liability' },
+  { group: '信用卡', name: '大陆信用卡 2', type: 'liability', tag: 'liability' },
+  { group: '其他资产', name: '其他收入', type: 'asset', tag: 'cash' },
+  { group: '其他资产', name: '外部欠款（应收）', type: 'asset', tag: 'cash' },
 ];
 function buildDefaultData() {
   let i = 1;
   const accounts = DEFAULT_ACCOUNTS.map(a => ({
-    id: 'a' + Date.now() + '-' + (i++), order: i, ...a,
+    id: 'a' + Date.now() + '-' + (i++), order: i, tag: a.tag || 'cash', ...a,
   }));
-  return { accounts, snapshots: [], groupOrder: [...DEFAULT_GROUP_ORDER] };
+  return { accounts, snapshots: [], groupOrder: [...DEFAULT_GROUP_ORDER], targetAllocation: {} };
 }
 
 // ============================================================
@@ -2599,7 +2771,22 @@ let state = {
   lockMode: 'passkey',    // 当前 UI 模式：passkey | password
   lastKnownUpdatedAt: 0,  // 服务器端 vault 最新时间戳（冲突检测用）
   cachedMeta: null,       // 解锁后缓存的 meta，避免 persistVault 每次额外 fetch
+  viewMode: 'all',        // 'all' | 'investment' —— 投资资产独立视图
+  targetAllocation: {},   // { [groupName]: percentage } —— 目标配置占比
+  anomalyThreshold: 0.2,  // 重大变化提醒阈值，默认 ±20%
+  historyView: 'list',    // 'list' | 'matrix' —— 历史页视图模式
 };
+
+function migrateAccounts(accounts) {
+  // 向后兼容：为旧账户补充 tag 字段
+  for (const a of accounts) {
+    if (!a.tag) {
+      a.tag = a.type === 'liability' ? 'liability' :
+        (a.group && (a.group.includes('券商') || a.group.includes('港股') || a.group.includes('A 股'))) ? 'investment' : 'cash';
+    }
+  }
+  return accounts;
+}
 
 // ============================================================
 // 主题
@@ -2661,6 +2848,7 @@ async function persistVault() {
     accounts: state.accounts,
     snapshots: state.snapshots,
     groupOrder: state.groupOrder,
+    targetAllocation: state.targetAllocation,
   }, state.masterKey);
   await dbPut('vault', { id: 'main', payload });
 
@@ -2716,9 +2904,10 @@ async function refreshFromCloud() {
       return;
     }
     const decrypted = await decryptJSON(vaultResp.payload, state.masterKey);
-    state.accounts = decrypted.accounts || [];
+    state.accounts = migrateAccounts(decrypted.accounts || []);
     state.snapshots = decrypted.snapshots || [];
     state.groupOrder = decrypted.groupOrder || [];
+    state.targetAllocation = decrypted.targetAllocation || {};
     state.lastKnownUpdatedAt = vaultResp.updated_at || 0;
 
     if (state.current === 'dashboard') renderDashboard();
@@ -2820,9 +3009,10 @@ async function unlockOrInit() {
       const vault = await dbGet('vault');
       if (vault) {
         const data = await decryptJSON(vault.payload, state.masterKey);
-        state.accounts = data.accounts || [];
+        state.accounts = migrateAccounts(data.accounts || []);
         state.snapshots = data.snapshots || [];
         state.groupOrder = data.groupOrder && data.groupOrder.length ? data.groupOrder : [...DEFAULT_GROUP_ORDER];
+        state.targetAllocation = data.targetAllocation || {};
         enterApp();
         return;
       }
@@ -3064,9 +3254,10 @@ async function loadVaultIntoState() {
   const vault = await dbGet('vault');
   if (vault) {
     const data = await decryptJSON(vault.payload, state.masterKey);
-    state.accounts = data.accounts || [];
+    state.accounts = migrateAccounts(data.accounts || []);
     state.snapshots = data.snapshots || [];
     state.groupOrder = data.groupOrder && data.groupOrder.length ? data.groupOrder : [...DEFAULT_GROUP_ORDER];
+    state.targetAllocation = data.targetAllocation || {};
 
     // 自动修复历史月份格式不规范的快照（如 '2026-4' → '2026-04'）
     let needRepersist = false;
@@ -3284,6 +3475,24 @@ function monthlyPnL(curr, prev) {
 // ============================================================
 // 导航
 // ============================================================
+function updateBackupBadge() {
+  const wrap = document.getElementById('export-data-wrap');
+  if (!wrap) return;
+  const existing = wrap.querySelector('.backup-badge');
+  const lastBackup = parseInt(localStorage.getItem('asset-ledger-last-backup') || '0');
+  const sevenDays = 7 * 24 * 3600 * 1000;
+  if (lastBackup && (Date.now() - lastBackup > sevenDays)) {
+    if (!existing) {
+      const badge = document.createElement('span');
+      badge.className = 'backup-badge';
+      badge.textContent = '该备份了';
+      wrap.appendChild(badge);
+    }
+  } else if (existing) {
+    existing.remove();
+  }
+}
+
 function navTo(page) {
   // 离开旧页面前清理图表实例，防止内存泄漏
   const prev = state.current;
@@ -3292,7 +3501,7 @@ function navTo(page) {
   state.current = page;
   document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
-  if (page === 'dashboard') renderDashboard();
+  if (page === 'dashboard') { renderDashboard(); updateBackupBadge(); }
   if (page === 'entry') renderEntry();
   if (page === 'history') renderHistory();
   // 切换页面时关闭抽屉（清理趋势图）
@@ -3303,6 +3512,15 @@ document.querySelectorAll('.nav button').forEach(b => {
   b.addEventListener('click', () => navTo(b.dataset.page));
 });
 document.getElementById('brand-home').addEventListener('click', () => navTo('dashboard'));
+
+// 投资视图切换
+document.querySelectorAll('#view-toggle button').forEach(b => {
+  b.addEventListener('click', () => {
+    state.viewMode = b.dataset.view;
+    document.querySelectorAll('#view-toggle button').forEach(x => x.classList.toggle('active', x === b));
+    renderDashboard();
+  });
+});
 
 // ============================================================
 // 抽屉 · drill-down 明细
@@ -3367,13 +3585,53 @@ function openAccountTrend(accId) {
     return e ? (Number(e.balance) || 0) : null;
   });
   const latestBal = data[data.length - 1] || 0;
-  document.getElementById('drawer-eyebrow').textContent = '余额趋势';
+  document.getElementById('drawer-eyebrow').textContent = '账户钻取';
   document.getElementById('drawer-title').textContent = acc.name + (acc.type === 'liability' ? '（负债）' : '');
   document.getElementById('drawer-amount').textContent = fmt(Math.abs(latestBal));
   document.getElementById('drawer-amount').className = 'drawer-amount';
   document.getElementById('drawer-toolbar').style.display = 'none';
+
+  // 计算累计指标
+  let cumPnL = 0, cumFlow = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    const e = sorted[i].entries[accId];
+    if (!e) continue;
+    const bal = Number(e.balance) || 0;
+    const flow = Number(e.flow) || 0;
+    cumFlow += flow;
+    if (i > 0) {
+      const prevE = sorted[i - 1].entries[accId];
+      const prevBal = prevE ? (Number(prevE.balance) || 0) : 0;
+      cumPnL += (bal - prevBal - flow);
+    }
+  }
+  // 简易 TWR（近似 Dietz）
+  let twr = null;
+  if (sorted.length >= 2) {
+    let accumReturn = 1;
+    for (let i = 1; i < sorted.length; i++) {
+      const e = sorted[i].entries[accId];
+      const prevE = sorted[i - 1].entries[accId];
+      if (!e || !prevE) continue;
+      const startBal = Math.abs(Number(prevE.balance) || 0);
+      const endBal = Math.abs(Number(e.balance) || 0);
+      const flow = Number(e.flow) || 0;
+      if (startBal + Math.abs(flow) / 2 > 0) {
+        accumReturn *= (endBal - flow / 2) / (startBal + flow / 2);
+      }
+    }
+    twr = accumReturn - 1;
+  }
+
   const body = document.getElementById('drawer-body');
-  body.innerHTML = '<div style="margin-bottom:4px;font-size:13px;font-weight:600;color:var(--ink-3)">各月余额</div>' +
+  const pnlClass = cumPnL >= 0 ? 'pos' : 'neg';
+  const twrClass = twr !== null && twr >= 0 ? 'pos' : 'neg';
+  body.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">' +
+    '<div style="background:var(--bg-2);border-radius:12px;padding:12px;text-align:center"><div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">累计盈亏</div><div style="font-family:JetBrains Mono,monospace;font-size:16px;font-weight:600;color:var(--' + (cumPnL >= 0 ? 'green' : 'red') + ')">' + fmtSign(cumPnL) + '</div></div>' +
+    '<div style="background:var(--bg-2);border-radius:12px;padding:12px;text-align:center"><div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">累计入金</div><div style="font-family:JetBrains Mono,monospace;font-size:16px;font-weight:600">' + fmtSign(cumFlow) + '</div></div>' +
+    '<div style="background:var(--bg-2);border-radius:12px;padding:12px;text-align:center"><div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">TWR</div><div style="font-family:JetBrains Mono,monospace;font-size:16px;font-weight:600;color:var(--' + (twr !== null && twr >= 0 ? 'green' : 'red') + ')">' + (twr !== null ? (twr >= 0 ? '+' : '') + (twr * 100).toFixed(1) + '%' : '—') + '</div></div>' +
+    '</div>' +
+    '<div style="margin-bottom:4px;font-size:13px;font-weight:600;color:var(--ink-3)">各月余额</div>' +
     '<div style="position:relative;height:220px"><canvas id="trend-canvas"></canvas></div>' +
     '<div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px">' +
     labels.map((l, i) => {
@@ -3476,6 +3734,8 @@ function renderDrawer() {
 
     if (mode === 'brief') {
       body.innerHTML = renderBriefView(rows);
+    } else if (mode === 'grouped') {
+      body.innerHTML = renderPnLByGroup(rows);
     } else {
       body.innerHTML = renderFullView(rows);
     }
@@ -3583,6 +3843,47 @@ function renderFullView(rows) {
     </tr>`;
   }
   html += '</tbody></table></div>';
+  return html;
+}
+
+function renderPnLByGroup(rows) {
+  const grouped = {};
+  for (const r of rows) {
+    if (!grouped[r.account.group]) grouped[r.account.group] = { pnl: 0, flow: 0, count: 0 };
+    grouped[r.account.group].pnl += r.pnl;
+    grouped[r.account.group].flow += r.flow;
+    grouped[r.account.group].count++;
+  }
+  const entries = Object.entries(grouped).sort((a, b) => Math.abs(b[1].pnl) - Math.abs(a[1].pnl));
+  const maxPnL = Math.max(...entries.map(e => Math.abs(e[1].pnl)), 1);
+  const totalPnL = entries.reduce((s, e) => s + e[1].pnl, 0);
+
+  let html = '<div class="drawer-section"><div class="drawer-section-title">分组归因</div>';
+  // 汇总
+  const winGroups = entries.filter(e => e[1].pnl > 0);
+  const loseGroups = entries.filter(e => e[1].pnl < 0);
+  const winTotal = winGroups.reduce((s, e) => s + e[1].pnl, 0);
+  const loseTotal = Math.abs(loseGroups.reduce((s, e) => s + e[1].pnl, 0));
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">' +
+    '<div style="background:var(--green-soft);border-radius:10px;padding:10px 14px"><div style="font-size:11px;color:var(--green)">盈利分组</div><div style="font-family:JetBrains Mono,monospace;font-size:18px;font-weight:600;color:var(--green)">' + fmt(winTotal) + '</div><div style="font-size:11px;color:var(--ink-4)">' + winGroups.length + ' 个分组</div></div>' +
+    '<div style="background:var(--red-soft);border-radius:10px;padding:10px 14px"><div style="font-size:11px;color:var(--red)">亏损分组</div><div style="font-family:JetBrains Mono,monospace;font-size:18px;font-weight:600;color:var(--red)">' + fmt(loseTotal) + '</div><div style="font-size:11px;color:var(--ink-4)">' + loseGroups.length + ' 个分组</div></div>' +
+    '</div>';
+
+  for (const [group, data] of entries) {
+    const barW = (Math.abs(data.pnl) / maxPnL * 100).toFixed(0);
+    const isPos = data.pnl >= 0;
+    const cls = isPos ? 'pos' : 'neg';
+    const barColor = isPos ? 'var(--green)' : 'var(--red)';
+    const pct = totalPnL !== 0 ? (data.pnl / totalPnL * 100) : 0;
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--sep)">' +
+      '<span style="flex:0 0 90px;font-size:13px;font-weight:500">' + escapeHtml(group) + '</span>' +
+      '<span style="flex:0 0 32px;font-size:10px;color:var(--ink-4)">×' + data.count + '</span>' +
+      '<span style="flex:1;height:6px;background:var(--bg-3);border-radius:3px;overflow:hidden"><span style="display:block;width:' + barW + '%;height:100%;background:' + barColor + ';border-radius:3px;transition:width 0.5s ease"></span></span>' +
+      '<span style="flex:0 0 80px;font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600;text-align:right;color:var(--' + (isPos ? 'green' : 'red') + ')">' + fmtSign(data.pnl) + '</span>' +
+      '<span style="flex:0 0 46px;font-size:11px;color:var(--ink-4);text-align:right">' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%</span>' +
+      '</div>';
+  }
+  html += '</div>';
   return html;
 }
 
@@ -4069,7 +4370,12 @@ function renderDashboard() {
     return;
   }
 
-  const activeAccIds = new Set(state.accounts.filter(a => !a.archived).map(a => a.id));
+  const activeAccIds = new Set(state.accounts.filter(a => {
+    if (a.archived) return false;
+    if (state.viewMode === 'investment') return a.tag === 'investment';
+    return true;
+  }).map(a => a.id));
+  const isInvestmentView = state.viewMode === 'investment';
   function onlyActive(snap) {
     if (!snap) return null;
     const entries = {};
@@ -4097,7 +4403,8 @@ function renderDashboard() {
 
   // Hero 总资产：拆 ¥ + 整数 + .小数
   renderHeroValue(total);
-  document.getElementById('kpi-total-sub').textContent = '截至 ' + latest.month;
+  document.getElementById('kpi-total-sub').textContent = (isInvestmentView ? '仅投资资产 · ' : '') + '截至 ' + latest.month;
+  document.querySelector('.hero-label').innerHTML = (isInvestmentView ? '投 资 资 产' : '总 资 产') + ' <span class="hero-arrow">›</span>';
 
   // Hero pill: 月对月变化百分比
   const pill = document.getElementById('kpi-total-pill');
@@ -4121,16 +4428,16 @@ function renderDashboard() {
   const ytdState = ytd > 0 ? 'pos' : (ytd < 0 ? 'neg' : 'neutral');
 
   document.getElementById('kpi-pnl').className = 'kpi-value ' + pnlState;
-  document.getElementById('kpi-pnl-sub').textContent = prev ? '已剔除 ' + fmtSign(flow) + ' 净流' : '需上月数据';
+  document.getElementById('kpi-pnl-sub').textContent = (prev ? '已剔除 ' + fmtSign(flow) + ' 净流' : '需上月数据') + (isInvestmentView ? '（仅投资）' : '');
   // 更新 accent bar 和 dot
   const pnlCard = document.querySelector('[data-drill="pnl"]');
   pnlCard.querySelector('.kpi-accent').className = 'kpi-accent ' + pnlState;
   document.getElementById('kpi-flow').className = 'kpi-value';
-  document.getElementById('kpi-flow-sub').textContent = flow > 0 ? '本月净流入' : (flow < 0 ? '本月净流出' : '无流动');
+  document.getElementById('kpi-flow-sub').textContent = (flow > 0 ? '本月净流入' : (flow < 0 ? '本月净流出' : '无流动')) + (isInvestmentView ? '（仅投资）' : '');
   const flowCard = document.querySelector('[data-drill="flow"]');
   flowCard.querySelector('.kpi-accent').className = 'kpi-accent ' + flowState;
   document.getElementById('kpi-ytd').className = 'kpi-value ' + ytdState;
-  document.getElementById('kpi-ytd-sub').textContent = yearOfLatest + ' 年内 · 仅市场盈亏';
+  document.getElementById('kpi-ytd-sub').textContent = yearOfLatest + ' 年内 · 仅市场盈亏' + (isInvestmentView ? '（仅投资）' : '');
   const ytdCard = document.querySelector('[data-drill="ytd"]');
   ytdCard.querySelector('.kpi-accent').className = 'kpi-accent ' + ytdState;
   const colorInk = getCSSVar('--ink');
@@ -4300,6 +4607,8 @@ function renderDashboard() {
       },
     },
   });
+
+  renderTargetAllocation();
 
   // 盈亏柱图（仅活跃账户）
   const pnls = sorted.map((s, i) => monthlyPnL(onlyActive(s), i > 0 ? onlyActive(sorted[i - 1]) : null));
@@ -4546,7 +4855,7 @@ function renderEntry() {
       const carryBadge = isCarryOver ? '<span class="carry-badge">沿用</span>' : '';
 
       row.innerHTML = `
-        <div class="name" style="cursor:pointer" data-acc-trend="${a.id}" title="查看余额趋势">${escapeHtml(a.name)}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.35;flex-shrink:0;margin-left:2px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>${liabilityBadge}${carryBadge}</div>
+        <div class="name" style="cursor:pointer" data-acc-trend="${a.id}" title="查看余额趋势">${escapeHtml(a.name)}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.35;flex-shrink:0;margin-left:2px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>${liabilityBadge}<span class="tag-badge ${a.tag || 'cash'}">${({investment:'投资',cash:'流动',liability:'负债'})[a.tag||'cash']}</span>${carryBadge}</div>
         <input type="number" step="0.01" min="0" data-acc="${a.id}" data-field="balance" value="${draft.balance}" placeholder="${balPlaceholder}" class="${isCarryOver ? 'is-carry' : ''}">
         <input type="number" step="0.01" data-acc="${a.id}" data-field="flow" value="${draft.flow}" placeholder="0">
         <div class="delta" data-delta="${a.id}">${delta !== null ? (delta >= 0 ? '+' : '') + Math.round(delta).toLocaleString('zh-CN') : '—'}</div>
@@ -4664,6 +4973,35 @@ function setEntryDirty(dirty) {
   if (btn) btn.classList.toggle('dirty', dirty);
 }
 
+function checkAnomalies(entries, prevMonthSnap) {
+  if (!prevMonthSnap) return [];
+  const anomalies = [];
+  for (const a of state.accounts) {
+    const newEntry = entries[a.id];
+    const oldEntry = prevMonthSnap.entries[a.id];
+    if (!newEntry || !oldEntry || !oldEntry.balance) continue;
+    const newBal = Math.abs(Number(newEntry.balance) || 0);
+    const oldBal = Math.abs(Number(oldEntry.balance) || 0);
+    if (oldBal === 0) continue;
+    const change = (newBal - oldBal) / oldBal;
+    if (Math.abs(change) > state.anomalyThreshold) {
+      anomalies.push({ account: a, prevBal: oldBal, currBal: newBal, change });
+    }
+  }
+  return anomalies.sort((x, y) => Math.abs(y.change) - Math.abs(x.change));
+}
+
+let pendingAnomalySave = null;
+document.getElementById('anomaly-cancel').addEventListener('click', () => {
+  document.getElementById('anomaly-modal').classList.remove('active');
+  pendingAnomalySave = null;
+});
+document.getElementById('anomaly-confirm').addEventListener('click', async () => {
+  document.getElementById('anomaly-modal').classList.remove('active');
+  if (pendingAnomalySave) await pendingAnomalySave();
+  pendingAnomalySave = null;
+});
+
 // Cmd/Ctrl + Enter 保存
 document.addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && state.current === 'entry') {
@@ -4738,12 +5076,53 @@ document.getElementById('entry-save').addEventListener('click', async () => {
     const monthKey = normalizeMonth(state.editingMonth);
     state.editingMonth = monthKey;
     const snap = { month: monthKey, entries, updatedAt: Date.now() };
+
+    // 重大变化检查
+    const prevMonthSnap = state.snapshots.find(s => s.month === ymPrev(monthKey));
+    const anomalies = checkAnomalies(entries, prevMonthSnap || prev);
+
+    const doSave = async () => {
+      state.snapshots = state.snapshots.filter(s => s.month !== monthKey);
+      state.snapshots.push(snap);
+      await persistVault();
+      clearPersistedDraft(state.editingMonth);
+      showToast(state.editingMonth + ' 快照已保存');
+      renderEntry();
+    };
+
+    if (anomalies.length > 0) {
+      document.getElementById('anomaly-threshold-pct').textContent = Math.round(state.anomalyThreshold * 100) + '%';
+      document.getElementById('anomaly-list').innerHTML = anomalies.map(x => {
+        const dir = x.change > 0 ? '↑' : '↓';
+        const cls = x.change > 0 ? 'pos' : 'neg';
+        return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:0.5px solid var(--sep);font-size:13px">' +
+          '<span style="flex:1;font-weight:500">' + escapeHtml(x.account.name) + '</span>' +
+          '<span style="font-family:JetBrains Mono,monospace;font-size:12px;color:var(--ink-4)">' + fmt(x.prevBal) + '</span>' +
+          '<span style="color:var(--ink-4)">→</span>' +
+          '<span style="font-family:JetBrains Mono,monospace;font-size:12px">' + fmt(x.currBal) + '</span>' +
+          '<span class="' + cls + '" style="font-family:JetBrains Mono,monospace;font-size:12px;font-weight:600;min-width:56px;text-align:right">' + dir + ' ' + Math.abs(x.change * 100).toFixed(1) + '%</span>' +
+          '</div>';
+      }).join('');
+      pendingAnomalySave = async () => {
+        btn.disabled = true; btn.style.opacity = '0.7'; btn.style.pointerEvents = 'none';
+        btn.innerHTML = '<span class="spinner"></span>保存中…';
+        try { await doSave(); } catch (err) {
+          console.error('保存失败:', err);
+          showToast('保存失败：' + (err.message || '未知错误') + '。请检查网络，并导出加密备份。', 'error');
+        } finally {
+          btn.disabled = false; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+          btn.innerHTML = origHTML;
+        }
+      };
+      btn.disabled = false; btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+      btn.innerHTML = origHTML;
+      document.getElementById('anomaly-modal').classList.add('active');
+      return;
+    }
+
     state.snapshots = state.snapshots.filter(s => s.month !== monthKey);
     state.snapshots.push(snap);
-
-    // persistVault 内部已做 3 次带重试的 read-back 校验，无需再重复验证
     await persistVault();
-
     clearPersistedDraft(state.editingMonth);
     showToast(state.editingMonth + ' 快照已保存');
     renderEntry();
@@ -4769,10 +5148,12 @@ function openAccountModal(id, defaultGroup) {
     document.getElementById('acc-name').value = a.name;
     document.getElementById('acc-group').value = a.group;
     document.getElementById('acc-type').value = a.type;
+    document.getElementById('acc-tag').value = a.tag || 'cash';
   } else {
     document.getElementById('acc-name').value = '';
     document.getElementById('acc-group').value = defaultGroup || (getAllGroups()[0] || '');
     document.getElementById('acc-type').value = 'asset';
+    document.getElementById('acc-tag').value = 'investment';
   }
   document.getElementById('group-list').innerHTML = getAllGroups().map(g => `<option value="${escapeHtml(g)}">`).join('');
   document.getElementById('account-modal').classList.add('active');
@@ -4788,13 +5169,14 @@ document.getElementById('acc-save').addEventListener('click', async () => {
   if (!name) { showToast('账户名不能为空', 'error'); return; }
   if (!group) { showToast('分组不能为空', 'error'); return; }
 
+  const tag = document.getElementById('acc-tag').value;
   if (state.editAccId) {
     const acc = state.accounts.find(a => a.id === state.editAccId);
-    acc.name = name; acc.group = group; acc.type = type;
+    acc.name = name; acc.group = group; acc.type = type; acc.tag = tag;
   } else {
     state.accounts.push({
       id: 'a' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
-      name, group, type, order: state.accounts.length + 1,
+      name, group, type, tag, order: state.accounts.length + 1,
     });
   }
   if (!state.groupOrder.includes(group)) state.groupOrder.push(group);
@@ -4871,6 +5253,11 @@ document.getElementById('group-save').addEventListener('click', async () => {
     const idx = state.groupOrder.indexOf(state.editGroupOriginal);
     if (idx >= 0) state.groupOrder[idx] = newName;
     else state.groupOrder.push(newName);
+    // 迁移目标配置中的 key
+    if (state.targetAllocation[state.editGroupOriginal] !== undefined) {
+      state.targetAllocation[newName] = state.targetAllocation[state.editGroupOriginal];
+      delete state.targetAllocation[state.editGroupOriginal];
+    }
   } else {
     if (existing.includes(newName)) { showToast('该分组已存在', 'error'); return; }
     state.groupOrder.push(newName);
@@ -4888,9 +5275,106 @@ async function deleteGroup(group) {
   }
   if (!confirm(`确认删除分组「${group}」？`)) return;
   state.groupOrder = state.groupOrder.filter(g => g !== group);
+  if (state.targetAllocation[group]) delete state.targetAllocation[group];
   await persistVault();
   renderEntry();
   showToast('已删除分组');
+}
+
+// ============================================================
+// 目标配置
+// ============================================================
+function openTargetModal() {
+  const groups = getAllGroups();
+  const inputs = document.getElementById('target-inputs');
+  let total = 0;
+  inputs.innerHTML = groups.map(g => {
+    const pct = state.targetAllocation[g] || 0;
+    total += pct;
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
+      '<span style="flex:0 0 100px;font-size:13px;font-weight:500">' + escapeHtml(g) + '</span>' +
+      '<input type="number" min="0" max="100" value="' + pct + '" data-target-group="' + escapeHtml(g) + '" style="width:70px;text-align:right;font-size:13px;padding:6px 10px">' +
+      '<span style="font-size:12px;color:var(--ink-4)">%</span>' +
+      '</div>';
+  }).join('');
+  document.getElementById('target-total-pct').textContent = total;
+
+  inputs.querySelectorAll('input').forEach(inp => {
+    inp.addEventListener('input', () => {
+      let sum = 0;
+      inputs.querySelectorAll('input').forEach(i => sum += (Number(i.value) || 0));
+      document.getElementById('target-total-pct').textContent = sum;
+      document.getElementById('target-total-pct').style.color = sum === 100 ? 'var(--green)' : 'var(--red)';
+    });
+  });
+
+  document.getElementById('target-modal').classList.add('active');
+  setTimeout(() => inputs.querySelector('input')?.focus(), 50);
+}
+document.getElementById('open-target-config').addEventListener('click', openTargetModal);
+document.getElementById('target-cancel').addEventListener('click', () => {
+  document.getElementById('target-modal').classList.remove('active');
+});
+document.getElementById('target-save').addEventListener('click', async () => {
+  const inputs = document.getElementById('target-inputs').querySelectorAll('input');
+  const alloc = {};
+  let sum = 0;
+  for (const inp of inputs) {
+    const v = Number(inp.value) || 0;
+    alloc[inp.dataset.targetGroup] = v;
+    sum += v;
+  }
+  if (sum !== 100) { showToast('占比总和需为 100%，当前为 ' + sum + '%', 'error'); return; }
+  state.targetAllocation = alloc;
+  await persistVault();
+  document.getElementById('target-modal').classList.remove('active');
+  renderDashboard();
+  showToast('目标配置已保存');
+});
+
+function renderTargetAllocation() {
+  const el = document.getElementById('target-deviation');
+  if (!el) return;
+  const groups = getAllGroups();
+  const hasTarget = Object.keys(state.targetAllocation).some(g => state.targetAllocation[g] > 0);
+  if (!hasTarget) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--ink-4);text-align:center;padding:8px 0">点击「⚙ 目标」设置各分组的理想占比</div>';
+    return;
+  }
+
+  const sorted = getSortedSnapshots();
+  if (sorted.length === 0) { el.innerHTML = ''; return; }
+  const latest = sorted[sorted.length - 1];
+  // 计算当前实际占比
+  let total = 0;
+  const current = {};
+  for (const g of groups) {
+    current[g] = 0;
+    for (const a of state.accounts) {
+      if (a.archived || a.group !== g) continue;
+      const e = latest.entries[a.id];
+      if (e && e.balance) current[g] += Math.abs(Number(e.balance)) || 0;
+    }
+    total += current[g];
+  }
+
+  let html = '<div style="font-size:12px;font-weight:600;color:var(--ink-3);margin-bottom:8px">当前 vs 目标占比</div>';
+  for (const g of groups) {
+    const curPct = total > 0 ? (current[g] / total * 100) : 0;
+    const targetPct = state.targetAllocation[g] || 0;
+    if (targetPct === 0) continue;
+    const diff = Math.abs(curPct - targetPct);
+    const deviated = diff > 5;
+    html += '<div class="alloc-row' + (deviated ? ' deviated' : '') + '">' +
+      '<span class="label">' + escapeHtml(g) + (deviated ? ' ⚠' : '') + '</span>' +
+      '<div class="bar-wrap">' +
+        '<span class="bar-fill current" style="width:' + curPct.toFixed(0) + '%"></span>' +
+        '<span class="bar-fill target" style="left:' + targetPct.toFixed(0) + '%"></span>' +
+      '</div>' +
+      '<span class="pct">' + curPct.toFixed(1) + '% → ' + targetPct + '%</span>' +
+      '</div>';
+  }
+  el.innerHTML = html;
 }
 
 // ============================================================
@@ -4900,6 +5384,7 @@ function renderHistory() {
   const root = document.getElementById('history-content');
   // 清除上次的断月横幅
   document.querySelectorAll('.gap-banner').forEach(el => el.remove());
+  if (state.historyView === 'matrix') { renderMatrixView(); return; }
   const allSorted = getSortedSnapshots().slice().reverse();
   if (allSorted.length === 0) {
     root.innerHTML = '<div class="empty"><div class="glyph">∅</div><p>历史是耐心的回声</p><div class="hint">请先录入第一份月度快照，数据会在这里呈现</div></div>';
@@ -5069,6 +5554,71 @@ document.getElementById('history-compare-a').addEventListener('change', runHisto
 document.getElementById('history-compare-b').addEventListener('change', runHistoryCompare);
 document.getElementById('export-csv').addEventListener('click', exportCSV);
 
+// 历史页视图切换（列表 / 对照表）
+document.querySelectorAll('#history-view-toggle button').forEach(b => {
+  b.addEventListener('click', () => {
+    state.historyView = b.dataset.hview;
+    document.querySelectorAll('#history-view-toggle button').forEach(x => x.classList.toggle('active', x === b));
+    // 搜索和对比工具仅在列表视图有实际作用
+    const isList = state.historyView === 'list';
+    document.getElementById('history-search').style.display = isList ? '' : 'none';
+    document.getElementById('history-compare-a').parentElement.style.display = isList ? '' : 'none';
+    document.getElementById('export-csv').style.display = isList ? '' : 'none';
+    renderHistory();
+  });
+});
+
+function renderMatrixView() {
+  const root = document.getElementById('history-content');
+  const sorted = getSortedSnapshots();
+  if (sorted.length === 0) {
+    root.innerHTML = '<div class="empty"><div class="glyph">∅</div><p>暂无数据</p></div>';
+    return;
+  }
+  const activeAccounts = state.accounts.filter(a => !a.archived);
+  // 按分组聚类
+  const grouped = {};
+  for (const a of activeAccounts) {
+    if (!grouped[a.group]) grouped[a.group] = [];
+    grouped[a.group].push(a);
+  }
+  const groups = state.groupOrder.filter(g => grouped[g] && grouped[g].length > 0);
+  // 展开列顺序：按分组聚类
+  const colAccounts = [];
+  for (const g of groups) {
+    for (const a of grouped[g]) colAccounts.push(a);
+  }
+
+  // 构建表头：两层
+  let html = '<div class="matrix-wrap"><table class="matrix-table"><thead>';
+  html += '<tr><th>月份</th>';
+  for (const g of groups) {
+    const cnt = grouped[g].length;
+    html += '<th class="group-header" colspan="' + cnt + '">' + escapeHtml(g) + '</th>';
+  }
+  html += '<th>总资产</th></tr>';
+  html += '<tr><th></th>';
+  for (const a of colAccounts) {
+    html += '<th>' + escapeHtml(a.name) + '</th>';
+  }
+  html += '<th></th></tr></thead><tbody>';
+
+  for (const s of sorted) {
+    html += '<tr>';
+    html += '<td>' + s.month + '</td>';
+    for (const a of colAccounts) {
+      const e = s.entries[a.id];
+      const bal = e && e.balance !== null && e.balance !== undefined ? Number(e.balance) : null;
+      const cls = bal !== null && bal < 0 ? 'neg-val' : '';
+      html += '<td class="mono ' + cls + '">' + (bal !== null ? Math.abs(bal).toLocaleString('zh-CN') : '—') + '</td>';
+    }
+    html += '<td class="mono" style="font-weight:600">' + snapshotTotal(s).toLocaleString('zh-CN') + '</td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  root.innerHTML = html;
+}
+
 // ============================================================
 // 导入 / 导出 / 重置 / 改密码
 // ============================================================
@@ -5089,6 +5639,8 @@ document.getElementById('export-data').addEventListener('click', async () => {
   a.download = '资产账本-加密备份-' + new Date().toISOString().slice(0, 10) + '.json';
   a.click();
   URL.revokeObjectURL(url);
+  localStorage.setItem('asset-ledger-last-backup', Date.now());
+  updateBackupBadge();
   showToast('已导出加密备份');
 });
 
