@@ -2487,6 +2487,7 @@
       <button id="import-data">导入加密备份</button>
       <input type="file" id="import-file" accept=".json,.enc" style="display:none">
       <button id="change-password">修改主密码</button>
+      <button id="enable-local-backup" style="position:relative">开启本地冷备份<span id="backup-status" style="position:absolute;top:-6px;right:-6px;width:8px;height:8px;border-radius:50%;background:var(--green);display:none"></span></button>
       <button id="reset-data">重置全部</button>
     </div>
   </footer>
@@ -3003,6 +3004,7 @@ let state = {
   returnCustomStart: null, // 自定义期间起始 YYYY-MM
   returnCustomEnd: null,   // 自定义期间结束 YYYY-MM
 };
+let localBackupDirectoryHandle = null;
 
 function migrateAccounts(accounts) {
   // 向后兼容：为旧账户补充 tag 字段
@@ -3106,6 +3108,28 @@ async function persistVault() {
     const meta = state.cachedMeta || await dbGet('meta');
     if (meta) writeLocalMirror(meta, payload);
   } catch (e) { /* 静默 */ }
+
+  // 本地冷备份：每次保存静默落盘到授权目录
+  if (localBackupDirectoryHandle) {
+    try {
+      const fileName = 'asset_ledger_' + new Date().toISOString().slice(0, 10) + '.json';
+      const fileHandle = await localBackupDirectoryHandle.getFileHandle(fileName, { create: true });
+      const writable = await fileHandle.createWritable();
+      const backupData = JSON.stringify({
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        meta: state.cachedMeta || await dbGet('meta'),
+        vault: { payload },
+      });
+      await writable.write(backupData);
+      await writable.close();
+    } catch (err) {
+      console.warn('本地冷备份写入失败，可能权限过期:', err);
+      localBackupDirectoryHandle = null;
+      const statusEl = document.getElementById('backup-status');
+      if (statusEl) statusEl.style.display = 'none';
+    }
+  }
   })();
 }
 
@@ -3771,6 +3795,13 @@ function monthlyPnL(curr, prev) {
 // ============================================================
 function calculateXIRR(cashFlows, guess = 0.1) {
   if (cashFlows.length < 2) return null;
+  // 必须同时存在投入（负）和结余/转出（正）
+  let hasPos = false, hasNeg = false;
+  for (const cf of cashFlows) {
+    if (cf.amount > 0.01) hasPos = true;
+    if (cf.amount < -0.01) hasNeg = true;
+  }
+  if (!hasPos || !hasNeg) return null;
   const maxIter = 100;
   const tol = 1e-6;
   let r = guess;
@@ -3779,10 +3810,11 @@ function calculateXIRR(cashFlows, guess = 0.1) {
     for (let j = 0; j < cashFlows.length; j++) {
       const { amount, days } = cashFlows[j];
       const term = Math.pow(1 + r, days / 365.0);
+      if (isNaN(term) || !isFinite(term)) return null;
       f += amount / term;
       df -= (days / 365.0) * amount / (term * (1 + r));
     }
-    if (Math.abs(df) < 1e-10) return null;
+    if (Math.abs(df) < 1e-10 || isNaN(df) || isNaN(f)) return null;
     const nextR = r - f / df;
     if (Math.abs(nextR - r) < tol) return nextR;
     r = nextR;
@@ -6590,6 +6622,19 @@ document.getElementById('reset-data').addEventListener('click', async () => {
   await dbClearAll();
   lockNow();
   showToast('已重置');
+});
+
+// 本地无感冷备份
+document.getElementById('enable-local-backup').addEventListener('click', async () => {
+  try {
+    localBackupDirectoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    document.getElementById('backup-status').style.display = '';
+    showToast('本地备份目录挂载成功');
+  } catch (e) {
+    if (e.name !== 'AbortError') {
+      showToast('授权失败或浏览器不支持此功能', 'error');
+    }
+  }
 });
 
 // 修改密码
