@@ -444,6 +444,41 @@
     color: var(--ink-3);
   }
   [data-theme="light"] .hero-decimal { color: var(--ink-3); }
+  /* 资产水位线 */
+  .waterline-container {
+    display: flex;
+    height: 6px;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 16px 20px 24px 20px;
+    background: var(--bg-2);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .waterline-segment {
+    height: 100%;
+    transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .waterline-legend {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 24px;
+    margin-bottom: 20px;
+    font-size: 11px;
+    color: var(--ink-3);
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
   .hero-meta {
     display: flex;
     align-items: center;
@@ -2266,6 +2301,7 @@
       <div class="hero-content">
         <div class="hero-label">总 资 产</div>
         <div class="hero-value" id="kpi-total"><span class="hero-currency">¥</span>—</div>
+        <div id="waterline-render-target"></div>
         <div class="hero-meta">
           <span class="hero-pill" id="kpi-total-pill"></span>
           <span class="hero-meta-text" id="kpi-total-sub">尚无数据</span>
@@ -3574,6 +3610,7 @@ function renderHeroValue(n) {
   const el = document.getElementById('kpi-total');
   if (n === null || n === undefined || isNaN(n)) {
     el.innerHTML = '<span class="hero-currency">¥</span>—';
+    document.getElementById('waterline-render-target').innerHTML = '';
     return;
   }
   const abs = Math.abs(n);
@@ -3585,6 +3622,40 @@ function renderHeroValue(n) {
   el.innerHTML = '<span class="hero-currency">' + sign + '¥</span>' +
     '<span class="num-anim">' + intStr + '</span>' +
     (showDecimal ? '<span class="hero-decimal num-anim">' + decimal + '</span>' : '');
+
+  // 资产水位线
+  const latest = state.snapshots.length > 0 ? state.snapshots[state.snapshots.length - 1] : null;
+  if (latest) {
+    let liqCash = 0, liqInvest = 0, liqLong = 0, totalDebt = 0;
+    state.accounts.forEach(acc => {
+      const bal = Number(latest.entries[acc.id]?.balance || 0);
+      if (acc.type === 'liability') {
+        if (bal > 0) totalDebt += bal;
+      } else if (bal > 0) {
+        if (acc.tag === 'cash') liqCash += bal;
+        else if (acc.tag === 'investment' || acc.tag === 'credit') liqInvest += bal;
+        else liqLong += bal;
+      }
+    });
+    const totalAssets = liqCash + liqInvest + liqLong;
+    const safeTotal = totalAssets > 0 ? totalAssets : 1;
+    const pCash = (liqCash / safeTotal * 100).toFixed(1);
+    const pInvest = (liqInvest / safeTotal * 100).toFixed(1);
+    const pLong = (liqLong / safeTotal * 100).toFixed(1);
+    const ltv = totalAssets > 0 ? (totalDebt / totalAssets * 100).toFixed(1) : 0;
+    document.getElementById('waterline-render-target').innerHTML =
+      '<div class="waterline-container">' +
+        '<div class="waterline-segment" style="width:' + pCash + '%;background:var(--accent)" title="流动 ' + pCash + '%"></div>' +
+        '<div class="waterline-segment" style="width:' + pInvest + '%;background:var(--accent-purple)" title="投资 ' + pInvest + '%"></div>' +
+        '<div class="waterline-segment" style="width:' + pLong + '%;background:var(--ink-3)" title="长期 ' + pLong + '%"></div>' +
+      '</div>' +
+      '<div class="waterline-legend">' +
+        '<div class="legend-item"><div class="legend-dot" style="background:var(--accent)"></div>流动 ' + pCash + '%</div>' +
+        '<div class="legend-item"><div class="legend-dot" style="background:var(--accent-purple)"></div>投资 ' + pInvest + '%</div>' +
+        '<div class="legend-item"><div class="legend-dot" style="background:var(--ink-3)"></div>长期 ' + pLong + '%</div>' +
+        '<div class="legend-item" title="资产负债率"><div class="legend-dot" style="background:var(--red)"></div>负债率 <span style="color:' + (ltv > 50 ? 'var(--red)' : 'inherit') + '">' + ltv + '%</span></div>' +
+      '</div>';
+  }
 }
 
 // 次级 KPI 卡：弱化货币符号 + 正负号
@@ -3705,6 +3776,33 @@ function monthlyPnL(curr, prev) {
   const prevTotal = prev ? Big(snapshotTotal(prev)) : Big(0);
   const flow = Big(snapshotFlow(curr));
   return currTotal.minus(prevTotal).minus(flow).toNumber();
+}
+
+// ============================================================
+// XIRR 核心引擎（牛顿迭代法）
+// ============================================================
+function calculateXIRR(cashFlows, guess = 0.1) {
+  if (cashFlows.length < 2) return null;
+  const maxIter = 100;
+  const tol = 1e-6;
+  let r = guess;
+  for (let i = 0; i < maxIter; i++) {
+    let f = 0, df = 0;
+    for (let j = 0; j < cashFlows.length; j++) {
+      const { amount, days } = cashFlows[j];
+      const term = Math.pow(1 + r, days / 365.0);
+      f += amount / term;
+      df -= (days / 365.0) * amount / (term * (1 + r));
+    }
+    if (Math.abs(df) < 1e-10) return null;
+    const nextR = r - f / df;
+    if (Math.abs(nextR - r) < tol) return nextR;
+    r = nextR;
+  }
+  return null;
+}
+function daysBetween(monthA, monthB) {
+  return (new Date(monthB + '-01') - new Date(monthA + '-01')) / 86400000;
 }
 
 function getActiveAccountIds() {
@@ -3944,13 +4042,30 @@ function openAccountTrend(accId) {
     twr = accumReturn.minus(1).toNumber();
   }
 
+  // XIRR 现金流
+  const xirrFlows = [];
+  const baseMonth = sorted[0]?.month;
+  if (sorted.length >= 2 && baseMonth) {
+    const firstBal = Number(sorted[0].entries[accId]?.balance || 0);
+    xirrFlows.push({ amount: -firstBal, days: 0 });
+    for (let i = 1; i < sorted.length; i++) {
+      const e = sorted[i].entries[accId];
+      if (e && e.flow) {
+        const f = Number(e.flow);
+        if (f !== 0) xirrFlows.push({ amount: -f, days: daysBetween(baseMonth, sorted[i].month) });
+      }
+    }
+    const lastBal = Number(sorted[sorted.length - 1].entries[accId]?.balance || 0);
+    xirrFlows.push({ amount: lastBal, days: daysBetween(baseMonth, sorted[sorted.length - 1].month) });
+  }
+  const xirrVal = calculateXIRR(xirrFlows);
+
   const body = document.getElementById('drawer-body');
-  const pnlClass = cumPnL >= 0 ? 'pos' : 'neg';
-  const twrClass = twr !== null && twr >= 0 ? 'pos' : 'neg';
-  body.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">' +
-    '<div style="background:var(--bg-2);border-radius:12px;padding:12px;text-align:center"><div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">累计盈亏</div><div style="font-family:JetBrains Mono,monospace;font-size:16px;font-weight:600;color:var(--' + (cumPnL >= 0 ? 'green' : 'red') + ')">' + fmtSign(cumPnL) + '</div></div>' +
-    '<div style="background:var(--bg-2);border-radius:12px;padding:12px;text-align:center"><div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">累计入金</div><div style="font-family:JetBrains Mono,monospace;font-size:16px;font-weight:600">' + fmtSign(cumFlow) + '</div></div>' +
-    '<div style="background:var(--bg-2);border-radius:12px;padding:12px;text-align:center"><div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">TWR</div><div style="font-family:JetBrains Mono,monospace;font-size:16px;font-weight:600;color:var(--' + (twr !== null && twr >= 0 ? 'green' : 'red') + ')">' + (twr !== null ? (twr >= 0 ? '+' : '') + (twr * 100).toFixed(1) + '%' : '—') + '</div></div>' +
+  body.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:16px">' +
+    '<div style="background:var(--bg-2);border-radius:10px;padding:10px 4px;text-align:center"><div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">累计盈亏</div><div style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:600;color:var(--' + (cumPnL >= 0 ? 'green' : 'red') + ')">' + fmtSign(cumPnL) + '</div></div>' +
+    '<div style="background:var(--bg-2);border-radius:10px;padding:10px 4px;text-align:center"><div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">累计入金</div><div style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:600">' + fmtSign(cumFlow) + '</div></div>' +
+    '<div style="background:var(--bg-2);border-radius:10px;padding:10px 4px;text-align:center" title="时间加权收益率"><div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">TWR</div><div style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:600;color:var(--' + (twr !== null && twr >= 0 ? 'green' : 'red') + ')">' + (twr !== null ? (twr >= 0 ? '+' : '') + (twr * 100).toFixed(1) + '%' : '—') + '</div></div>' +
+    '<div style="background:var(--bg-2);border-radius:10px;padding:10px 4px;text-align:center" title="内部收益率 (年化)"><div style="font-size:11px;color:var(--ink-3);margin-bottom:4px">XIRR</div><div style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:600;color:var(--' + (xirrVal !== null && xirrVal >= 0 ? 'green' : 'red') + ')">' + (xirrVal !== null ? (xirrVal >= 0 ? '+' : '') + (xirrVal * 100).toFixed(1) + '%' : '—') + '</div></div>' +
     '</div>' +
     '<div style="margin-bottom:4px;font-size:13px;font-weight:600;color:var(--ink-3)">各月余额</div>' +
     '<div style="position:relative;height:220px"><canvas id="trend-canvas"></canvas></div>' +
