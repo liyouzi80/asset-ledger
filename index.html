@@ -3762,7 +3762,7 @@ function navTo(page) {
   const drawer = document.getElementById('drawer');
   if (drawer && drawer.classList.contains('open')) closeDrawer();
 }
-document.querySelectorAll('.nav button').forEach(b => {
+document.querySelectorAll('nav.nav button').forEach(b => {
   b.addEventListener('click', () => navTo(b.dataset.page));
 });
 document.getElementById('brand-home').addEventListener('click', () => navTo('dashboard'));
@@ -5048,8 +5048,12 @@ function renderDashboard() {
   const colorTooltipBg = getCSSVar('--tooltip-bg');
   const colorLine = getCSSVar('--sep-strong');
 
-  // 收益率模块
-  renderReturnsModule(sorted, onlyActive);
+  // 收益率模块（独立 try/catch，图表失败不影响 Hero 统计）
+  try {
+    renderReturnsModule(sorted, onlyActive);
+  } catch (e) {
+    console.error('renderReturnsModule failed:', e);
+  }
 
   // Hero 内嵌统计
   renderHeroStatValue('hero-stat-pnl', pnl, true);
