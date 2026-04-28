@@ -5019,6 +5019,17 @@ function renderDashboard() {
     pill.classList.remove('show');
   }
 
+  // 颜色变量（收益率模块和图表共用，需在调用前定义）
+  const colorInk = getCSSVar('--ink');
+  const colorMute = getCSSVar('--ink-3');
+  const colorGrid = getCSSVar('--chart-grid');
+  const colorAccent = getCSSVar('--accent');
+  const colorGreen = getCSSVar('--green');
+  const colorRed = getCSSVar('--red');
+  const colorBg = getCSSVar('--bg-1');
+  const colorTooltipBg = getCSSVar('--tooltip-bg');
+  const colorLine = getCSSVar('--sep-strong');
+
   // 收益率模块
   renderReturnsModule(sorted, onlyActive);
 
@@ -5076,15 +5087,6 @@ function renderDashboard() {
   if (ytdEl) ytdEl.className = 'hero-stat-value ' + ytdState;
   const ytdSubEl = document.getElementById('hero-stat-ytd-sub');
   if (ytdSubEl) ytdSubEl.textContent = yearOfLatest + ' 年内 · 仅市场盈亏' + (isInvestmentView ? '（仅投资）' : '');
-  const colorInk = getCSSVar('--ink');
-  const colorMute = getCSSVar('--ink-3');
-  const colorGrid = getCSSVar('--chart-grid');
-  const colorAccent = getCSSVar('--accent');
-  const colorGreen = getCSSVar('--green');
-  const colorRed = getCSSVar('--red');
-  const colorBg = getCSSVar('--bg-1');
-  const colorTooltipBg = getCSSVar('--tooltip-bg');
-  const colorLine = getCSSVar('--sep-strong');
 
   Chart.defaults.color = colorMute;
   Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
