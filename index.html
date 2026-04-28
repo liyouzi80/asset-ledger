@@ -5427,6 +5427,7 @@ function renderDashboard() {
           borderSkipped: false,
           barPercentage: 0.5,
           categoryPercentage: 0.7,
+          minBarLength: 3,
         },
         {
           label: '净入金',
@@ -5444,6 +5445,7 @@ function renderDashboard() {
       responsive: true,
       maintainAspectRatio: false,
       animation: { duration: 800, easing: 'easeOutQuart' },
+      interaction: { mode: 'index', intersect: false },
       onClick: (evt, elements) => {
         if (!elements || elements.length === 0) return;
         const idx = elements[0].index;
