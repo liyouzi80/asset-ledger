@@ -2441,13 +2441,13 @@
     <div class="history-toolbar">
       <input type="text" id="history-search" placeholder="搜索月份…" class="history-search">
       <div style="display:flex;gap:6px;align-items:center;margin-left:auto;">
+        <input type="month" id="history-compare-a" class="month-pick" style="width:auto;padding:5px 10px;font-size:12px">
+        <span style="color:var(--ink-3);font-size:12px">vs</span>
+        <input type="month" id="history-compare-b" class="month-pick" style="width:auto;padding:5px 10px;font-size:12px">
         <div class="nav" id="history-view-toggle" style="margin-right:4px">
           <button data-hview="list" class="active">列表</button>
           <button data-hview="matrix">对照表</button>
         </div>
-        <input type="month" id="history-compare-a" class="month-pick" style="width:auto;padding:5px 10px;font-size:12px">
-        <span style="color:var(--ink-3);font-size:12px">vs</span>
-        <input type="month" id="history-compare-b" class="month-pick" style="width:auto;padding:5px 10px;font-size:12px">
         <button class="btn btn-ghost btn-sm" id="export-csv">CSV</button>
       </div>
     </div>
