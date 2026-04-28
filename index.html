@@ -2611,6 +2611,8 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/big.js@6.2.1/big.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
 'use strict';
 
@@ -3220,10 +3222,11 @@ async function unlockOrInit() {
         await enterApp();
         return;
       }
-    } catch {
-      // 密钥失效 → 降级到锁屏
+    } catch (e) {
+      // 密钥失效（解密/校验失败）→ 清除缓存，降级到锁屏
       state.masterKey = null;
       localStorage.removeItem(LOCAL_KEY_STORAGE);
+      console.error('Auto-unlock failed:', e);
     }
   }
 
@@ -3514,7 +3517,12 @@ async function enterApp() {
   document.getElementById('lock-password').value = '';
   document.getElementById('lock-password-confirm').value = '';
   document.getElementById('lock-error').textContent = '';
-  navTo('dashboard');
+  try {
+    navTo('dashboard');
+  } catch (e) {
+    console.error('renderDashboard failed:', e);
+    // 渲染错误不影响解锁状态，锁屏已关闭
+  }
 }
 
 function lockNow() {
@@ -6547,7 +6555,5 @@ navTo = function(page) {
   await unlockOrInit();
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/big.js@6.2.1/big.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </body>
 </html>
