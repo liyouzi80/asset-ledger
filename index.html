@@ -2357,6 +2357,7 @@
           <button data-indicator="twr" class="active">TWR</button>
           <button data-indicator="simple">简单</button>
           <button data-indicator="amount">盈亏额</button>
+          <button data-indicator="xirr">XIRR</button>
         </div>
       </div>
       <div class="returns-summary">
@@ -4509,6 +4510,7 @@ function computeReturnMetrics(allSorted) {
 function valueOfIndicator(p, indicator) {
   if (indicator === 'twr') return p.twrCum;
   if (indicator === 'simple') return p.simpleCum;
+  if (indicator === 'xirr') return p.xirrCum;
   return p.pnlCum;
 }
 function renderReturnsModule(allSorted, onlyActive) {
@@ -4583,6 +4585,12 @@ function renderReturnsModule(allSorted, onlyActive) {
     secondaryValue = last.pnlCum;
     secondaryLabel = '累计盈亏';
     formulaEl.textContent = '简单收益率 = 累计盈亏 / 期初余额';
+  } else if (indicator === 'xirr') {
+    primaryValue = last.xirrCum;
+    primaryLabel = '收益率 · XIRR';
+    secondaryValue = last.twrCum;
+    secondaryLabel = 'TWR 对比';
+    formulaEl.textContent = 'XIRR 内部收益率（年化）—— 考虑每笔现金流的时间价值';
   } else { // amount
     primaryValue = last.pnlCum;
     primaryLabel = '累计盈亏';
@@ -4736,9 +4744,9 @@ function computePeriodSeries(periodSnaps) {
   const points = periodSnaps.points;
   if (points.length < 2) return { points: [] };
 
-  // 第一份是期初（从这里起算，自身不在序列里展示数字，但作为基准）
   const inception = points[0];
   const startBalance = snapshotTotal(inception);
+  const inceptionMonth = inception.month;
 
   let twrFactor = Big(1);
   let pnlCum = 0;
@@ -4751,20 +4759,34 @@ function computePeriodSeries(periodSnaps) {
     const periodPnL = monthlyPnL(curr, prev);
     pnlCum += periodPnL;
     if (periodStart > 0) twrFactor = twrFactor.times(Big(1).plus(Big(periodPnL).div(Big(periodStart))));
+
+    // XIRR at this point
+    let xirrAtPoint = null;
+    if (startBalance > 0) {
+      const xf = [{ amount: -startBalance, days: 0 }];
+      for (let j = 1; j <= i; j++) {
+        const flow = snapshotFlow(points[j]);
+        if (flow !== 0) xf.push({ amount: -flow, days: daysBetween(inceptionMonth, points[j].month) });
+      }
+      const endBal = snapshotTotal(curr);
+      if (endBal > 0 && xf.length >= 2) {
+        xf.push({ amount: endBal, days: daysBetween(inceptionMonth, curr.month) });
+        xirrAtPoint = calculateXIRR(xf);
+      }
+    }
+
     out.push({
       month: curr.month,
       twrCum: twrFactor.minus(1).toNumber(),
       simpleCum: startBalance > 0 ? pnlCum / startBalance : 0,
       pnlCum: pnlCum,
+      xirrCum: xirrAtPoint,
     });
   }
 
-  // 在最前面插入"期初"点（零基准）
   out.unshift({
     month: inception.month,
-    twrCum: 0,
-    simpleCum: 0,
-    pnlCum: 0,
+    twrCum: 0, simpleCum: 0, pnlCum: 0, xirrCum: null,
   });
 
   return { points: out };
