@@ -229,11 +229,11 @@
     border: none;
     color: var(--ink-3);
     font-family: inherit;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     letter-spacing: -0.01em;
-    padding: 5px 13px;
-    border-radius: 7px;
+    padding: 7px 16px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
@@ -364,10 +364,6 @@
     box-shadow: 0 32px 80px var(--accent-glow);
   }
   .hero-block:active { transform: translateY(-2px); }
-  .hero-block:hover .hero-arrow {
-    color: var(--accent);
-    transform: translateX(3px);
-  }
   [data-theme="light"] .hero-block {
     background: var(--bg-1);
     box-shadow: 0 8px 48px rgba(0,0,0,0.04);
@@ -408,18 +404,6 @@
     gap: 6px;
   }
   [data-theme="light"] .hero-label { color: var(--ink-3); }
-  .hero-arrow {
-    color: var(--ink-4);
-    font-size: 13px;
-    line-height: 1;
-    transition: color 0.25s, transform 0.25s;
-    animation: arrowHint 2s ease-in-out infinite;
-  }
-  @keyframes arrowHint {
-    0%, 100% { transform: translateX(0); }
-    50% { transform: translateX(3px); }
-  }
-  [data-theme="light"] .hero-arrow { color: var(--ink-4); }
   .hero-value {
     font-family: 'Inter', -apple-system, sans-serif;
     font-size: 96px;
@@ -536,10 +520,10 @@
     border: none;
     color: var(--ink-3);
     font-family: inherit;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     letter-spacing: -0.01em;
-    padding: 6px 14px;
+    padding: 7px 16px;
     border-radius: 7px;
     cursor: pointer;
     transition: all 0.2s;
@@ -741,11 +725,11 @@
     border: none;
     color: var(--ink-3);
     font-family: inherit;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     letter-spacing: -0.01em;
-    padding: 6px 16px;
-    border-radius: 7px;
+    padding: 7px 18px;
+    border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s;
     white-space: nowrap;
@@ -1099,10 +1083,10 @@
     border: none;
     color: #ffffff;
     font-family: inherit;
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 600;
     letter-spacing: -0.01em;
-    padding: 11px 22px;
+    padding: 12px 24px;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1135,7 +1119,7 @@
     box-shadow: 0 8px 24px rgba(248,113,113,0.3);
     filter: none;
   }
-  .btn-sm { padding: 7px 14px; font-size: 13px; border-radius: 10px; }
+  .btn-sm { padding: 9px 16px; font-size: 14px; border-radius: 10px; }
 
   /* =====================================================
      录入页
@@ -1191,11 +1175,11 @@
     border: 1.5px solid var(--sep-strong);
     color: var(--ink-3);
     font-family: inherit;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
-    padding: 4px 10px;
+    padding: 6px 12px;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: 7px;
     transition: all 0.18s;
   }
   .icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
@@ -2134,7 +2118,7 @@
     .group-title-bar h4 { font-size: 13px; }
     .nav { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
     .nav::-webkit-scrollbar { display: none; }
-    .nav button { padding: 5px 10px; font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+    .nav button { padding: 6px 12px; font-size: 13px; white-space: nowrap; flex-shrink: 0; }
     .theme-toggle { display: none; }
     .lock-card { padding: 28px 24px 24px; }
     .lock-card h2 { font-size: 20px; }
@@ -2202,7 +2186,7 @@
     .hero-block { padding: 20px 12px 18px; border-radius: 14px; }
 
     .drawer { width: 100vw; max-height: 92vh; border-radius: 14px; }
-    .nav button { font-size: 11px; padding: 4px 8px; }
+    .nav button { font-size: 12px; padding: 5px 10px; }
     .entry-row { padding: 10px 12px; gap: 6px; }
     .data-table td, .data-table th { padding: 8px 6px; font-size: 11px; }
     .chart-wrap { height: 180px; }
@@ -2293,7 +2277,7 @@
       <div class="hero-bg-1"></div>
       <div class="hero-bg-2"></div>
       <div class="hero-content">
-        <div class="view-toggle" id="view-toggle" style="margin-bottom:8px">
+        <div class="view-toggle" id="view-toggle" style="margin-bottom:20px">
           <button data-view="all" class="active">总览</button>
           <button data-view="investment">仅投资资产</button>
         </div>
@@ -5175,7 +5159,7 @@ function renderDashboard() {
   // Hero 总资产：拆 ¥ + 整数 + .小数
   renderHeroValue(total);
   document.getElementById('kpi-total-sub').textContent = (isInvestmentView ? '仅投资资产 · ' : '') + '截至 ' + latest.month;
-  document.querySelector('.hero-label').innerHTML = (isInvestmentView ? '投 资 资 产' : '总 资 产') + ' <span class="hero-arrow">›</span>';
+  document.querySelector('.hero-label').innerHTML = (isInvestmentView ? '投 资 资 产' : '总 资 产');
 
   // Hero pill: 月对月变化百分比
   const pill = document.getElementById('kpi-total-pill');
