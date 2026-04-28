@@ -2241,9 +2241,9 @@
   </div>
   <div class="drawer-toolbar" id="drawer-toolbar" style="display:none">
     <div class="drawer-mode-tabs">
-      <button data-drawer-mode="brief" class="active">简明</button>
+      <button data-drawer-mode="brief">简明</button>
       <button data-drawer-mode="full">完整</button>
-      <button data-drawer-mode="grouped">按分组</button>
+      <button data-drawer-mode="grouped" class="active">按分组</button>
     </div>
   </div>
   <div class="drawer-body" id="drawer-body"></div>
@@ -3502,13 +3502,13 @@ document.querySelectorAll('#view-toggle button').forEach(b => {
 const drawerState = {
   type: null,          // 'pnl' | 'flow' | 'ytd'
   month: null,         // 当前展示的月份（YYYY-MM），ytd 类型用作年份
-  mode: 'brief',       // 'brief' | 'full'，仅 pnl 类型用
+  mode: 'grouped',     // 'brief' | 'full' | 'grouped'，仅 pnl 类型用，默认按分组
 };
 
 function openDrawer(type, month) {
   drawerState.type = type;
   drawerState.month = month;
-  drawerState.mode = 'brief';
+  drawerState.mode = 'grouped';
   renderDrawer();
   document.getElementById('drawer').classList.add('open');
   document.getElementById('drawer-backdrop').classList.add('open');
@@ -4240,9 +4240,39 @@ function renderYtdView(year, yearSnaps, allSorted) {
   const accRows = Object.entries(accPnL)
     .map(([accId, pnl]) => {
       const acc = state.accounts.find(a => a.id === accId);
-      return acc ? { name: acc.name, pnl } : null;
+      return acc ? { name: acc.name, group: acc.group, pnl } : null;
     })
     .filter(r => r && Math.abs(r.pnl) > 0.5);
+
+  // 按分组聚合 YTD 盈亏（在账户明细之前展示）
+  const groupYtdPnL = {};
+  for (const r of accRows) {
+    groupYtdPnL[r.group] = (groupYtdPnL[r.group] || 0) + r.pnl;
+  }
+  const groupEntries = Object.entries(groupYtdPnL).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+  if (groupEntries.length > 0) {
+    const maxGrp = Math.max(...groupEntries.map(e => Math.abs(e[1])), 1);
+    const winGrp = groupEntries.filter(e => e[1] > 0);
+    const loseGrp = groupEntries.filter(e => e[1] < 0);
+    html += '<div class="drawer-section"><div class="drawer-section-title">分组归因</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">' +
+      '<div style="background:var(--green-soft);border-radius:8px;padding:8px 12px"><div style="font-size:10px;color:var(--green)">盈利分组</div><div style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:700;color:var(--green)">' + fmt(winGrp.reduce((s, e) => s + e[1], 0)) + '</div></div>' +
+      '<div style="background:var(--red-soft);border-radius:8px;padding:8px 12px"><div style="font-size:10px;color:var(--red)">亏损分组</div><div style="font-family:JetBrains Mono,monospace;font-size:14px;font-weight:700;color:var(--red)">' + fmt(Math.abs(loseGrp.reduce((s, e) => s + e[1], 0))) + '</div></div>' +
+      '</div>';
+    for (const [group, pnl] of groupEntries) {
+      const barW = (Math.abs(pnl) / maxGrp * 100).toFixed(0);
+      const isPos = pnl >= 0;
+      const barColor = isPos ? 'var(--green)' : 'var(--red)';
+      const pct = totalPnL !== 0 ? (pnl / totalPnL * 100) : 0;
+      html += '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:0.5px solid var(--sep);font-size:12px">' +
+        '<span style="width:80px;font-weight:500">' + escapeHtml(group) + '</span>' +
+        '<span style="flex:1;height:5px;background:var(--bg-3);border-radius:3px;overflow:hidden"><span style="display:block;width:' + barW + '%;height:100%;background:' + barColor + ';border-radius:3px"></span></span>' +
+        '<span style="font-family:JetBrains Mono,monospace;font-weight:600;color:' + barColor + ';min-width:60px;text-align:right">' + fmtSign(pnl) + '</span>' +
+        '<span style="color:var(--ink-4);min-width:40px;text-align:right;font-size:11px">' + (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%</span>' +
+        '</div>';
+    }
+    html += '</div>';
+  }
 
   if (accRows.length > 0) {
     const winners = accRows.filter(r => r.pnl > 0).sort((a, b) => b.pnl - a.pnl);
