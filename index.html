@@ -4603,7 +4603,13 @@ function renderReturnsModule(allSorted, onlyActive) {
   if (indicator === 'amount') {
     primaryEl.textContent = fmtSign(primaryValue);
     primaryEl.className = 'returns-summary-value ' + (primaryValue > 0 ? 'pos' : primaryValue < 0 ? 'neg' : '');
-    secondaryEl.textContent = primaryValue === null ? '—' : (secondaryValue === null ? '—' : (secondaryValue >= 0 ? '+' : '') + (secondaryValue * 100).toFixed(2) + '%');
+    secondaryEl.textContent = secondaryValue === null ? '—' : (secondaryValue >= 0 ? '+' : '') + (secondaryValue * 100).toFixed(2) + '%';
+    secondaryEl.className = 'returns-summary-value ' + (secondaryValue > 0 ? 'pos' : secondaryValue < 0 ? 'neg' : '');
+  } else if (indicator === 'xirr') {
+    // XIRR 主副指标均为百分比
+    primaryEl.textContent = primaryValue === null ? '—' : (primaryValue >= 0 ? '+' : '') + (primaryValue * 100).toFixed(2) + '%';
+    primaryEl.className = 'returns-summary-value ' + (primaryValue > 0 ? 'pos' : primaryValue < 0 ? 'neg' : '');
+    secondaryEl.textContent = secondaryValue === null ? '—' : (secondaryValue >= 0 ? '+' : '') + (secondaryValue * 100).toFixed(2) + '%';
     secondaryEl.className = 'returns-summary-value ' + (secondaryValue > 0 ? 'pos' : secondaryValue < 0 ? 'neg' : '');
   } else {
     primaryEl.textContent = primaryValue === null ? '—' : (primaryValue >= 0 ? '+' : '') + (primaryValue * 100).toFixed(2) + '%';
