@@ -562,7 +562,7 @@
   .returns-chart-wrap {
     position: relative;
     width: 100%;
-    height: 220px;
+    height: 260px;
     margin-bottom: 14px;
   }
   .returns-chart-wrap svg {
@@ -608,6 +608,36 @@
   }
   .returns-end-dot.pos { fill: var(--green); }
   .returns-end-dot.neg { fill: var(--red); }
+  .returns-grid-line {
+    stroke: var(--chart-grid);
+    stroke-width: 0.5;
+    pointer-events: none;
+  }
+  .returns-data-dot {
+    stroke: var(--bg-1);
+    stroke-width: 1.2;
+    pointer-events: none;
+  }
+  .returns-data-dot.pos { fill: var(--green); }
+  .returns-data-dot.neg { fill: var(--red); }
+  .returns-end-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    pointer-events: none;
+  }
+  .returns-y-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9.5px;
+    fill: var(--ink-4);
+    pointer-events: none;
+  }
+  .returns-x-label {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 10px;
+    fill: var(--ink-4);
+    pointer-events: none;
+  }
   .returns-axis-text {
     font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
@@ -625,7 +655,7 @@
     .returns-summary-value { font-size: 28px; }
     .returns-summary-item.secondary .returns-summary-value { font-size: 17px; }
     .returns-summary-item.secondary .returns-summary-value.tiny { font-size: 12px; }
-    .returns-chart-wrap { height: 180px; }
+    .returns-chart-wrap { height: 220px; }
     .returns-period-tabs button,
     .returns-indicator-pick button { padding: 5px 10px; font-size: 12px; }
   }
@@ -2362,7 +2392,7 @@
         </div>
       </div>
       <div class="returns-chart-wrap">
-        <svg id="returns-chart" preserveAspectRatio="none"></svg>
+        <svg id="returns-chart" preserveAspectRatio="xMidYMid meet"></svg>
         <div class="returns-chart-empty" id="returns-chart-empty" style="display:none">
           <span class="glyph">📉</span>
           <p>该期间数据不足以绘制走势</p>
@@ -4565,11 +4595,11 @@ function drawReturnsChart(svg, points, indicator) {
   }
 
   const W = 800; // viewBox 宽
-  const H = 220; // viewBox 高
-  const PAD_LEFT = 4;
-  const PAD_RIGHT = 30;
-  const PAD_TOP = 16;
-  const PAD_BOTTOM = 24;
+  const H = 240; // viewBox 高
+  const PAD_LEFT = 52;
+  const PAD_RIGHT = 24;
+  const PAD_TOP = 12;
+  const PAD_BOTTOM = 32;
 
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
 
@@ -4583,14 +4613,17 @@ function drawReturnsChart(svg, points, indicator) {
   const values = points.map(valueOf);
   let yMin = Math.min(0, ...values);
   let yMax = Math.max(0, ...values);
-  if (yMin === yMax) { yMin -= 1; yMax += 1; }
+  const isPercent = indicator !== 'amount';
+  if (yMin === yMax) { yMin -= isPercent ? 0.02 : 1000; yMax += isPercent ? 0.02 : 1000; }
   const range = yMax - yMin;
-  // 给上下留 8% 余量
-  yMin -= range * 0.08;
-  yMax += range * 0.08;
+  // 给上下留 12% 余量
+  yMin -= range * 0.12;
+  yMax += range * 0.12;
 
-  const xOf = (i) => PAD_LEFT + (W - PAD_LEFT - PAD_RIGHT) * (i / (points.length - 1));
-  const yOf = (v) => PAD_TOP + (H - PAD_TOP - PAD_BOTTOM) * (1 - (v - yMin) / (yMax - yMin));
+  const plotW = W - PAD_LEFT - PAD_RIGHT;
+  const plotH = H - PAD_TOP - PAD_BOTTOM;
+  const xOf = (i) => PAD_LEFT + plotW * (i / (points.length - 1));
+  const yOf = (v) => PAD_TOP + plotH * (1 - (v - yMin) / (yMax - yMin));
   const yZero = yOf(0);
 
   // 路径：曲线
@@ -4601,9 +4634,6 @@ function drawReturnsChart(svg, points, indicator) {
 
   const lastVal = values[values.length - 1];
   const lastClass = lastVal >= 0 ? 'pos' : 'neg';
-
-  // 颜色根据终点决定（主色），但填充按零线分段（盈利段绿、亏损段红）
-  // 简化：用整体颜色 = 终值正负
   const lineColorClass = lastClass;
 
   // 生成工具提示数据
@@ -4616,47 +4646,88 @@ function drawReturnsChart(svg, points, indicator) {
       : (values[i] >= 0 ? '+' : '') + (values[i] * 100).toFixed(1) + '%',
   }));
 
+  // Y 轴标签格式化
+  const fmtAxisY = (v) => {
+    if (indicator === 'amount') return (v >= 0 ? '+' : '') + (v / 10000).toFixed(1) + '万';
+    return (v >= 0 ? '+' : '') + (v * 100).toFixed(1) + '%';
+  };
+
+  // X 轴标签：首、中、尾月份
+  const xLabelMonths = [];
+  xLabelMonths.push({ i: 0, month: points[0].month });
+  if (points.length > 2) {
+    const mi = Math.floor((points.length - 1) / 2);
+    xLabelMonths.push({ i: mi, month: points[mi].month });
+  }
+  xLabelMonths.push({ i: points.length - 1, month: points[points.length - 1].month });
+
   // SVG 内容
   let svgContent = '';
-  // clipPath: 上方（>=0 的部分）- 使用唯一 ID 避免多实例冲突
+  // clipPath
   const clipIdPos = 'clip-pos-' + (indicator || 'twr');
   const clipIdNeg = 'clip-neg-' + (indicator || 'twr');
   svgContent += `<defs>
     <clipPath id="${clipIdPos}"><rect x="0" y="0" width="${W}" height="${yZero}"/></clipPath>
     <clipPath id="${clipIdNeg}"><rect x="0" y="${yZero}" width="${W}" height="${H - yZero}"/></clipPath>
   </defs>`;
+
+  // 水平网格线（yMax, 0, yMin）
+  const gridLines = [yMax, 0, yMin];
+  for (const gv of gridLines) {
+    const gy = yOf(gv);
+    svgContent += `<line x1="${PAD_LEFT}" y1="${gy.toFixed(1)}" x2="${(W - PAD_RIGHT).toFixed(1)}" y2="${gy.toFixed(1)}" class="returns-grid-line"/>`;
+  }
+
   // 双色填充
   svgContent += `<path d="${areaPath}" class="returns-area-pos" clip-path="url(#${clipIdPos})"/>`;
   svgContent += `<path d="${areaPath}" class="returns-area-neg" clip-path="url(#${clipIdNeg})"/>`;
-  // 零线
-  svgContent += `<line x1="${PAD_LEFT}" y1="${yZero.toFixed(2)}" x2="${(W - PAD_RIGHT).toFixed(2)}" y2="${yZero.toFixed(2)}" class="returns-zero-line"/>`;
+  // 零线（加粗区分）
+  svgContent += `<line x1="${PAD_LEFT}" y1="${yZero.toFixed(1)}" x2="${(W - PAD_RIGHT).toFixed(1)}" y2="${yZero.toFixed(1)}" class="returns-zero-line"/>`;
   // 曲线
   svgContent += `<path d="${linePath}" class="returns-line ${lineColorClass}"/>`;
-  // 不可见的宽点击区域用于 hover
+  // hover 宽区域
   svgContent += `<path d="${linePath}" fill="none" stroke="transparent" stroke-width="22" class="returns-hover-track"/>`;
-  // 终点圆点
-  const endP = pathPoints[pathPoints.length - 1];
-  svgContent += `<circle cx="${endP.x.toFixed(2)}" cy="${endP.y.toFixed(2)}" class="returns-end-dot ${lastClass}"/>`;
-  // 终点标签
-  const labelText = indicator === 'amount'
-    ? fmtSign(lastVal)
-    : (lastVal >= 0 ? '+' : '') + (lastVal * 100).toFixed(1) + '%';
-  svgContent += `<text x="${(endP.x + 6).toFixed(2)}" y="${(endP.y + 4).toFixed(2)}" class="returns-axis-text" text-anchor="start" style="font-weight:600;fill:${lastVal >= 0 ? 'var(--green)' : 'var(--red)'}">${labelText}</text>`;
-  // 零线右侧标签
-  svgContent += `<text x="${W - PAD_RIGHT + 4}" y="${yZero.toFixed(2)}" dominant-baseline="middle" class="returns-axis-text">0%</text>`;
 
-  // 工具提示圆（默认隐藏）
+  // 数据点圆点（每隔 1 个显示，避免太密）
+  for (let i = 0; i < pathPoints.length; i++) {
+    if (pathPoints.length <= 6 || i % Math.max(1, Math.floor(pathPoints.length / 6)) === 0 || i === pathPoints.length - 1) {
+      const dp = pathPoints[i];
+      const isEnd = i === pathPoints.length - 1;
+      svgContent += `<circle cx="${dp.x.toFixed(1)}" cy="${dp.y.toFixed(1)}" r="${isEnd ? 3.5 : 2}" class="returns-data-dot ${values[i] >= 0 ? 'pos' : 'neg'}" style="${isEnd ? '' : 'opacity:0.6'}"/>`;
+    }
+  }
+
+  // 终点标签
+  const endP = pathPoints[pathPoints.length - 1];
+  const labelText = fmtAxisY(lastVal);
+  const labelX = Math.min(endP.x + 8, W - 60);
+  svgContent += `<text x="${labelX.toFixed(1)}" y="${(endP.y + 4).toFixed(1)}" class="returns-end-label" text-anchor="start" style="fill:${lastVal >= 0 ? 'var(--green)' : 'var(--red)'}">${labelText}</text>`;
+
+  // Y 轴标签
+  for (const gv of gridLines) {
+    const gy = yOf(gv);
+    const yaLabel = fmtAxisY(gv);
+    const isZero = Math.abs(gv) < (isPercent ? 0.0001 : 0.01);
+    svgContent += `<text x="${(PAD_LEFT - 6).toFixed(1)}" y="${(gy + 3).toFixed(1)}" class="returns-y-label" text-anchor="end" style="${isZero ? 'font-weight:600;fill:var(--ink-3)' : ''}">${yaLabel}</text>`;
+  }
+
+  // X 轴标签
+  for (const xlm of xLabelMonths) {
+    const xx = xOf(xlm.i);
+    svgContent += `<text x="${xx.toFixed(1)}" y="${(H - 6).toFixed(1)}" class="returns-x-label" text-anchor="middle">${xlm.month.slice(5)}月</text>`;
+  }
+
+  // 工具提示
   svgContent += `<circle cx="0" cy="0" r="5" class="returns-tooltip-dot" style="display:none;fill:var(--ink);stroke:var(--bg-1);stroke-width:2;pointer-events:none"/>`;
-  // 工具提示文字
   svgContent += `<g class="returns-tooltip-group" style="display:none;pointer-events:none">
-    <rect x="0" y="0" width="100" height="40" rx="6" fill="var(--tooltip-bg)" stroke="var(--sep-strong)" stroke-width="0.5"/>
-    <text x="50" y="16" class="returns-axis-text" text-anchor="middle" style="font-weight:600;fill:var(--ink-2)"></text>
-    <text x="50" y="30" class="returns-axis-text" text-anchor="middle" style="font-size:11px;fill:var(--ink-3)"></text>
+    <rect x="0" y="0" width="110" height="42" rx="6" fill="var(--tooltip-bg)" stroke="var(--sep-strong)" stroke-width="0.5"/>
+    <text x="55" y="16" class="returns-axis-text" text-anchor="middle" style="font-weight:600;fill:var(--ink-2)"></text>
+    <text x="55" y="31" class="returns-axis-text" text-anchor="middle" style="font-size:11px;fill:var(--ink-3)"></text>
   </g>`;
 
   svg.innerHTML = svgContent;
 
-  // 鼠标事件：hover 显示数据点
+  // 鼠标事件
   const hoverTrack = svg.querySelector('.returns-hover-track');
   const tooltipDot = svg.querySelector('.returns-tooltip-dot');
   const tooltipGroup = svg.querySelector('.returns-tooltip-group');
@@ -4671,13 +4742,12 @@ function drawReturnsChart(svg, points, indicator) {
   }
 
   svg.addEventListener('mousemove', function(e) {
-    const rect = svg.getBoundingClientRect();
-    const scaleX = W / rect.width;
-    const scaleY = H / rect.height;
-    const mx = (e.clientX - rect.left) * scaleX;
-    const my = (e.clientY - rect.top) * scaleY;
+    const svgRect = svg.getBoundingClientRect();
+    const scaleX = W / svgRect.width;
+    const scaleY = H / svgRect.height;
+    const mx = (e.clientX - svgRect.left) * scaleX;
+    const my = (e.clientY - svgRect.top) * scaleY;
 
-    // 找最近的数据点
     let bestIdx = -1;
     let bestDist = Infinity;
     for (let i = 0; i < tooltipData.length; i++) {
@@ -4685,19 +4755,15 @@ function drawReturnsChart(svg, points, indicator) {
       const dx = d.x - mx;
       const dy = d.y - my;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < bestDist) {
-        bestDist = dist;
-        bestIdx = i;
-      }
+      if (dist < bestDist) { bestDist = dist; bestIdx = i; }
     }
 
-    // 阈值：hover 范围
-    const hoverThreshold = 30;
+    const hoverThreshold = 36;
     if (bestIdx >= 0 && bestDist < hoverThreshold) {
       const d = tooltipData[bestIdx];
       tooltipDot.style.display = '';
-      tooltipDot.setAttribute('cx', d.x.toFixed(2));
-      tooltipDot.setAttribute('cy', d.y.toFixed(2));
+      tooltipDot.setAttribute('cx', d.x.toFixed(1));
+      tooltipDot.setAttribute('cy', d.y.toFixed(1));
 
       tooltipGroup.style.display = '';
       const tw = 110, th = 42;
@@ -4719,22 +4785,15 @@ function drawReturnsChart(svg, points, indicator) {
   svg.addEventListener('mouseleave', hideTooltip);
   svg.addEventListener('touchstart', function(e) {
     if (e.touches.length === 1) {
-      // 模拟 mouse 事件用于移动端
       const touch = e.touches[0];
-      const mouseEvent = new MouseEvent('mousemove', {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
-      });
+      const mouseEvent = new MouseEvent('mousemove', { clientX: touch.clientX, clientY: touch.clientY });
       svg.dispatchEvent(mouseEvent);
     }
   }, { passive: true });
   svg.addEventListener('touchmove', function(e) {
     if (e.touches.length === 1) {
       const touch = e.touches[0];
-      const mouseEvent = new MouseEvent('mousemove', {
-        clientX: touch.clientX,
-        clientY: touch.clientY,
-      });
+      const mouseEvent = new MouseEvent('mousemove', { clientX: touch.clientX, clientY: touch.clientY });
       svg.dispatchEvent(mouseEvent);
     }
   }, { passive: true });
@@ -4752,7 +4811,7 @@ function smoothPath(pts) {
     const p1 = pts[i];
     const p2 = pts[i + 1];
     const p3 = pts[i + 2] || p2;
-    const t = 0.18; // tension 越小越尖锐，越大越圆滑
+    const t = 0.30; // tension 越小越尖锐，越大越圆滑
     const cp1x = p1.x + (p2.x - p0.x) * t;
     const cp1y = p1.y + (p2.y - p0.y) * t;
     const cp2x = p2.x - (p3.x - p1.x) * t;
