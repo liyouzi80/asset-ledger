@@ -6398,7 +6398,7 @@ function renderMatrixView() {
   }
 
   // 构建表头：两层
-  html += '<div class="matrix-wrap"><table class="matrix-table"><thead>';
+  let html = '<div class="matrix-wrap"><table class="matrix-table"><thead>';
   html += '<tr><th>月份</th>';
   for (const g of groups) {
     const cnt = grouped[g].length;
