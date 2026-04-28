@@ -3771,9 +3771,9 @@ function snapshotFlow(snap) {
   return Object.values(snap.entries || {}).reduce((s, e) => s.plus(toBig(e.flow)), Big(0)).toNumber();
 }
 function monthlyPnL(curr, prev) {
-  if (!curr) return 0;
+  if (!curr || !prev) return 0; // 基准月：无前月可对比，盈亏不可知
   const currTotal = Big(snapshotTotal(curr));
-  const prevTotal = prev ? Big(snapshotTotal(prev)) : Big(0);
+  const prevTotal = Big(snapshotTotal(prev));
   const flow = Big(snapshotFlow(curr));
   return currTotal.minus(prevTotal).minus(flow).toNumber();
 }
@@ -4153,10 +4153,16 @@ function renderDrawer() {
       return;
     }
     const pnl = monthlyPnL(curr, prev);
-    amountEl.textContent = fmtSign(pnl);
-    amountEl.className = 'drawer-amount ' + (pnl > 0 ? 'pos' : pnl < 0 ? 'neg' : '');
+    const isBaseMonth = !prev;
+    amountEl.textContent = isBaseMonth ? '基准月' : fmtSign(pnl);
+    amountEl.className = 'drawer-amount' + (isBaseMonth ? '' : pnl > 0 ? ' pos' : pnl < 0 ? ' neg' : '');
 
-    toolbar.style.display = '';
+    toolbar.style.display = isBaseMonth ? 'none' : '';
+    if (isBaseMonth) {
+      body.innerHTML = '<div class="drawer-empty">基准月 · 无前期数据可对比</div>';
+      return;
+    }
+
     // 模式按钮状态
     document.querySelectorAll('[data-drawer-mode]').forEach(b => {
       b.classList.toggle('active', b.dataset.drawerMode === mode);
