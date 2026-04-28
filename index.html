@@ -5148,13 +5148,8 @@ function renderDashboard() {
     document.getElementById('returns-secondary-value').textContent = '—';
     document.getElementById('returns-secondary-value').className = 'returns-summary-value';
     document.getElementById('returns-period-range').textContent = '—';
-    document.getElementById('returns-chart').innerHTML = '';
+    if (returnsModuleChart) { returnsModuleChart.destroy(); returnsModuleChart = null; }
     document.getElementById('returns-chart-empty').style.display = 'flex';
-    // 显示空状态图表区提示
-    document.querySelectorAll('.chart-card').forEach(c => {
-      const desc = c.querySelector('.desc');
-      if (desc) desc.textContent = '暂无数据';
-    });
     return;
   }
 
