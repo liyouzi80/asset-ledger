@@ -1041,7 +1041,7 @@
     -webkit-appearance: none;
     appearance: none;
   }
-  input[type="number"] {
+  input[type="number"], input[inputmode="decimal"] {
     font-family: 'JetBrains Mono', monospace;
     text-align: right;
     font-size: 14px;
@@ -3689,12 +3689,12 @@ function getSortedSnapshots() {
 }
 function snapshotTotal(snap) {
   if (!snap) return 0;
-  const sum = Object.values(snap.entries || {}).reduce((s, e) => s.plus(Number(e.balance) || 0), Big(0));
+  const sum = Object.values(snap.entries || {}).reduce((s, e) => s.plus(new Big(e.balance || '0')), Big(0));
   return sum.toNumber();
 }
 function snapshotFlow(snap) {
   if (!snap) return 0;
-  const sum = Object.values(snap.entries || {}).reduce((s, e) => s.plus(Number(e.flow) || 0), Big(0));
+  const sum = Object.values(snap.entries || {}).reduce((s, e) => s.plus(new Big(e.flow || '0')), Big(0));
   return sum.toNumber();
 }
 function monthlyPnL(curr, prev) {
@@ -3892,6 +3892,7 @@ function openPieDrilldown(group, accounts, total) {
 }
 
 let accountTrendChart = null;
+let trendChartTimer = null;
 function openAccountTrend(accId) {
   const acc = state.accounts.find(a => a.id === accId);
   if (!acc) return;
@@ -3930,9 +3931,9 @@ function openAccountTrend(accId) {
       const e = sorted[i].entries[accId];
       const prevE = sorted[i - 1].entries[accId];
       if (!e || !prevE) continue;
-      const startBal = Big(Math.abs(Number(prevE.balance) || 0));
-      const endBal = Big(Math.abs(Number(e.balance) || 0));
-      const flow = Big(Number(e.flow) || 0);
+      const startBal = new Big(prevE.balance || '0').abs();
+      const endBal = new Big(e.balance || '0').abs();
+      const flow = new Big(e.flow || '0');
       const halfFlow = flow.abs().div(2);
       if (startBal.plus(halfFlow).gt(0)) {
         accumReturn = accumReturn.times(endBal.minus(flow.div(2)).div(startBal.plus(flow.div(2))));
@@ -3961,14 +3962,16 @@ function openAccountTrend(accId) {
   document.getElementById('drawer-backdrop').classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  // 绘制折线图（渲染后绘制）
-  setTimeout(() => {
+  // 绘制折线图（渲染后绘制，竞态保护）
+  if (trendChartTimer) clearTimeout(trendChartTimer);
+  trendChartTimer = setTimeout(() => {
+    trendChartTimer = null;
     const canvas = document.getElementById('trend-canvas');
     if (!canvas) return;
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const colorLine = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
     const colorText = isDark ? '#e5e5ea' : '#1c1c1e';
-    if (accountTrendChart) accountTrendChart.destroy();
+    if (accountTrendChart) { accountTrendChart.destroy(); accountTrendChart = null; }
     const valid = labels.map((l, i) => ({ l, v: data[i] })).filter(d => d.v !== null);
     if (valid.length < 2) {
       canvas.parentNode.innerHTML = '<div style="text-align:center;padding:60px 0;color:var(--ink-mute);font-size:14px">数据不足，至少需要 2 个月</div>';
@@ -5517,8 +5520,8 @@ function renderEntry() {
 
       row.innerHTML = `
         <div class="name" style="cursor:pointer" data-acc-trend="${a.id}" title="查看余额趋势">${escapeHtml(a.name)}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.35;flex-shrink:0;margin-left:2px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>${liabilityBadge}<span class="tag-badge ${a.tag || 'cash'}">${({investment:'投资',credit:'债权', 'long-term':'长期', cash:'流动',liability:'负债'})[a.tag||'cash']}</span>${carryBadge}</div>
-        <input type="number" step="0.01" min="0" data-acc="${a.id}" data-field="balance" value="${draft.balance}" placeholder="${balPlaceholder}" class="${isCarryOver ? 'is-carry' : ''}">
-        <input type="number" step="0.01" data-acc="${a.id}" data-field="flow" value="${draft.flow}" placeholder="0">
+        <input type="text" inputmode="decimal" pattern="[0-9]*" data-acc="${a.id}" data-field="balance" value="${draft.balance}" placeholder="${balPlaceholder}" class="${isCarryOver ? 'is-carry' : ''}">
+        <input type="text" inputmode="decimal" pattern="[0-9]*" data-acc="${a.id}" data-field="flow" value="${draft.flow}" placeholder="0">
         <div class="delta" data-delta="${a.id}">${delta !== null ? (delta >= 0 ? '+' : '') + Math.round(delta).toLocaleString('zh-CN') : '—'}</div>
         <div class="row-actions">
           <button class="move-btn" title="上移" data-action="move-account" data-acc="${a.id}" data-dir="up">↑</button>
