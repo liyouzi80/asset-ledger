@@ -3211,7 +3211,7 @@ async function unlockOrInit() {
         state.snapshots = data.snapshots || [];
         state.groupOrder = data.groupOrder && data.groupOrder.length ? data.groupOrder : [...DEFAULT_GROUP_ORDER];
         state.targetAllocation = data.targetAllocation || {};
-        enterApp();
+        await enterApp();
         return;
       }
     } catch {
@@ -3327,7 +3327,7 @@ async function handleLockSubmit() {
     state.snapshots = def.snapshots;
     state.groupOrder = def.groupOrder;
     await persistVault();
-    enterApp();
+    await enterApp();
     showToast('已用密码完成初始化');
   } else {
     // 已有：用密码解锁
@@ -3343,7 +3343,7 @@ async function handleLockSubmit() {
       if (checkObj.check !== 'asset-ledger-ok') throw new Error();
       state.masterKey = masterKey;
       await loadVaultIntoState();
-      enterApp();
+      await enterApp();
     } catch {
       errEl.textContent = '密码错误';
       setLockLoading(false);
@@ -3417,7 +3417,7 @@ async function handlePasskeyAction() {
       state.snapshots = def.snapshots;
       state.groupOrder = def.groupOrder;
       await persistVault();
-      enterApp();
+      await enterApp();
       showToast('Passkey 注册成功');
     } catch (err) {
       setLockLoading(false);
@@ -3435,7 +3435,7 @@ async function handlePasskeyAction() {
       if (checkObj.check !== 'asset-ledger-ok') throw new Error('校验失败');
       state.masterKey = masterKey;
       await loadVaultIntoState();
-      enterApp();
+      await enterApp();
     } catch (err) {
       setLockLoading(false);
       errEl.textContent = 'Passkey 解锁失败：' + (err.message || '请重试');
@@ -3501,9 +3501,9 @@ async function loadVaultIntoState() {
   }
 }
 
-function enterApp() {
+async function enterApp() {
   state.unlocked = true;
-  if (state.masterKey) cacheMasterKeyLocally(state.masterKey);
+  if (state.masterKey) await cacheMasterKeyLocally(state.masterKey);
   document.getElementById('lock-screen').classList.remove('active');
   document.getElementById('lock-password').value = '';
   document.getElementById('lock-password-confirm').value = '';
@@ -3735,11 +3735,15 @@ function navTo(page) {
   if (prev === 'dashboard') destroyCharts();
   if (prev === 'history' && returnChart) { returnChart.destroy(); returnChart = null; }
   state.current = page;
-  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('active', b.dataset.page === page));
+  document.querySelectorAll('nav.nav button').forEach(b => b.classList.toggle('active', b.dataset.page === page));
   document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + page));
   if (page === 'dashboard') { renderDashboard(); updateBackupBadge(); }
   if (page === 'entry') renderEntry();
-  if (page === 'history') renderHistory();
+  if (page === 'history') {
+    // 同步历史页视图切换按钮的 active 状态
+    document.querySelectorAll('#history-view-toggle button').forEach(b => b.classList.toggle('active', b.dataset.hview === state.historyView));
+    renderHistory();
+  }
   // 切换页面时关闭抽屉（清理趋势图）
   const drawer = document.getElementById('drawer');
   if (drawer && drawer.classList.contains('open')) closeDrawer();
@@ -6203,16 +6207,20 @@ document.querySelectorAll('#history-view-toggle button').forEach(b => {
     state.historyView = b.dataset.hview;
     document.querySelectorAll('#history-view-toggle button').forEach(x => x.classList.toggle('active', x === b));
     const isList = state.historyView === 'list';
-    // 列表视图专属控件
-    document.getElementById('history-search').style.display = isList ? '' : 'none';
-    document.getElementById('export-csv').style.display = isList ? '' : 'none';
-    const compareRow = document.getElementById('history-compare-a').closest('div');
-    // 只隐藏比较控件（vs 和两个日期输入），保留视图切换按钮
-    document.getElementById('history-compare-a').style.display = isList ? '' : 'none';
-    document.getElementById('history-compare-b').style.display = isList ? '' : 'none';
-    if (compareRow) {
-      const vsSpan = compareRow.querySelector('span');
-      if (vsSpan) vsSpan.style.display = isList ? '' : 'none';
+    const searchEl = document.getElementById('history-search');
+    const csvEl = document.getElementById('export-csv');
+    const cmpA = document.getElementById('history-compare-a');
+    const cmpB = document.getElementById('history-compare-b');
+    if (searchEl) searchEl.style.display = isList ? '' : 'none';
+    if (csvEl) csvEl.style.display = isList ? '' : 'none';
+    if (cmpA) cmpA.style.display = isList ? '' : 'none';
+    if (cmpB) cmpB.style.display = isList ? '' : 'none';
+    if (cmpA) {
+      const compareRow = cmpA.closest('div');
+      if (compareRow) {
+        const vsSpan = compareRow.querySelector('span');
+        if (vsSpan) vsSpan.style.display = isList ? '' : 'none';
+      }
     }
     renderHistory();
   });
