@@ -11,80 +11,88 @@
   /* =====================================================
      CSS 变量系统 · 苹果设计语言
   ===================================================== */
+  /* =====================================================
+     Linear Dark · 暗色主题
+     灵感来源: Linear.app — 极暗画布、半透白边框、蓝紫强调
+  ===================================================== */
   :root, [data-theme="dark"] {
-    /* 背景层级 */
-    --bg:          #050508;
-    --bg-1:        #121215;
-    --bg-2:        #1e1e22;
-    --bg-3:        #2a2a30;
-    --bg-glass:    rgba(18,18,21,0.68);
-    /* 前景 */
-    --ink:         #f5f5f7;
-    --ink-2:       rgba(245,245,247,0.85);
-    --ink-3:       rgba(245,245,247,0.52);
-    --ink-4:       rgba(245,245,247,0.28);
-    /* 分割线 */
-    --sep:         rgba(255,255,255,0.06);
-    --sep-strong:  rgba(255,255,255,0.12);
-    /* 强调色 · 蓝 */
-    --accent:      #3b82f6;
-    --accent-soft: rgba(59,130,246,0.15);
-    /* 绿/红 */
-    --green:       #34d399;
-    --green-soft:  rgba(52,211,153,0.14);
+    /* 背景层级 · luminance stepping */
+    --bg:          #08090a;
+    --bg-1:        #0f1011;
+    --bg-2:        #191a1b;
+    --bg-3:        #28282c;
+    --bg-glass:    rgba(15,16,17,0.85);
+    /* 前景 · near-white 防眼疲劳 */
+    --ink:         #f7f8f8;
+    --ink-2:       #d0d6e0;
+    --ink-3:       #8a8f98;
+    --ink-4:       #62666d;
+    /* 分割线 · 半透明白 */
+    --sep:         rgba(255,255,255,0.05);
+    --sep-strong:  rgba(255,255,255,0.08);
+    /* 强调色 · Linear 招牌 indigo-violet */
+    --accent:      #5e6ad2;
+    --accent-soft: rgba(94,106,210,0.14);
+    /* 语义色 */
+    --green:       #27a644;
+    --green-soft:  rgba(39,166,68,0.13);
     --red:         #f87171;
-    --red-soft:    rgba(248,113,113,0.14);
-    /* 黄/橙 */
+    --red-soft:    rgba(248,113,113,0.13);
     --yellow:      #fbbf24;
     --orange:      #fb923c;
-    /* 阴影 */
-    --shadow-sm:   0 1px 2px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2);
-    --shadow-md:   0 4px 24px rgba(0,0,0,0.4), 0 1px 8px rgba(0,0,0,0.3);
-    --shadow-lg:   0 20px 60px rgba(0,0,0,0.55), 0 4px 24px rgba(0,0,0,0.35);
-    /* 图表辅助 */
+    /* 阴影 · 暗面亮度递进代替传统 drop shadow */
+    --shadow-sm:   0 1px 2px rgba(0,0,0,0.25);
+    --shadow-md:   0 4px 24px rgba(0,0,0,0.35);
+    --shadow-lg:   0 20px 60px rgba(0,0,0,0.50);
+    /* 图表 */
     --chart-grid:  rgba(255,255,255,0.04);
-    --chart-tick:  rgba(255,255,255,0.30);
-    --tooltip-bg:  #1e1e22;
-    --accent-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
-    --accent-glow:     rgba(59,130,246,0.25);
-    --accent-purple:   #8b5cf6;
-    --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.08);
-    --glow-blue:       rgba(59,130,246,0.06);
-    --glow-purple:     rgba(139,92,246,0.04);
+    --chart-tick:  rgba(255,255,255,0.25);
+    --tooltip-bg:  #191a1b;
+    /* 渐变 & 辉光 */
+    --accent-gradient: linear-gradient(135deg, #5e6ad2, #7170ff);
+    --accent-glow:     rgba(94,106,210,0.22);
+    --accent-purple:   #7170ff;
+    --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.06);
+    --glow-blue:       rgba(94,106,210,0.05);
+    --glow-purple:     rgba(113,112,255,0.03);
   }
 
+  /* =====================================================
+     Apple Light · 浅色主题
+     灵感来源: Apple.com — 留白为主、SF 风格、蓝黑克制
+  ===================================================== */
   [data-theme="light"] {
-    --bg:          #f5f5f9;
-    --bg-1:        #ffffff;
-    --bg-2:        #f0f0f4;
-    --bg-3:        #e5e5ea;
+    --bg:          #ffffff;
+    --bg-1:        #f5f5f7;
+    --bg-2:        #e8e8ed;
+    --bg-3:        #dcdce0;
     --bg-glass:    rgba(255,255,255,0.76);
-    --ink:         #0d0d12;
-    --ink-2:       rgba(13,13,18,0.85);
-    --ink-3:       rgba(13,13,18,0.48);
-    --ink-4:       rgba(13,13,18,0.22);
-    --sep:         rgba(0,0,0,0.06);
-    --sep-strong:  rgba(0,0,0,0.10);
-    --accent:      #2563eb;
-    --accent-soft: rgba(37,99,235,0.10);
-    --green:       #10b981;
-    --green-soft:  rgba(16,185,129,0.10);
-    --red:         #ef4444;
-    --red-soft:    rgba(239,68,68,0.10);
-    --yellow:      #f59e0b;
-    --orange:      #f97316;
+    --ink:         #1d1d1f;
+    --ink-2:       rgba(29,29,31,0.82);
+    --ink-3:       #6e6e73;
+    --ink-4:       #aeaeb2;
+    --sep:         #d2d2d7;
+    --sep-strong:  #86868b;
+    --accent:      #0071e3;
+    --accent-soft: rgba(0,113,227,0.10);
+    --green:       #34c759;
+    --green-soft:  rgba(52,199,89,0.10);
+    --red:         #ff3b30;
+    --red-soft:    rgba(255,59,48,0.10);
+    --yellow:      #ff9500;
+    --orange:      #ff9f0a;
     --shadow-sm:   0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03);
-    --shadow-md:   0 4px 24px rgba(0,0,0,0.06), 0 1px 8px rgba(0,0,0,0.04);
-    --shadow-lg:   0 20px 60px rgba(0,0,0,0.10), 0 4px 24px rgba(0,0,0,0.06);
+    --shadow-md:   0 4px 24px rgba(0,0,0,0.05), 0 1px 8px rgba(0,0,0,0.03);
+    --shadow-lg:   0 20px 60px rgba(0,0,0,0.08), 0 4px 24px rgba(0,0,0,0.04);
     --chart-grid:  rgba(0,0,0,0.04);
     --chart-tick:  rgba(0,0,0,0.35);
     --tooltip-bg:  #ffffff;
-    --accent-gradient: linear-gradient(135deg, #2563eb, #7c3aed);
-    --accent-glow:     rgba(37,99,235,0.18);
-    --accent-purple:   #7c3aed;
-    --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.6);
-    --glow-blue:       rgba(37,99,235,0.05);
-    --glow-purple:     rgba(124,58,237,0.03);
+    --accent-gradient: linear-gradient(135deg, #0071e3, #2997ff);
+    --accent-glow:     rgba(0,113,227,0.14);
+    --accent-purple:   #2997ff;
+    --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.7);
+    --glow-blue:       rgba(0,113,227,0.04);
+    --glow-purple:     rgba(41,151,255,0.02);
   }
 
   /* =====================================================
@@ -239,7 +247,7 @@
   }
   [data-theme="light"] .nav button.active,
   [data-theme="light"] .theme-toggle button.active {
-    background: #ffffff;
+    background: var(--bg);
   }
   .nav button.dirty::after {
     content: '';
@@ -321,14 +329,14 @@
   ===================================================== */
   .hero-block {
     position: relative;
-    background: linear-gradient(135deg, #001530 0%, #0a1a2a 50%, #001020 100%);
+    background: linear-gradient(135deg, #0f1011 0%, #191a1b 100%);
     border-radius: 32px;
     padding: 64px 56px 56px;
     margin-bottom: 14px;
     overflow: hidden;
     cursor: pointer;
-    box-shadow: 0 32px 80px var(--glow-blue);
-    border: 0.5px solid rgba(255,255,255,0.08);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--sep-strong);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform;
@@ -339,22 +347,21 @@
     position: absolute; inset: 0; z-index: 0;
     background-image:
       radial-gradient(circle at 20% 50%, var(--glow-blue) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(139,92,246,0.05) 0%, transparent 40%),
-      radial-gradient(circle at 50% 80%, rgba(255,159,10,0.04) 0%, transparent 40%);
+      radial-gradient(circle at 80% 20%, var(--glow-purple) 0%, transparent 40%);
     pointer-events: none;
   }
   .hero-block::after {
     content: '';
     position: absolute; inset: 0; z-index: 0;
-    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0v40M0 20h40' stroke='rgba(255,255,255,0.02)' stroke-width='0.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0v40M0 20h40' stroke='rgba(255,255,255,0.015)' stroke-width='0.5'/%3E%3C/svg%3E");
     pointer-events: none;
   }
   [data-theme="light"] .hero-block::after {
-    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0v40M0 20h40' stroke='rgba(0,0,0,0.03)' stroke-width='0.5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0v40M0 20h40' stroke='rgba(0,0,0,0.025)' stroke-width='0.5'/%3E%3C/svg%3E");
   }
   .hero-block:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 40px 100px var(--accent-glow);
+    transform: translateY(-4px);
+    box-shadow: 0 32px 80px var(--accent-glow);
   }
   .hero-block:active { transform: translateY(-2px); }
   .hero-block:hover .hero-arrow {
@@ -362,9 +369,9 @@
     transform: translateX(3px);
   }
   [data-theme="light"] .hero-block {
-    background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 50%, #f5f8ff 100%);
-    box-shadow: 0 24px 72px rgba(0,122,255,0.08);
-    border: 0.5px solid rgba(255,255,255,0.6);
+    background: var(--bg-1);
+    box-shadow: 0 8px 48px rgba(0,0,0,0.04);
+    border: 0.5px solid var(--sep);
   }
   .hero-bg-1, .hero-bg-2 {
     position: absolute;
@@ -380,14 +387,14 @@
   .hero-bg-2 {
     bottom: -100px; left: -80px;
     width: 320px; height: 320px;
-    background: radial-gradient(circle, rgba(139,92,246,0.10), transparent 65%);
+    background: radial-gradient(circle, var(--glow-purple), transparent 65%);
     animation: heroGlow 5s ease-in-out infinite 1s;
   }
   [data-theme="light"] .hero-bg-1 {
     background: radial-gradient(circle, var(--accent-glow), transparent 65%);
   }
   [data-theme="light"] .hero-bg-2 {
-    background: radial-gradient(circle, rgba(139,92,246,0.10), transparent 65%);
+    background: radial-gradient(circle, var(--glow-purple), transparent 65%);
   }
   .hero-content { position: relative; }
   .hero-label {
@@ -400,9 +407,9 @@
     align-items: center;
     gap: 6px;
   }
-  [data-theme="light"] .hero-label { color: rgba(0,0,0,0.45); }
+  [data-theme="light"] .hero-label { color: var(--ink-3); }
   .hero-arrow {
-    color: rgba(255,255,255,0.3);
+    color: var(--ink-4);
     font-size: 13px;
     line-height: 1;
     transition: color 0.25s, transform 0.25s;
@@ -412,32 +419,31 @@
     0%, 100% { transform: translateX(0); }
     50% { transform: translateX(3px); }
   }
-  [data-theme="light"] .hero-arrow { color: rgba(0,0,0,0.3); }
+  [data-theme="light"] .hero-arrow { color: var(--ink-4); }
   .hero-value {
     font-family: 'Inter', -apple-system, sans-serif;
     font-size: 96px;
     font-weight: 200;
-    color: white;
+    color: var(--ink);
     letter-spacing: -0.05em;
     line-height: 0.95;
-    /* 数字使用等宽数字属性，刷新时不抖 */
     font-variant-numeric: tabular-nums;
   }
-  [data-theme="light"] .hero-value { color: #001530; }
+  [data-theme="light"] .hero-value { color: var(--ink); }
   .hero-currency {
     font-size: 40px;
     font-weight: 300;
-    color: rgba(255,255,255,0.5);
+    color: var(--ink-3);
     margin-right: 6px;
     vertical-align: 0.5em;
   }
-  [data-theme="light"] .hero-currency { color: rgba(0,0,0,0.5); }
+  [data-theme="light"] .hero-currency { color: var(--ink-3); }
   .hero-decimal {
     font-size: 40px;
     font-weight: 300;
-    color: rgba(255,255,255,0.5);
+    color: var(--ink-3);
   }
-  [data-theme="light"] .hero-decimal { color: rgba(0,0,0,0.5); }
+  [data-theme="light"] .hero-decimal { color: var(--ink-3); }
   .hero-meta {
     display: flex;
     align-items: center;
@@ -514,7 +520,7 @@
     box-shadow: var(--shadow-sm);
   }
   [data-theme="light"] .returns-period-tabs button.active,
-  [data-theme="light"] .returns-indicator-pick button.active { background: #ffffff; }
+  [data-theme="light"] .returns-indicator-pick button.active { background: var(--bg); }
 
   .returns-summary {
     display: flex;
@@ -722,7 +728,7 @@
     font-weight: 600;
     box-shadow: var(--shadow-sm);
   }
-  [data-theme="light"] .view-toggle button.active { background: #ffffff; }
+  [data-theme="light"] .view-toggle button.active { background: var(--bg); }
 
   /* 标签徽章 */
   .tag-badge {
