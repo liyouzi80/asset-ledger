@@ -468,42 +468,167 @@
     color: rgba(255,255,255,0.5);
   }
   [data-theme="light"] .hero-meta-text { color: rgba(0,0,0,0.5); }
-  .hero-returns {
+  /* =====================================================
+     收益率模块（独立 chart-card 风格）
+  ===================================================== */
+  .returns-toolbar {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+  .returns-period-tabs,
+  .returns-indicator-pick {
+    display: inline-flex;
+    background: var(--bg-2);
+    border-radius: 9px;
+    padding: 2px;
     gap: 0;
-    margin-top: 28px;
-    padding-top: 20px;
-    border-top: 0.5px solid rgba(255,255,255,0.08);
   }
-  [data-theme="light"] .hero-returns { border-top-color: rgba(0,0,0,0.06); }
-  .hero-ret-item { flex: 1; }
-  .hero-ret-label {
-    font-size: 11px;
-    color: rgba(255,255,255,0.35);
+  [data-theme="light"] .returns-period-tabs,
+  [data-theme="light"] .returns-indicator-pick { background: var(--bg-3); }
+  .returns-period-tabs button,
+  .returns-indicator-pick button {
+    background: none;
+    border: none;
+    color: var(--ink-3);
+    font-family: inherit;
+    font-size: 13px;
     font-weight: 500;
-    letter-spacing: 0.04em;
-    margin-bottom: 4px;
+    letter-spacing: -0.01em;
+    padding: 6px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
   }
-  [data-theme="light"] .hero-ret-label { color: rgba(0,0,0,0.35); }
-  .hero-ret-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 22px;
+  .returns-period-tabs button:hover,
+  .returns-indicator-pick button:hover { color: var(--ink-2); }
+  .returns-period-tabs button.active,
+  .returns-indicator-pick button.active {
+    background: var(--bg-1);
+    color: var(--ink);
     font-weight: 600;
-    letter-spacing: -0.02em;
-    color: rgba(255,255,255,0.85);
+    box-shadow: var(--shadow-sm);
   }
-  .hero-ret-value.pos { color: var(--green); }
-  .hero-ret-value.neg { color: var(--red); }
-  [data-theme="light"] .hero-ret-value { color: rgba(0,0,0,0.8); }
-  .hero-ret-divider {
-    width: 0.5px;
-    height: 32px;
-    background: rgba(255,255,255,0.08);
-    margin: 0 24px;
-    flex-shrink: 0;
+  [data-theme="light"] .returns-period-tabs button.active,
+  [data-theme="light"] .returns-indicator-pick button.active { background: #ffffff; }
+
+  .returns-summary {
+    display: flex;
+    align-items: flex-end;
+    gap: 32px;
+    padding-bottom: 20px;
+    border-bottom: 0.5px solid var(--sep);
+    margin-bottom: 18px;
+    flex-wrap: wrap;
   }
-  [data-theme="light"] .hero-ret-divider { background: rgba(0,0,0,0.08); }
+  .returns-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .returns-summary-label {
+    font-size: 12px;
+    color: var(--ink-3);
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+  .returns-summary-value {
+    font-family: 'Inter', -apple-system, sans-serif;
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .returns-summary-value.pos { color: var(--green); }
+  .returns-summary-value.neg { color: var(--red); }
+  .returns-summary-item.secondary .returns-summary-value {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink-2);
+  }
+  .returns-summary-item.secondary .returns-summary-value.tiny {
+    font-size: 14px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    color: var(--ink-3);
+  }
+
+  .returns-chart-wrap {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    margin-bottom: 14px;
+  }
+  .returns-chart-wrap svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+  .returns-chart-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-3);
+    font-size: 13px;
+    gap: 8px;
+  }
+  .returns-chart-empty .glyph {
+    font-size: 32px;
+    opacity: 0.5;
+  }
+  .returns-zero-line {
+    stroke: var(--sep-strong);
+    stroke-width: 0.5;
+    stroke-dasharray: 4 4;
+  }
+  .returns-line {
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .returns-line.pos { stroke: var(--green); }
+  .returns-line.neg { stroke: var(--red); }
+  .returns-area-pos { fill: rgba(48,209,88,0.12); }
+  .returns-area-neg { fill: rgba(255,69,58,0.10); }
+  .returns-end-dot {
+    r: 3.5;
+    stroke: var(--bg-1);
+    stroke-width: 1.5;
+  }
+  .returns-end-dot.pos { fill: var(--green); }
+  .returns-end-dot.neg { fill: var(--red); }
+  .returns-axis-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    fill: var(--ink-4);
+  }
+
+  .returns-footer {
+    font-size: 11.5px;
+    color: var(--ink-4);
+    line-height: 1.55;
+  }
+
+  @media (max-width: 600px) {
+    .returns-summary { gap: 20px; }
+    .returns-summary-value { font-size: 28px; }
+    .returns-summary-item.secondary .returns-summary-value { font-size: 17px; }
+    .returns-summary-item.secondary .returns-summary-value.tiny { font-size: 12px; }
+    .returns-chart-wrap { height: 180px; }
+    .returns-period-tabs button,
+    .returns-indicator-pick button { padding: 5px 10px; font-size: 12px; }
+  }
 
   /* 三张次级卡 */
   @keyframes heroGlow {
@@ -2022,9 +2147,6 @@
     .hero-currency, .hero-decimal { font-size: 22px; }
     .hero-label { font-size: 12px; margin-bottom: 16px; }
     .hero-meta { margin-top: 20px; gap: 10px; }
-    .hero-returns { margin-top: 20px; padding-top: 16px; }
-    .hero-ret-value { font-size: 18px; }
-    .hero-ret-divider { margin: 0 16px; height: 28px; }
     .kpi-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 28px; }
     .kpi-card { padding: 18px 20px; border-radius: 16px; }
     .kpi-card:hover { transform: none; }
@@ -2203,26 +2325,15 @@
 
   <!-- 概览 -->
   <section id="page-dashboard" class="page active">
-    <div class="hero-block clickable" data-drill="returns">
+    <div class="hero-block">
       <div class="hero-bg-1"></div>
       <div class="hero-bg-2"></div>
       <div class="hero-content">
-        <div class="hero-label">总 资 产 <span class="hero-arrow">›</span></div>
+        <div class="hero-label">总 资 产</div>
         <div class="hero-value" id="kpi-total"><span class="hero-currency">¥</span>—</div>
         <div class="hero-meta">
           <span class="hero-pill" id="kpi-total-pill"></span>
           <span class="hero-meta-text" id="kpi-total-sub">尚无数据</span>
-        </div>
-        <div class="hero-returns" id="hero-returns">
-          <div class="hero-ret-item">
-            <div class="hero-ret-label">简单收益</div>
-            <div class="hero-ret-value" id="hero-simple-ret">—</div>
-          </div>
-          <div class="hero-ret-divider"></div>
-          <div class="hero-ret-item">
-            <div class="hero-ret-label">时间加权 (TWR)</div>
-            <div class="hero-ret-value" id="hero-twr">—</div>
-          </div>
         </div>
       </div>
     </div>
@@ -2265,6 +2376,50 @@
           <div class="kpi-trend" id="kpi-ytd-trend"></div>
           <div class="kpi-sub" id="kpi-ytd-sub"></div>
         </div>
+      </div>
+    </div>
+
+    <div class="section-head reveal">
+      <h2>收益率走势</h2>
+      <span class="meta">期间累计收益</span>
+    </div>
+    <div class="chart-card reveal" id="returns-module">
+      <div class="returns-toolbar">
+        <div class="returns-period-tabs" id="returns-period-tabs">
+          <button data-period="1m">近 1 月</button>
+          <button data-period="3m">近 3 月</button>
+          <button data-period="6m">近 6 月</button>
+          <button data-period="ytd" class="active">年初至今</button>
+        </div>
+        <div class="returns-indicator-pick" id="returns-indicator-pick">
+          <button data-indicator="twr" class="active">TWR</button>
+          <button data-indicator="simple">简单</button>
+          <button data-indicator="amount">盈亏额</button>
+        </div>
+      </div>
+      <div class="returns-summary">
+        <div class="returns-summary-item">
+          <div class="returns-summary-label" id="returns-primary-label">收益率 · TWR</div>
+          <div class="returns-summary-value" id="returns-primary-value">—</div>
+        </div>
+        <div class="returns-summary-item secondary">
+          <div class="returns-summary-label" id="returns-secondary-label">累计盈亏</div>
+          <div class="returns-summary-value" id="returns-secondary-value">—</div>
+        </div>
+        <div class="returns-summary-item secondary">
+          <div class="returns-summary-label">起止</div>
+          <div class="returns-summary-value tiny" id="returns-period-range">—</div>
+        </div>
+      </div>
+      <div class="returns-chart-wrap">
+        <svg id="returns-chart" preserveAspectRatio="none"></svg>
+        <div class="returns-chart-empty" id="returns-chart-empty" style="display:none">
+          <span class="glyph">📉</span>
+          <p>该期间数据不足以绘制走势</p>
+        </div>
+      </div>
+      <div class="returns-footer">
+        <span id="returns-formula-note">TWR 累计收益率剔除入金/出金影响</span>
       </div>
     </div>
 
@@ -2904,6 +3059,8 @@ let state = {
   targetAllocation: {},   // { [groupName]: percentage } —— 目标配置占比
   anomalyThreshold: 0.2,  // 重大变化提醒阈值，默认 ±20%
   historyView: 'list',    // 'list' | 'matrix' —— 历史页视图模式
+  returnPeriod: 'ytd',    // '1m' | '3m' | '6m' | 'ytd' —— 收益率模块默认期间
+  returnIndicator: 'twr', // 'twr' | 'simple' | 'amount' —— 默认指标
 };
 
 function migrateAccounts(accounts) {
@@ -3670,6 +3827,22 @@ document.querySelectorAll('#view-toggle button').forEach(b => {
   });
 });
 
+// 收益率模块 · 期间切换
+document.querySelectorAll('#returns-period-tabs button').forEach(b => {
+  b.addEventListener('click', () => {
+    state.returnPeriod = b.dataset.period;
+    renderDashboard();
+  });
+});
+
+// 收益率模块 · 指标切换
+document.querySelectorAll('#returns-indicator-pick button').forEach(b => {
+  b.addEventListener('click', () => {
+    state.returnIndicator = b.dataset.indicator;
+    renderDashboard();
+  });
+});
+
 // ============================================================
 // 抽屉 · drill-down 明细
 // ============================================================
@@ -4207,6 +4380,258 @@ function computeReturnMetrics(allSorted) {
            ytdPnL, startBalance, series, hasYearStart, year };
 }
 
+// ============================================================
+// 首页 · 收益率模块（独立 chart-card）
+// 数据基于 viewMode 过滤后的快照流，按 returnPeriod 切片
+// ============================================================
+function renderReturnsModule(allSorted, onlyActive) {
+  if (!allSorted || allSorted.length === 0) return;
+
+  // 1. 切片：按 returnPeriod 取所需 snapshots（含期初）
+  const period = state.returnPeriod || 'ytd';
+  const indicator = state.returnIndicator || 'twr';
+  const filtered = allSorted.map(s => onlyActive(s));
+  const periodSnaps = sliceSnapshotsByPeriod(filtered, period);
+
+  // 同步按钮 active 状态
+  document.querySelectorAll('#returns-period-tabs button').forEach(b => {
+    b.classList.toggle('active', b.dataset.period === period);
+  });
+  document.querySelectorAll('#returns-indicator-pick button').forEach(b => {
+    b.classList.toggle('active', b.dataset.indicator === indicator);
+  });
+
+  // 2. 没有有效切片时显示空状态
+  const emptyEl = document.getElementById('returns-chart-empty');
+  const svg = document.getElementById('returns-chart');
+  const primaryEl = document.getElementById('returns-primary-value');
+  const primaryLabelEl = document.getElementById('returns-primary-label');
+  const secondaryEl = document.getElementById('returns-secondary-value');
+  const secondaryLabelEl = document.getElementById('returns-secondary-label');
+  const rangeEl = document.getElementById('returns-period-range');
+  const formulaEl = document.getElementById('returns-formula-note');
+
+  if (!periodSnaps || periodSnaps.points.length < 2) {
+    primaryEl.textContent = '—';
+    primaryEl.className = 'returns-summary-value';
+    secondaryEl.textContent = '—';
+    secondaryEl.className = 'returns-summary-value';
+    rangeEl.textContent = '—';
+    svg.innerHTML = '';
+    emptyEl.style.display = 'flex';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  // 3. 计算累计 TWR / 简单 / 盈亏额 序列
+  const series = computePeriodSeries(periodSnaps);
+  // series.points: [{ month, twrCum, simpleCum, pnlCum }]
+
+  // 4. 主指标和辅助数字
+  const last = series.points[series.points.length - 1];
+  let primaryValue, primaryLabel, secondaryValue, secondaryLabel;
+  if (indicator === 'twr') {
+    primaryValue = last.twrCum;
+    primaryLabel = '收益率 · TWR';
+    secondaryValue = last.pnlCum;
+    secondaryLabel = '累计盈亏';
+    formulaEl.textContent = 'TWR 累计收益率剔除入金/出金影响';
+  } else if (indicator === 'simple') {
+    primaryValue = last.simpleCum;
+    primaryLabel = '收益率 · 简单加权';
+    secondaryValue = last.pnlCum;
+    secondaryLabel = '累计盈亏';
+    formulaEl.textContent = '简单收益率 = 累计盈亏 / 期初余额';
+  } else { // amount
+    primaryValue = last.pnlCum;
+    primaryLabel = '累计盈亏';
+    secondaryValue = last.twrCum;
+    secondaryLabel = '收益率 · TWR';
+    formulaEl.textContent = '累计盈亏额 = 期间所有市场盈亏之和（已剔除净流）';
+  }
+
+  // 渲染主指标
+  if (indicator === 'amount') {
+    primaryEl.textContent = fmtSign(primaryValue);
+    primaryEl.className = 'returns-summary-value ' + (primaryValue > 0 ? 'pos' : primaryValue < 0 ? 'neg' : '');
+    secondaryEl.textContent = primaryValue === null ? '—' : (secondaryValue === null ? '—' : (secondaryValue >= 0 ? '+' : '') + (secondaryValue * 100).toFixed(2) + '%');
+    secondaryEl.className = 'returns-summary-value ' + (secondaryValue > 0 ? 'pos' : secondaryValue < 0 ? 'neg' : '');
+  } else {
+    primaryEl.textContent = primaryValue === null ? '—' : (primaryValue >= 0 ? '+' : '') + (primaryValue * 100).toFixed(2) + '%';
+    primaryEl.className = 'returns-summary-value ' + (primaryValue > 0 ? 'pos' : primaryValue < 0 ? 'neg' : '');
+    secondaryEl.textContent = fmtSign(secondaryValue);
+    secondaryEl.className = 'returns-summary-value ' + (secondaryValue > 0 ? 'pos' : secondaryValue < 0 ? 'neg' : '');
+  }
+  primaryLabelEl.textContent = primaryLabel;
+  secondaryLabelEl.textContent = secondaryLabel;
+  rangeEl.textContent = series.points[0].month + ' → ' + last.month;
+
+  // 5. 绘制走势图
+  drawReturnsChart(svg, series.points, indicator);
+}
+
+// 按 period 切出 snapshots：第一份是"期初"，后面是各个数据点
+function sliceSnapshotsByPeriod(allSorted, period) {
+  if (allSorted.length === 0) return null;
+
+  if (period === 'ytd') {
+    const latest = allSorted[allSorted.length - 1];
+    const year = latest.month.slice(0, 4);
+    const prevDec = String(Number(year) - 1) + '-12';
+    const yearStartIdx = allSorted.findIndex(s => s.month === prevDec);
+    const yearStart = yearStartIdx >= 0 ? allSorted[yearStartIdx] : null;
+    const yearSnaps = allSorted.filter(s => s.month.startsWith(year));
+    if (yearSnaps.length === 0) return { points: [] };
+    return {
+      points: [yearStart, ...yearSnaps].filter(Boolean),
+      hasInception: !!yearStart, // 是否有真正的期初快照
+    };
+  }
+
+  // 1m / 3m / 6m: 取最近 N+1 份（N 期间 + 1 期初）
+  const months = period === '1m' ? 1 : period === '3m' ? 3 : 6;
+  const n = months + 1;
+  const slice = allSorted.slice(-n);
+  return { points: slice, hasInception: slice.length === n };
+}
+
+// 计算每个数据点的累计指标
+function computePeriodSeries(periodSnaps) {
+  const points = periodSnaps.points;
+  if (points.length < 2) return { points: [] };
+
+  // 第一份是期初（从这里起算，自身不在序列里展示数字，但作为基准）
+  const inception = points[0];
+  const startBalance = snapshotTotal(inception);
+
+  let twrFactor = 1;
+  let pnlCum = 0;
+  const out = [];
+
+  for (let i = 1; i < points.length; i++) {
+    const curr = points[i];
+    const prev = points[i - 1];
+    const periodStart = snapshotTotal(prev);
+    const periodPnL = monthlyPnL(curr, prev);
+    pnlCum += periodPnL;
+    if (periodStart > 0) twrFactor *= (1 + periodPnL / periodStart);
+    out.push({
+      month: curr.month,
+      twrCum: twrFactor - 1,
+      simpleCum: startBalance > 0 ? pnlCum / startBalance : 0,
+      pnlCum: pnlCum,
+    });
+  }
+
+  // 在最前面插入"期初"点（零基准）
+  out.unshift({
+    month: inception.month,
+    twrCum: 0,
+    simpleCum: 0,
+    pnlCum: 0,
+  });
+
+  return { points: out };
+}
+
+// 用 SVG 手画走势图：曲线 + 零线 + 双色填充
+function drawReturnsChart(svg, points, indicator) {
+  if (!points || points.length < 2) {
+    svg.innerHTML = '';
+    return;
+  }
+
+  const W = 800; // viewBox 宽
+  const H = 220; // viewBox 高
+  const PAD_LEFT = 4;
+  const PAD_RIGHT = 30;
+  const PAD_TOP = 16;
+  const PAD_BOTTOM = 24;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  // 取要绘制的数值：根据 indicator
+  const valueOf = (p) => {
+    if (indicator === 'twr') return p.twrCum;
+    if (indicator === 'simple') return p.simpleCum;
+    return p.pnlCum;
+  };
+
+  const values = points.map(valueOf);
+  let yMin = Math.min(0, ...values);
+  let yMax = Math.max(0, ...values);
+  if (yMin === yMax) { yMin -= 1; yMax += 1; }
+  const range = yMax - yMin;
+  // 给上下留 8% 余量
+  yMin -= range * 0.08;
+  yMax += range * 0.08;
+
+  const xOf = (i) => PAD_LEFT + (W - PAD_LEFT - PAD_RIGHT) * (i / (points.length - 1));
+  const yOf = (v) => PAD_TOP + (H - PAD_TOP - PAD_BOTTOM) * (1 - (v - yMin) / (yMax - yMin));
+  const yZero = yOf(0);
+
+  // 路径：曲线
+  const pathPoints = points.map((p, i) => ({ x: xOf(i), y: yOf(valueOf(p)) }));
+  const linePath = smoothPath(pathPoints);
+  // 闭合路径用于零线分段填充
+  const areaPath = linePath + ` L ${pathPoints[pathPoints.length - 1].x} ${yZero} L ${pathPoints[0].x} ${yZero} Z`;
+
+  const lastVal = values[values.length - 1];
+  const lastClass = lastVal >= 0 ? 'pos' : 'neg';
+
+  // 颜色根据终点决定（主色），但填充按零线分段（盈利段绿、亏损段红）
+  // 简化：用整体颜色 = 终值正负
+  const lineColorClass = lastClass;
+
+  // SVG 内容
+  let svgContent = '';
+  // clipPath: 上方（>=0 的部分）
+  svgContent += `<defs>
+    <clipPath id="clip-pos"><rect x="0" y="0" width="${W}" height="${yZero}"/></clipPath>
+    <clipPath id="clip-neg"><rect x="0" y="${yZero}" width="${W}" height="${H - yZero}"/></clipPath>
+  </defs>`;
+  // 双色填充
+  svgContent += `<path d="${areaPath}" class="returns-area-pos" clip-path="url(#clip-pos)"/>`;
+  svgContent += `<path d="${areaPath}" class="returns-area-neg" clip-path="url(#clip-neg)"/>`;
+  // 零线
+  svgContent += `<line x1="${PAD_LEFT}" y1="${yZero.toFixed(2)}" x2="${(W - PAD_RIGHT).toFixed(2)}" y2="${yZero.toFixed(2)}" class="returns-zero-line"/>`;
+  // 曲线
+  svgContent += `<path d="${linePath}" class="returns-line ${lineColorClass}"/>`;
+  // 终点圆点
+  const endP = pathPoints[pathPoints.length - 1];
+  svgContent += `<circle cx="${endP.x.toFixed(2)}" cy="${endP.y.toFixed(2)}" class="returns-end-dot ${lastClass}"/>`;
+  // 终点标签
+  const labelText = indicator === 'amount'
+    ? fmtSign(lastVal)
+    : (lastVal >= 0 ? '+' : '') + (lastVal * 100).toFixed(1) + '%';
+  svgContent += `<text x="${(endP.x + 6).toFixed(2)}" y="${(endP.y + 4).toFixed(2)}" class="returns-axis-text" text-anchor="start" style="font-weight:600;fill:${lastVal >= 0 ? 'var(--green)' : 'var(--red)'}">${labelText}</text>`;
+  // 零线右侧标签
+  svgContent += `<text x="${W - PAD_RIGHT + 4}" y="${yZero.toFixed(2)}" dominant-baseline="middle" class="returns-axis-text">0%</text>`;
+
+  svg.innerHTML = svgContent;
+}
+
+// 平滑曲线生成器（Catmull-Rom 转 Bezier）
+function smoothPath(pts) {
+  if (pts.length < 2) return '';
+  if (pts.length === 2) return `M ${pts[0].x} ${pts[0].y} L ${pts[1].x} ${pts[1].y}`;
+
+  let d = `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const t = 0.18; // tension 越小越尖锐，越大越圆滑
+    const cp1x = p1.x + (p2.x - p0.x) * t;
+    const cp1y = p1.y + (p2.y - p0.y) * t;
+    const cp2x = p2.x - (p3.x - p1.x) * t;
+    const cp2y = p2.y - (p3.y - p1.y) * t;
+    d += ` C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)}, ${cp2x.toFixed(2)} ${cp2y.toFixed(2)}, ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}`;
+  }
+  return d;
+}
+
 function renderReturnsView(m, sorted) {
   const latestTotal = snapshotTotal(sorted[sorted.length - 1]);
   let html = '';
@@ -4547,13 +4972,19 @@ function renderDashboard() {
     document.getElementById('kpi-total').innerHTML = '<span class="hero-currency">¥</span>—';
     document.getElementById('kpi-total-sub').textContent = '尚无快照，请先到「录入」页创建第一份记录';
     document.getElementById('kpi-total-pill').classList.remove('show');
-    document.getElementById('hero-returns').style.display = 'none';
-    document.getElementById('kpi-total').closest('.hero-block').style.cursor = 'default';
     ['pnl', 'flow', 'ytd'].forEach(k => {
       document.getElementById('kpi-' + k).textContent = '—';
       document.getElementById('kpi-' + k + '-trend').textContent = '';
       document.getElementById('kpi-' + k + '-sub').textContent = '';
     });
+    // 收益率模块清空
+    document.getElementById('returns-primary-value').textContent = '—';
+    document.getElementById('returns-primary-value').className = 'returns-summary-value';
+    document.getElementById('returns-secondary-value').textContent = '—';
+    document.getElementById('returns-secondary-value').className = 'returns-summary-value';
+    document.getElementById('returns-period-range').textContent = '—';
+    document.getElementById('returns-chart').innerHTML = '';
+    document.getElementById('returns-chart-empty').style.display = 'flex';
     // 显示空状态图表区提示
     document.querySelectorAll('.chart-card').forEach(c => {
       const desc = c.querySelector('.desc');
@@ -4598,31 +5029,8 @@ function renderDashboard() {
     pill.classList.remove('show');
   }
 
-  // Hero 收益率
-  const filteredSnaps = sorted.map(s => onlyActive(s));
-  const retMetrics = computeReturnMetrics(filteredSnaps);
-  const heroSimpleEl = document.getElementById('hero-simple-ret');
-  const heroTwrEl = document.getElementById('hero-twr');
-  const heroReturnsRow = document.getElementById('hero-returns');
-  if (retMetrics.ytdSimple !== null || retMetrics.ytdTWR !== null) {
-    heroReturnsRow.style.display = 'flex';
-    if (retMetrics.ytdSimple !== null) {
-      heroSimpleEl.textContent = (retMetrics.ytdSimple >= 0 ? '+' : '') + (retMetrics.ytdSimple * 100).toFixed(1) + '%';
-      heroSimpleEl.className = 'hero-ret-value ' + (retMetrics.ytdSimple >= 0 ? 'pos' : 'neg');
-    } else {
-      heroSimpleEl.textContent = '—';
-      heroSimpleEl.className = 'hero-ret-value';
-    }
-    if (retMetrics.ytdTWR !== null) {
-      heroTwrEl.textContent = (retMetrics.ytdTWR >= 0 ? '+' : '') + (retMetrics.ytdTWR * 100).toFixed(1) + '%';
-      heroTwrEl.className = 'hero-ret-value ' + (retMetrics.ytdTWR >= 0 ? 'pos' : 'neg');
-    } else {
-      heroTwrEl.textContent = '—';
-      heroTwrEl.className = 'hero-ret-value';
-    }
-  } else {
-    heroReturnsRow.style.display = 'none';
-  }
+  // 收益率模块
+  renderReturnsModule(sorted, onlyActive);
 
   // 三张次级卡：弱化货币符号
   renderKpiValue('kpi-pnl', pnl, true);
