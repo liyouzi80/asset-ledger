@@ -5463,6 +5463,26 @@ function renderDashboard() {
         },
       ],
     },
+    plugins: [{
+      id: 'barLabel',
+      afterDraw(chart) {
+        const ctx = chart.ctx;
+        const meta = chart.getDatasetMeta(0);
+        if (!meta || !meta.data) return;
+        ctx.save();
+        ctx.font = '11px "JetBrains Mono", monospace';
+        ctx.textAlign = 'center';
+        meta.data.forEach((bar, i) => {
+          const v = chart.data.datasets[0].data[i];
+          if (v == null || isNaN(v) || v === 0) return;
+          const label = v >= 0 ? '+' + (v / 10000).toFixed(1) + '万' : (v / 10000).toFixed(1) + '万';
+          const y = v >= 0 ? bar.y - 8 : bar.y + 16;
+          ctx.fillStyle = v >= 0 ? colorGreen : colorRed;
+          ctx.fillText(label, bar.x, y);
+        });
+        ctx.restore();
+      },
+    }],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -5488,26 +5508,6 @@ function renderDashboard() {
             font: { size: 12, family: "'Inter', sans-serif" },
             usePointStyle: true,
             pointStyle: 'circle',
-          },
-        },
-        // 柱形图上直接显示数值（无需 hover）
-        barLabel: {
-          afterDatasetsDraw(chart) {
-            const ctx = chart.ctx;
-            const meta = chart.getDatasetMeta(0);
-            if (!meta || !meta.data) return;
-            ctx.save();
-            ctx.font = '11px "JetBrains Mono", monospace';
-            ctx.textAlign = 'center';
-            meta.data.forEach((bar, i) => {
-              const v = chart.data.datasets[0].data[i];
-              if (v == null || isNaN(v) || v === 0) return;
-              const label = v >= 0 ? '+' + (v / 10000).toFixed(1) + '万' : (v / 10000).toFixed(1) + '万';
-              const y = v >= 0 ? bar.y - 6 : bar.y + (bar.base - bar.y) + 14;
-              ctx.fillStyle = v >= 0 ? colorGreen : colorRed;
-              ctx.fillText(label, bar.x, y);
-            });
-            ctx.restore();
           },
         },
         tooltip: {
