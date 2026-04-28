@@ -6247,16 +6247,8 @@ document.querySelectorAll('#history-view-toggle button').forEach(b => {
 function renderMatrixView() {
   const root = document.getElementById('history-content');
   const sorted = getSortedSnapshots();
-  // 返回按钮
-  let html = '<button class="icon-btn" id="matrix-back-btn" style="margin-bottom:12px">← 返回列表</button>';
   if (sorted.length === 0) {
-    html += '<div class="empty"><div class="glyph">∅</div><p>暂无数据</p></div>';
-    root.innerHTML = html;
-    document.getElementById('matrix-back-btn').addEventListener('click', () => {
-      state.historyView = 'list';
-      document.querySelectorAll('#history-view-toggle button').forEach(x => x.classList.toggle('active', x.dataset.hview === 'list'));
-      renderHistory();
-    });
+    root.innerHTML = '<div class="empty"><div class="glyph">∅</div><p>暂无数据</p></div>';
     return;
   }
   const activeAccounts = state.accounts.filter(a => !a.archived);
@@ -6301,11 +6293,6 @@ function renderMatrixView() {
   }
   html += '</tbody></table></div>';
   root.innerHTML = html;
-  document.getElementById('matrix-back-btn').addEventListener('click', () => {
-    state.historyView = 'list';
-    document.querySelectorAll('#history-view-toggle button').forEach(x => x.classList.toggle('active', x.dataset.hview === 'list'));
-    renderHistory();
-  });
 }
 
 // ============================================================
