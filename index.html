@@ -468,6 +468,42 @@
     color: rgba(255,255,255,0.5);
   }
   [data-theme="light"] .hero-meta-text { color: rgba(0,0,0,0.5); }
+  .hero-returns {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 0.5px solid rgba(255,255,255,0.08);
+  }
+  [data-theme="light"] .hero-returns { border-top-color: rgba(0,0,0,0.06); }
+  .hero-ret-item { flex: 1; }
+  .hero-ret-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.35);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  [data-theme="light"] .hero-ret-label { color: rgba(0,0,0,0.35); }
+  .hero-ret-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: rgba(255,255,255,0.85);
+  }
+  .hero-ret-value.pos { color: var(--green); }
+  .hero-ret-value.neg { color: var(--red); }
+  [data-theme="light"] .hero-ret-value { color: rgba(0,0,0,0.8); }
+  .hero-ret-divider {
+    width: 0.5px;
+    height: 32px;
+    background: rgba(255,255,255,0.08);
+    margin: 0 24px;
+    flex-shrink: 0;
+  }
+  [data-theme="light"] .hero-ret-divider { background: rgba(0,0,0,0.08); }
 
   /* 三张次级卡 */
   @keyframes heroGlow {
@@ -1986,6 +2022,9 @@
     .hero-currency, .hero-decimal { font-size: 22px; }
     .hero-label { font-size: 12px; margin-bottom: 16px; }
     .hero-meta { margin-top: 20px; gap: 10px; }
+    .hero-returns { margin-top: 20px; padding-top: 16px; }
+    .hero-ret-value { font-size: 18px; }
+    .hero-ret-divider { margin: 0 16px; height: 28px; }
     .kpi-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 28px; }
     .kpi-card { padding: 18px 20px; border-radius: 16px; }
     .kpi-card:hover { transform: none; }
@@ -2174,6 +2213,17 @@
           <span class="hero-pill" id="kpi-total-pill"></span>
           <span class="hero-meta-text" id="kpi-total-sub">尚无数据</span>
         </div>
+        <div class="hero-returns" id="hero-returns">
+          <div class="hero-ret-item">
+            <div class="hero-ret-label">简单收益</div>
+            <div class="hero-ret-value" id="hero-simple-ret">—</div>
+          </div>
+          <div class="hero-ret-divider"></div>
+          <div class="hero-ret-item">
+            <div class="hero-ret-label">时间加权 (TWR)</div>
+            <div class="hero-ret-value" id="hero-twr">—</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2259,6 +2309,20 @@
         </div>
       </div>
       <div class="chart-wrap tall"><canvas id="chart-pnl"></canvas></div>
+    </div>
+
+    <div class="section-head reveal">
+      <h2>收益走势</h2>
+      <span class="meta">TWR 剔除资金进出影响</span>
+    </div>
+    <div class="chart-card reveal reveal-delay-3">
+      <div class="card-header">
+        <div class="card-header-left">
+          <h3>累计收益率</h3>
+          <div class="desc">TWR (时间加权) vs 简单累计</div>
+        </div>
+      </div>
+      <div class="chart-wrap tall"><canvas id="chart-returns-dashboard"></canvas></div>
     </div>
   </section>
 
@@ -4244,15 +4308,16 @@ function renderReturnChart(metrics) {
         {
           label: '简单累计',
           data: simpleData,
-          borderColor: colorMute,
-          backgroundColor: 'transparent',
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56,189,248,0.06)',
           tension: 0.3,
-          borderWidth: 1.5,
-          borderDash: [4, 4],
+          borderWidth: 2,
+          borderDash: [],
           pointRadius: 2,
-          pointBackgroundColor: colorMute,
+          pointBackgroundColor: '#38bdf8',
           pointBorderColor: colorBg,
-          pointBorderWidth: 1,
+          pointBorderWidth: 1.5,
+          fill: true,
         },
       ],
     },
@@ -4262,7 +4327,7 @@ function renderReturnChart(metrics) {
       plugins: {
         legend: {
           position: 'top', align: 'end',
-          labels: { boxWidth: 10, boxHeight: 10, padding: 12, font: { size: 12, family: "'Inter', sans-serif" }, usePointStyle: true, pointStyle: 'circle' },
+          labels: { boxWidth: 16, boxHeight: 4, padding: 16, font: { size: 12, family: "'Inter', sans-serif" }, usePointStyle: true, pointStyle: 'line' },
         },
         tooltip: {
           backgroundColor: colorTooltipBg, borderColor: colorLine, borderWidth: 1,
@@ -4482,6 +4547,7 @@ function renderDashboard() {
     document.getElementById('kpi-total').innerHTML = '<span class="hero-currency">¥</span>—';
     document.getElementById('kpi-total-sub').textContent = '尚无快照，请先到「录入」页创建第一份记录';
     document.getElementById('kpi-total-pill').classList.remove('show');
+    document.getElementById('hero-returns').style.display = 'none';
     document.getElementById('kpi-total').closest('.hero-block').style.cursor = 'default';
     ['pnl', 'flow', 'ytd'].forEach(k => {
       document.getElementById('kpi-' + k).textContent = '—';
@@ -4530,6 +4596,32 @@ function renderDashboard() {
     pill.textContent = (isPos ? '↑ ' : '↓ ') + Math.abs(pct).toFixed(1) + '%';
   } else {
     pill.classList.remove('show');
+  }
+
+  // Hero 收益率
+  const filteredSnaps = sorted.map(s => onlyActive(s));
+  const retMetrics = computeReturnMetrics(filteredSnaps);
+  const heroSimpleEl = document.getElementById('hero-simple-ret');
+  const heroTwrEl = document.getElementById('hero-twr');
+  const heroReturnsRow = document.getElementById('hero-returns');
+  if (retMetrics.ytdSimple !== null || retMetrics.ytdTWR !== null) {
+    heroReturnsRow.style.display = 'flex';
+    if (retMetrics.ytdSimple !== null) {
+      heroSimpleEl.textContent = (retMetrics.ytdSimple >= 0 ? '+' : '') + (retMetrics.ytdSimple * 100).toFixed(1) + '%';
+      heroSimpleEl.className = 'hero-ret-value ' + (retMetrics.ytdSimple >= 0 ? 'pos' : 'neg');
+    } else {
+      heroSimpleEl.textContent = '—';
+      heroSimpleEl.className = 'hero-ret-value';
+    }
+    if (retMetrics.ytdTWR !== null) {
+      heroTwrEl.textContent = (retMetrics.ytdTWR >= 0 ? '+' : '') + (retMetrics.ytdTWR * 100).toFixed(1) + '%';
+      heroTwrEl.className = 'hero-ret-value ' + (retMetrics.ytdTWR >= 0 ? 'pos' : 'neg');
+    } else {
+      heroTwrEl.textContent = '—';
+      heroTwrEl.className = 'hero-ret-value';
+    }
+  } else {
+    heroReturnsRow.style.display = 'none';
   }
 
   // 三张次级卡：弱化货币符号
@@ -4838,6 +4930,78 @@ function renderDashboard() {
       },
     },
   });
+
+  // 收益走势 · Dashboard 图表
+  const retCanvas = document.getElementById('chart-returns-dashboard');
+  if (retCanvas && retMetrics.series && retMetrics.series.length > 0) {
+    const retLabels = retMetrics.series.map(p => p.month.slice(5) + '月');
+    const retTwr = retMetrics.series.map(p => p.twrCum * 100);
+    const retSimple = retMetrics.series.map(p => p.simpleCum * 100);
+    charts.returnsDash = new Chart(retCanvas, {
+      type: 'line',
+      data: {
+        labels: retLabels,
+        datasets: [
+          {
+            label: 'TWR 累计',
+            data: retTwr,
+            borderColor: colorAccent,
+            backgroundColor: (ctx) => {
+              const c = ctx.chart.ctx;
+              const g = c.createLinearGradient(0, 0, 0, 280);
+              const rgb = hexToRgb(colorAccent);
+              g.addColorStop(0, `rgba(${rgb},0.12)`);
+              g.addColorStop(1, `rgba(${rgb},0)`);
+              return g;
+            },
+            fill: true,
+            tension: 0.3,
+            borderWidth: 2.5,
+            pointRadius: 3,
+            pointBackgroundColor: colorAccent,
+            pointBorderColor: colorBg,
+            pointBorderWidth: 2,
+          },
+          {
+            label: '简单累计',
+            data: retSimple,
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56,189,248,0.04)',
+            fill: true,
+            tension: 0.3,
+            borderWidth: 2,
+            pointRadius: 2,
+            pointBackgroundColor: '#38bdf8',
+            pointBorderColor: colorBg,
+            pointBorderWidth: 1.5,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 1000, easing: 'easeOutQuart' },
+        plugins: {
+          legend: {
+            position: 'top', align: 'end',
+            labels: { boxWidth: 16, boxHeight: 4, padding: 16, font: { size: 12, family: "'Inter', sans-serif" }, usePointStyle: true, pointStyle: 'line' },
+          },
+          tooltip: {
+            backgroundColor: colorTooltipBg, borderColor: colorLine, borderWidth: 1,
+            titleColor: colorInk, bodyColor: colorInk, padding: 12, cornerRadius: 10,
+            callbacks: { label: (ctx) => '  ' + ctx.dataset.label + ': ' + (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y.toFixed(2) + '%' },
+          },
+        },
+        scales: {
+          x: { grid: { display: false }, border: { display: false }, ticks: { color: colorMute } },
+          y: {
+            grid: { color: colorGrid }, border: { display: false },
+            ticks: { color: colorMute, callback: (v) => (v >= 0 ? '+' : '') + v.toFixed(1) + '%' },
+          },
+        },
+      },
+    });
+  }
 
 }
 
