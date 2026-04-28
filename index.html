@@ -2299,6 +2299,10 @@
       <div class="hero-bg-1"></div>
       <div class="hero-bg-2"></div>
       <div class="hero-content">
+        <div class="view-toggle" id="view-toggle" style="margin-bottom:8px">
+          <button data-view="all" class="active">总览</button>
+          <button data-view="investment">仅投资资产</button>
+        </div>
         <div class="hero-label">总 资 产</div>
         <div class="hero-value" id="kpi-total"><span class="hero-currency">¥</span>—</div>
         <div id="waterline-render-target"></div>
@@ -2327,11 +2331,6 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <div class="view-toggle" id="view-toggle">
-      <button data-view="all" class="active">总览</button>
-      <button data-view="investment">仅投资资产</button>
     </div>
 
     <div class="section-head reveal">
@@ -4042,12 +4041,12 @@ function openAccountTrend(accId) {
     twr = accumReturn.minus(1).toNumber();
   }
 
-  // XIRR 现金流
+  // XIRR 现金流（过滤零值，防止 Newton 迭代发散）
   const xirrFlows = [];
   const baseMonth = sorted[0]?.month;
   if (sorted.length >= 2 && baseMonth) {
     const firstBal = Number(sorted[0].entries[accId]?.balance || 0);
-    xirrFlows.push({ amount: -firstBal, days: 0 });
+    if (firstBal !== 0) xirrFlows.push({ amount: -firstBal, days: 0 });
     for (let i = 1; i < sorted.length; i++) {
       const e = sorted[i].entries[accId];
       if (e && e.flow) {
@@ -4056,9 +4055,9 @@ function openAccountTrend(accId) {
       }
     }
     const lastBal = Number(sorted[sorted.length - 1].entries[accId]?.balance || 0);
-    xirrFlows.push({ amount: lastBal, days: daysBetween(baseMonth, sorted[sorted.length - 1].month) });
+    if (lastBal !== 0) xirrFlows.push({ amount: lastBal, days: daysBetween(baseMonth, sorted[sorted.length - 1].month) });
   }
-  const xirrVal = calculateXIRR(xirrFlows);
+  const xirrVal = xirrFlows.length >= 2 ? calculateXIRR(xirrFlows) : null;
 
   const body = document.getElementById('drawer-body');
   body.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:16px">' +
