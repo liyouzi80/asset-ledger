@@ -4115,6 +4115,45 @@ function renderDrawer() {
   const toolbar = document.getElementById('drawer-toolbar');
   const body = document.getElementById('drawer-body');
 
+  if (type === 'assets') {
+    const isInvestmentView = state.viewMode === 'investment';
+    const activeAccounts = state.accounts.filter(a => !a.archived &&
+      (!isInvestmentView || a.tag === 'investment' || a.tag === 'credit' || a.tag === 'long-term'));
+    const latest = sorted[sorted.length - 1];
+    const total = snapshotTotal(isInvestmentView ? filterSnapshotEntries(latest, getActiveAccountIds()) : latest);
+    eyebrow.textContent = isInvestmentView ? '投资资产' : '总资产';
+    title.textContent = '资产明细';
+    amountEl.textContent = fmt(total);
+    amountEl.className = 'drawer-amount';
+    toolbar.style.display = 'none';
+
+    // 按分组聚类
+    const grouped = {};
+    for (const a of activeAccounts) {
+      const bal = Number(latest.entries[a.id]?.balance || 0);
+      if (!grouped[a.group]) grouped[a.group] = { total: 0, accounts: [] };
+      grouped[a.group].total += bal;
+      grouped[a.group].accounts.push({ ...a, balance: bal });
+    }
+    const groups = state.groupOrder.filter(g => grouped[g] && grouped[g].total !== 0);
+
+    let html = '';
+    for (const g of groups) {
+      const grp = grouped[g];
+      html += '<div class="drawer-section"><div class="drawer-section-title">' + escapeHtml(g) + ' · ' + fmt(grp.total) + '</div>';
+      for (const a of grp.accounts) {
+        const isNeg = a.type === 'liability' || a.balance < 0;
+        html += '<div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:0.5px solid var(--sep)">' +
+          '<span style="flex:1;font-size:14px">' + escapeHtml(a.name) + '</span>' +
+          '<span style="font-family:JetBrains Mono,monospace;font-size:14px;color:' + (isNeg ? 'var(--red)' : 'var(--ink)') + '">' + fmt(Math.abs(a.balance)) + '</span>' +
+          '</div>';
+      }
+      html += '</div>';
+    }
+    body.innerHTML = html || '<div class="drawer-empty">暂无资产数据</div>';
+    return;
+  }
+
   if (type === 'pnl') {
     // 找指定月份的快照
     const targetMonth = month || sorted[sorted.length - 1].month;
@@ -5065,6 +5104,13 @@ document.addEventListener('keydown', (e) => {
     closeDrawer();
   }
 });
+// Hero 卡片点击 → 资产明细抽屉
+document.querySelector('.hero-block').addEventListener('click', (e) => {
+  if (e.target.closest('[data-drill]') || e.target.closest('#view-toggle')) return;
+  if (state.snapshots.length === 0) { showToast('尚无数据'); return; }
+  openDrawer('assets');
+});
+
 document.querySelectorAll('[data-drill]').forEach(el => {
   el.addEventListener('click', () => {
     if (state.snapshots.length === 0) {
