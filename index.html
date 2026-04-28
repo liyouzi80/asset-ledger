@@ -579,6 +579,8 @@
     margin-left: 6px;
   }
   .tag-badge.investment { background: var(--accent-soft); color: var(--accent); }
+  .tag-badge.credit { background: rgba(191,90,242,0.18); color: #bf5af2; }
+  .tag-badge.long-term { background: rgba(94,92,230,0.18); color: #5e5ce6; }
   .tag-badge.cash { background: var(--green-soft); color: var(--green); }
   .tag-badge.liability { background: var(--red-soft); color: var(--red); }
 
@@ -1277,54 +1279,6 @@
     color: var(--ink);
     font-weight: 600;
     box-shadow: var(--shadow-sm);
-  }
-
-  /* =====================================================
-     主界面背景壁纸
-  ===================================================== */
-  .app-bg {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    background-size: cover;
-    background-position: center;
-    opacity: 0;
-    transition: opacity 0.8s ease;
-  }
-  .app-bg.loaded { opacity: 1; }
-  .app-bg::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    pointer-events: none;
-    background:
-      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(10,132,255,0.08) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 90% 80%, rgba(94,92,230,0.06) 0%, transparent 55%),
-      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(255,159,10,0.04) 0%, transparent 50%);
-    transition: background 0.5s ease;
-  }
-  [data-theme="light"] .app-bg::before {
-    background:
-      radial-gradient(ellipse 80% 60% at 10% 20%, rgba(0,122,255,0.05) 0%, transparent 60%),
-      radial-gradient(ellipse 60% 50% at 90% 75%, rgba(94,92,230,0.04) 0%, transparent 55%);
-  }
-  /* 壁纸遮罩 — 毛玻璃去突兀 */
-  .app-bg::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    pointer-events: none;
-    background: rgba(0,0,0,0.35);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    transition: background 0.5s ease;
-  }
-  [data-theme="light"] .app-bg::after {
-    background: rgba(255,255,255,0.20);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
   }
 
   /* =====================================================
@@ -2088,7 +2042,6 @@
   </div>
 </div>
 
-<div class="app-bg" id="app-bg"></div>
 <div class="app">
 
   <header>
@@ -2319,7 +2272,9 @@
     <div class="form-group">
       <label>资金属性</label>
       <select id="acc-tag">
-        <option value="investment">投资资产</option>
+        <option value="investment">投资资产（股票/基金等）</option>
+        <option value="credit">债权资产（应收/债券等）</option>
+        <option value="long-term">长期资产（不动产等）</option>
         <option value="cash">生活流动资金</option>
         <option value="liability">负债</option>
       </select>
@@ -2743,7 +2698,7 @@ const DEFAULT_ACCOUNTS = [
   { group: '信用卡', name: '大陆信用卡 1', type: 'liability', tag: 'liability' },
   { group: '信用卡', name: '大陆信用卡 2', type: 'liability', tag: 'liability' },
   { group: '其他资产', name: '其他收入', type: 'asset', tag: 'cash' },
-  { group: '其他资产', name: '外部欠款（应收）', type: 'asset', tag: 'cash' },
+  { group: '其他资产', name: '外部欠款（应收）', type: 'asset', tag: 'credit' },
 ];
 function buildDefaultData() {
   let i = 1;
@@ -2781,8 +2736,10 @@ function migrateAccounts(accounts) {
   // 向后兼容：为旧账户补充 tag 字段
   for (const a of accounts) {
     if (!a.tag) {
-      a.tag = a.type === 'liability' ? 'liability' :
-        (a.group && (a.group.includes('券商') || a.group.includes('港股') || a.group.includes('A 股'))) ? 'investment' : 'cash';
+      if (a.type === 'liability') a.tag = 'liability';
+      else if (a.group && (a.group.includes('券商') || a.group.includes('港股') || a.group.includes('A 股'))) a.tag = 'investment';
+      else if (a.name && a.name.includes('欠款')) a.tag = 'credit';
+      else a.tag = 'cash';
     }
   }
   return accounts;
@@ -2981,7 +2938,7 @@ function setLockUI(mode, isFirstTime, hasPasskey) {
 // Bing 每日壁纸 — 锁屏 + 主界面背景
 // ============================================================
 async function loadBingWallpaper() {
-  const targets = ['lock-screen-bg', 'app-bg'];
+  const targets = ['lock-screen-bg'];
   try {
     const resp = await fetch('/api/bg');
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -4372,7 +4329,7 @@ function renderDashboard() {
 
   const activeAccIds = new Set(state.accounts.filter(a => {
     if (a.archived) return false;
-    if (state.viewMode === 'investment') return a.tag === 'investment';
+    if (state.viewMode === 'investment') return a.tag === 'investment' || a.tag === 'credit' || a.tag === 'long-term';
     return true;
   }).map(a => a.id));
   const isInvestmentView = state.viewMode === 'investment';
@@ -4855,7 +4812,7 @@ function renderEntry() {
       const carryBadge = isCarryOver ? '<span class="carry-badge">沿用</span>' : '';
 
       row.innerHTML = `
-        <div class="name" style="cursor:pointer" data-acc-trend="${a.id}" title="查看余额趋势">${escapeHtml(a.name)}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.35;flex-shrink:0;margin-left:2px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>${liabilityBadge}<span class="tag-badge ${a.tag || 'cash'}">${({investment:'投资',cash:'流动',liability:'负债'})[a.tag||'cash']}</span>${carryBadge}</div>
+        <div class="name" style="cursor:pointer" data-acc-trend="${a.id}" title="查看余额趋势">${escapeHtml(a.name)}<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.35;flex-shrink:0;margin-left:2px"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>${liabilityBadge}<span class="tag-badge ${a.tag || 'cash'}">${({investment:'投资',credit:'债权', 'long-term':'长期', cash:'流动',liability:'负债'})[a.tag||'cash']}</span>${carryBadge}</div>
         <input type="number" step="0.01" min="0" data-acc="${a.id}" data-field="balance" value="${draft.balance}" placeholder="${balPlaceholder}" class="${isCarryOver ? 'is-carry' : ''}">
         <input type="number" step="0.01" data-acc="${a.id}" data-field="flow" value="${draft.flow}" placeholder="0">
         <div class="delta" data-delta="${a.id}">${delta !== null ? (delta >= 0 ? '+' : '') + Math.round(delta).toLocaleString('zh-CN') : '—'}</div>
@@ -5559,11 +5516,18 @@ document.querySelectorAll('#history-view-toggle button').forEach(b => {
   b.addEventListener('click', () => {
     state.historyView = b.dataset.hview;
     document.querySelectorAll('#history-view-toggle button').forEach(x => x.classList.toggle('active', x === b));
-    // 搜索和对比工具仅在列表视图有实际作用
     const isList = state.historyView === 'list';
+    // 列表视图专属控件
     document.getElementById('history-search').style.display = isList ? '' : 'none';
-    document.getElementById('history-compare-a').parentElement.style.display = isList ? '' : 'none';
     document.getElementById('export-csv').style.display = isList ? '' : 'none';
+    const compareRow = document.getElementById('history-compare-a').closest('div');
+    // 只隐藏比较控件（vs 和两个日期输入），保留视图切换按钮
+    document.getElementById('history-compare-a').style.display = isList ? '' : 'none';
+    document.getElementById('history-compare-b').style.display = isList ? '' : 'none';
+    if (compareRow) {
+      const vsSpan = compareRow.querySelector('span');
+      if (vsSpan) vsSpan.style.display = isList ? '' : 'none';
+    }
     renderHistory();
   });
 });
@@ -5571,8 +5535,16 @@ document.querySelectorAll('#history-view-toggle button').forEach(b => {
 function renderMatrixView() {
   const root = document.getElementById('history-content');
   const sorted = getSortedSnapshots();
+  // 返回按钮
+  let html = '<button class="icon-btn" id="matrix-back-btn" style="margin-bottom:12px">← 返回列表</button>';
   if (sorted.length === 0) {
-    root.innerHTML = '<div class="empty"><div class="glyph">∅</div><p>暂无数据</p></div>';
+    html += '<div class="empty"><div class="glyph">∅</div><p>暂无数据</p></div>';
+    root.innerHTML = html;
+    document.getElementById('matrix-back-btn').addEventListener('click', () => {
+      state.historyView = 'list';
+      document.querySelectorAll('#history-view-toggle button').forEach(x => x.classList.toggle('active', x.dataset.hview === 'list'));
+      renderHistory();
+    });
     return;
   }
   const activeAccounts = state.accounts.filter(a => !a.archived);
@@ -5590,7 +5562,7 @@ function renderMatrixView() {
   }
 
   // 构建表头：两层
-  let html = '<div class="matrix-wrap"><table class="matrix-table"><thead>';
+  html += '<div class="matrix-wrap"><table class="matrix-table"><thead>';
   html += '<tr><th>月份</th>';
   for (const g of groups) {
     const cnt = grouped[g].length;
@@ -5617,6 +5589,11 @@ function renderMatrixView() {
   }
   html += '</tbody></table></div>';
   root.innerHTML = html;
+  document.getElementById('matrix-back-btn').addEventListener('click', () => {
+    state.historyView = 'list';
+    document.querySelectorAll('#history-view-toggle button').forEach(x => x.classList.toggle('active', x.dataset.hview === 'list'));
+    renderHistory();
+  });
 }
 
 // ============================================================
