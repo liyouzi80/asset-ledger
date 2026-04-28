@@ -4769,7 +4769,7 @@ function computePeriodSeries(periodSnaps) {
         if (flow !== 0) xf.push({ amount: -flow, days: daysBetween(inceptionMonth, points[j].month) });
       }
       const endBal = snapshotTotal(curr);
-      if (endBal > 0 && xf.length >= 2) {
+      if (endBal > 0) {
         xf.push({ amount: endBal, days: daysBetween(inceptionMonth, curr.month) });
         xirrAtPoint = calculateXIRR(xf);
       }
