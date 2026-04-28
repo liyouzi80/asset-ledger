@@ -797,17 +797,18 @@
     border-radius: 16px;
     -webkit-overflow-scrolling: touch;
   }
-  .matrix-table { border-collapse: collapse; font-size: 13px; min-width: 100%; }
+  .matrix-table { border-collapse: collapse; font-size: 14px; min-width: 100%; }
   .matrix-table th, .matrix-table td {
-    padding: 10px 14px;
+    padding: 12px 16px;
     text-align: right;
     border-bottom: 0.5px solid var(--sep);
     white-space: nowrap;
   }
   .matrix-table th {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--ink-3);
     position: sticky;
     top: 0;
@@ -817,9 +818,10 @@
   .matrix-table th.group-header {
     text-align: center;
     background: var(--bg-2);
-    font-size: 13px;
+    font-size: 12px;
     color: var(--ink-2);
     letter-spacing: 0.04em;
+    text-transform: none;
   }
   .matrix-table td:first-child, .matrix-table th:first-child {
     text-align: left;
@@ -4117,10 +4119,11 @@ function renderDrawer() {
 
   if (type === 'assets') {
     const isInvestmentView = state.viewMode === 'investment';
-    const activeAccounts = state.accounts.filter(a => !a.archived &&
-      (!isInvestmentView || a.tag === 'investment' || a.tag === 'credit' || a.tag === 'long-term'));
+    const activeIds = getActiveAccountIds();
     const latest = sorted[sorted.length - 1];
-    const total = snapshotTotal(isInvestmentView ? filterSnapshotEntries(latest, getActiveAccountIds()) : latest);
+    const filteredLatest = isInvestmentView ? filterSnapshotEntries(latest, activeIds) : latest;
+    const total = snapshotTotal(filteredLatest);
+    const activeAccounts = state.accounts.filter(a => activeIds.has(a.id));
     eyebrow.textContent = isInvestmentView ? '投资资产' : '总资产';
     title.textContent = '资产明细';
     amountEl.textContent = fmt(total);
