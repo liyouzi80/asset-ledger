@@ -5592,26 +5592,6 @@ function renderDashboard() {
         },
       },
     },
-    plugins: [{
-      id: 'donutCenterText',
-      afterDraw(chart) {
-        const { ctx, chartArea: { top, bottom, left, right } } = chart;
-        const cx = (left + right) / 2;
-        const cy = (top + bottom) / 2;
-        const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-        ctx.save();
-        ctx.font = '600 32px "JetBrains Mono", monospace';
-        ctx.fillStyle = getCSSVar('--ink');
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText('¥' + (total / 10000).toFixed(1) + '万', cx, cy + 2);
-        ctx.font = '12px "Inter", -apple-system, sans-serif';
-        ctx.fillStyle = getCSSVar('--ink-3');
-        ctx.textBaseline = 'top';
-        ctx.fillText('总资产', cx, cy + 4);
-        ctx.restore();
-      },
-    }],
   });
 
   renderTargetAllocation();
