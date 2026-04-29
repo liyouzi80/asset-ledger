@@ -1,29 +1,32 @@
 # Asset Ledger · 个人资产负债表
 
-端到端加密的资产追踪系统。单文件 HTML SPA + Cloudflare Worker + D1，双主题（Apple 浅色 / Linear 深色），Chart.js 4.x + Big.js，GitHub Actions 自动部署。
+端到端加密的资产追踪系统。单文件 HTML SPA + Cloudflare Worker + D1，双主题（Apple 浅色 / Linear 深色），Chart.js + Big.js，GitHub Actions 自动部署。
 
 ## 功能概览
 
 ### 首页 Dashboard
-- **Hero 资产总览**：总资产/投资资产双视图切换，水位线透视资产分布（流动/投资/长期/负债率），点击 Hero 打开资产明细抽屉
-- **总资产曲线**：Percento 风格折线图，hover 十字准星 + 实时 scrubbing 联动 Hero 数值，Y 轴 ¥万标签
-- **收益率走势**：正负双色面积图（绿盈/红亏），TWR / 简单加权 / XIRR / 盈亏额 四种指标
-- **每月盈亏柱图**：正负堆叠柱状图
-- **资产环形图**：按分组聚类 doughnut 图
-- **紧凑 Hero**：滚动时吸附顶部的悬浮导航条
+- **Hero 资产总览**：总资产/投资资产双视图切换（排除债权和"其他资产"组），水位线透视资产分布（流动/投资/长期/负债率），点击 Hero 打开资产明细抽屉
+- **总资产曲线**：Percento 风格折线图，hover 十字准星 + 实时 scrubbing 联动 Hero 数值
+- **收益率走势**：累计收益率折线图，TWR / 简单加权 / XIRR / 盈亏额 四种指标切换
+- **每月盈亏柱图**：正负堆叠柱状图，点击钻取明细
+- **资产环形图**：按分组聚类 doughnut 图，点击查看分组内账户余额
+- **紧凑 Hero**：滚动时吸附顶部的悬浮导航条，含视图切换
 
 ### 录入
-- 月度快照批量录入，分组排列
-- 账户 CRUD（新增/编辑/删除/归档），资金属性标签
+- 月度快照批量录入，按分组排列账户行
+- 账户 CRUD（新增/编辑/删除/归档），资金属性标签分类
 - 分组管理（新增/重命名）
+- 保存前冲突检测 + 云端回读校验 + 本地镜像
 
 ### 历史明细
-- **列表视图** + **对照表视图**（账户 × 月份矩阵）
-- 逐月盈亏/净流，正负色标
+- **列表视图**：月度总资产/盈亏/净流，正负色标
+- **对照表视图**：账户 × 月份矩阵透视
+- 一键刷新云端数据
 
 ### 安全
 - AES-GCM 端到端加密，Web Crypto API
 - Passkey（WebAuthn PRF）/ 主密码 双解锁路径
+- 首次设置强制密码模式，系统内按需注册 Passkey
 - 主密钥缓存 localStorage，刷新免重登
 - 云端数据全密文，D1 无法解密
 
@@ -35,16 +38,16 @@
 ## 技术架构
 
 ```
-index.html               ← 单文件 SPA（~6500 行）
+index.html               ← 单文件 SPA（~7400 行）
 worker/
 ├── index.js              ← Worker 路由分发
 ├── meta.js               ← 密钥元信息 CRUD（D1 meta 表）
-├── vault.js              ← 加密账本 CRUD（D1 vault 表）
-└── ping.js               ← 健康检查
+├── vault.js              ← 加密账本 CRUD + 冲突检测（D1 vault 表）
+└── bg.js                 ← Bing 每日壁纸代理
 ```
 
 - **Big.js**：CDN 加载，任意精度十进制运算
-- **Chart.js 4.x**：CDN 加载，Percento 风格
+- **Chart.js 4.x**：CDN 加载，Percento 风格 + 自定义插件
 - **双主题**：Apple 浅色 + Linear 深色，CSS 变量驱动
 - **动效**：transitions.dev — 数字弹入、文本交换、面板浮现
 
@@ -54,9 +57,8 @@ worker/
 asset-ledger/
 ├── index.html                  ← 完整前端应用
 ├── worker/                     ← Cloudflare Worker API
-├── wrangler.example.toml       ← 部署配置模板（fork 用）
+├── wrangler.example.toml       ← 部署配置模板
 ├── .github/workflows/deploy.yml ← GitHub Actions 自动部署
-├── package.json                ← 本地 `npm run deploy`
 ├── .gitignore
 └── README.md
 ```
@@ -84,11 +86,11 @@ CREATE TABLE IF NOT EXISTS meta (
 
 ### 2. GitHub Actions 自动部署（推荐）
 
-Fork 本仓库。在 Settings → Secrets and variables → Actions 添加：
+Fork 本仓库。Settings → Secrets and variables → Actions：
 
 | Secret | 说明 |
 |--------|------|
-| `CLOUDFLARE_API_TOKEN` | API Token（My Profile → API Tokens → Workers 模板） |
+| `CLOUDFLARE_API_TOKEN` | API Token（My Profile → API Tokens） |
 | `CLOUDFLARE_ACCOUNT_ID` | Account ID（Workers 右侧栏） |
 | `D1_DATABASE_ID` | D1 数据库 ID |
 
@@ -104,9 +106,7 @@ npx wrangler deploy
 
 部署后在 Worker → Settings → Triggers → Custom Domains 绑定域名。
 
-## 开发
-
-改 `index.html` 推送到 GitHub 自动部署。本地调试：
+### 4. 本地调试
 
 ```bash
 npx wrangler dev
@@ -117,7 +117,7 @@ npx wrangler dev
 - 主密码 → PBKDF2（250K 迭代）→ 包装密钥 → 解开 AES-GCM 主密钥
 - Passkey → WebAuthn PRF → HKDF → 包装密钥 → 同上
 - 主密钥缓存在 localStorage，刷新免重登
-- 数据传输和存储全程密文
+- 数据全程密文传输和存储
 
 ## 已知边界
 
