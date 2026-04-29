@@ -908,18 +908,6 @@
   }
   .chart-wrap { position: relative; height: 280px; }
   .chart-wrap.tall { height: 320px; }
-  /* Donut 中心总额 */
-  .donut-center {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-52%);
-    text-align: center; pointer-events: none; z-index: 1;
-  }
-  .donut-center .val {
-    font-size: 32px; font-weight: 600;
-    font-family: 'JetBrains Mono', monospace; color: var(--ink);
-  }
-  .donut-center .lbl { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
-  [data-theme="light"] .donut-center .val { color: var(--ink); }
-  [data-theme="light"] .donut-center .lbl { color: var(--ink-3); }
 
   /* =====================================================
      表格
@@ -2190,7 +2178,6 @@
     header { padding: 0 10px; }
     .hero-block { padding: 24px 16px 22px; border-radius: 16px; }
     .hero-value { font-size: 36px; }
-    .donut-center .val { font-size: 22px; }
     .hero-currency, .hero-decimal { font-size: 18px; }
     .hero-label { font-size: 11px; }
     .hero-meta-text { font-size: 12px; }
@@ -2418,10 +2405,7 @@
             <button class="btn btn-ghost btn-sm" id="open-target-config">⚙ 目标配置</button>
           </div>
         </div>
-        <div class="chart-wrap tall">
-          <canvas id="chart-pie"></canvas>
-          <div class="donut-center" id="donut-center"><div class="val">—</div><div class="lbl">总资产</div></div>
-        </div>
+        <div class="chart-wrap tall"><canvas id="chart-pie"></canvas></div>
         <div id="target-deviation" style="margin-top:16px"></div>
       </div>
     </div>
@@ -5284,8 +5268,6 @@ function renderDashboard() {
     document.getElementById('kpi-total').innerHTML = '<span class="hero-currency">¥</span>—';
     document.getElementById('kpi-total-sub').textContent = '尚无快照，请先到「录入」页创建第一份记录';
     document.getElementById('kpi-total-pill').classList.remove('show');
-    const dc = document.getElementById('donut-center');
-    if (dc) dc.innerHTML = '<div class="val">—</div><div class="lbl">总资产</div>';
     ['pnl', 'flow', 'ytd'].forEach(k => {
       const el = document.getElementById('hero-stat-' + k);
       if (el) el.textContent = '—';
@@ -5579,6 +5561,26 @@ function renderDashboard() {
         easing: 'easeOutQuart',
       },
       plugins: {
+        donutCenterText: {
+          id: 'donutCenterText',
+          afterDraw(chart) {
+            const { ctx, chartArea: { top, bottom, left, right } } = chart;
+            const cx = (left + right) / 2;
+            const cy = (top + bottom) / 2;
+            const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+            ctx.save();
+            ctx.font = '600 32px "JetBrains Mono", monospace';
+            ctx.fillStyle = getCSSVar('--ink');
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('¥' + (total / 10000).toFixed(1) + '万', cx, cy + 2);
+            ctx.font = '12px "Inter", -apple-system, sans-serif';
+            ctx.fillStyle = getCSSVar('--ink-3');
+            ctx.textBaseline = 'top';
+            ctx.fillText('总资产', cx, cy + 4);
+            ctx.restore();
+          },
+        },
         legend: {
           position: 'bottom',
           labels: {
@@ -5611,12 +5613,6 @@ function renderDashboard() {
       },
     },
   });
-  // 环形图中心总额
-  (() => {
-    const pieTotal = pieData.reduce((a, b) => a + b, 0);
-    const dc = document.getElementById('donut-center');
-    if (dc) dc.innerHTML = '<div class="val"><span class="hero-currency" style="font-size:24px;margin-right:4px;vertical-align:baseline">¥</span>' + (pieTotal / 10000).toFixed(1) + '万</div><div class="lbl">总资产</div>';
-  })();
 
   renderTargetAllocation();
 
