@@ -3952,7 +3952,10 @@ function renderHeroValue(n) {
   const latest = state.snapshots.length > 0 ? state.snapshots[state.snapshots.length - 1] : null;
   if (latest) {
     let liqCash = 0, liqInvest = 0, liqLong = 0, totalDebt = 0;
+    const isInvestmentView = state.viewMode === 'investment';
+    const activeIds = isInvestmentView ? getActiveAccountIds() : null;
     state.accounts.forEach(acc => {
+      if (activeIds && !activeIds.has(acc.id)) return;
       const bal = Number(latest.entries[acc.id]?.balance || 0);
       if (acc.type === 'liability') {
         if (bal > 0) totalDebt += bal;
