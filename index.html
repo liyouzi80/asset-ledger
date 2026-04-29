@@ -3468,28 +3468,21 @@ function setLockUI(mode, isFirstTime, hasPasskey) {
   const passkeyText = document.getElementById('passkey-action-text');
 
   if (isFirstTime) {
+    // 首次设置：只能用密码
+    mode = 'password';
     title.textContent = '设置主密码';
-    subtitle.textContent = '首次启动 · 选择如何加密你的数据';
-    tabs.style.display = isPRFSupported() ? '' : 'none';
-    warning.style.display = '';
-    confirmGroup.style.display = mode === 'password' ? '' : 'none';
-    if (mode === 'passkey') {
-      title.textContent = '使用 Passkey 加密';
-      subtitle.textContent = '点击下方按钮注册一个 Passkey（Touch ID / Face ID）作为加密钥匙';
-      passkeyText.textContent = '注册 Passkey';
-      passkeyArea.style.display = '';
-      passwordArea.style.display = 'none';
-    } else {
-      title.textContent = '设置主密码';
-      subtitle.textContent = '设置一个用于加密所有数据的主密码（至少 6 位）';
-      passkeyArea.style.display = 'none';
-      passwordArea.style.display = '';
-    }
-  } else {
+    subtitle.textContent = '设置一个用于加密所有数据的主密码（至少 6 位）';
     tabs.style.display = 'none';
+    warning.style.display = '';
+    confirmGroup.style.display = '';
+    passkeyArea.style.display = 'none';
+    passwordArea.style.display = '';
+  } else if (hasPasskey) {
+    // 已有 Passkey：默认 Passkey，显示切换按钮
+    tabs.style.display = '';
     warning.style.display = 'none';
     confirmGroup.style.display = 'none';
-    if (mode === 'passkey' && hasPasskey) {
+    if (mode === 'passkey') {
       title.textContent = '解锁账本';
       subtitle.textContent = '使用 Touch ID / Face ID 解锁';
       passkeyText.textContent = '使用 Passkey 解锁';
@@ -3501,9 +3494,17 @@ function setLockUI(mode, isFirstTime, hasPasskey) {
       passkeyArea.style.display = 'none';
       passwordArea.style.display = '';
     }
+  } else {
+    // 仅有密码：无切换
+    title.textContent = '输入主密码';
+    subtitle.textContent = '请输入密码以解锁账本';
+    tabs.style.display = 'none';
+    warning.style.display = 'none';
+    confirmGroup.style.display = 'none';
+    passkeyArea.style.display = 'none';
+    passwordArea.style.display = '';
   }
 
-  // 模式切换 toggle
   document.querySelectorAll('#lock-mode-tabs button').forEach(b => {
     b.classList.toggle('active', b.dataset.mode === mode);
   });
@@ -3565,9 +3566,8 @@ async function unlockOrInit() {
   document.getElementById('lock-screen').classList.add('active');
 
   if (!meta) {
-    const defaultMode = isPRFSupported() ? 'passkey' : 'password';
-    setLockUI(defaultMode, true, false);
-    if (defaultMode === 'password') document.getElementById('lock-password').focus();
+    setLockUI('password', true, false);
+    document.getElementById('lock-password').focus();
   } else {
     const hasPasskey = !!meta.passkeyCredId;
     const mode = hasPasskey ? 'passkey' : 'password';
