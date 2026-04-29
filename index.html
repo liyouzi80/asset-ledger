@@ -4697,73 +4697,78 @@ function renderReturnsModule(allSorted, onlyActive) {
   const chartAccent = lastDataVal >= 0 ? colorGreen : colorRed;
   const chartAccentRgb = hexToRgb(chartAccent);
 
+  // 收益率走势 · Percento 风格
+  const retCtx = canvas.getContext('2d');
+  const retGradient = retCtx.createLinearGradient(0, 0, 0, 220);
+  retGradient.addColorStop(0, `rgba(${chartAccentRgb},0.25)`);
+  retGradient.addColorStop(1, `rgba(${chartAccentRgb},0)`);
+
   returnsModuleChart = new Chart(canvas, {
     type: 'line',
     data: {
       labels,
       datasets: [{
-        label: indicator === 'amount' ? '累计盈亏' : indicator === 'twr' ? 'TWR 收益率' : '简单收益率',
         data: dataValues,
         borderColor: chartAccent,
-        backgroundColor: (ctx) => {
-          const c = ctx.chart.ctx;
-          const g = c.createLinearGradient(0, 0, 0, 220);
-          g.addColorStop(0, `rgba(${chartAccentRgb},0.18)`);
-          g.addColorStop(0.5, `rgba(${chartAccentRgb},0.06)`);
-          g.addColorStop(1, `rgba(${chartAccentRgb},0)`);
-          return g;
-        },
+        borderWidth: 3,
         fill: true,
-        tension: 0.35,
-        borderWidth: 2.6,
-        pointRadius: 4,
-        pointHoverRadius: 7,
+        backgroundColor: retGradient,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 6,
         pointBackgroundColor: colorBg,
         pointBorderColor: chartAccent,
-        pointBorderWidth: 2.5,
+        pointBorderWidth: 2,
         pointHoverBorderWidth: 3,
       }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 1000, easing: 'easeOutQuart' },
+      animation: { duration: 800, easing: 'easeOutQuart' },
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: colorTooltipBg,
-          borderColor: colorLine,
-          borderWidth: 1,
-          titleColor: colorInk,
-          bodyColor: colorInk,
-          padding: 14,
-          cornerRadius: 12,
+          backgroundColor: 'rgba(28,28,30,0.85)',
+          titleFont: { size: 12, weight: 'normal' },
+          bodyFont: { size: 14, weight: 'bold', family: 'JetBrains Mono' },
+          padding: 10,
+          cornerRadius: 8,
           displayColors: false,
-          titleFont: { size: 13, weight: '600' },
-          bodyFont: { size: 14, weight: '500' },
           callbacks: {
             label: (ctx) => isPct
               ? (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y.toFixed(2) + '%'
               : fmt(ctx.parsed.y),
           },
         },
+        crosshair: {
+          afterDraw(chart) {
+            if (!chart.tooltip || !chart.tooltip._active || !chart.tooltip._active.length) return;
+            const ctx = chart.ctx;
+            const x = chart.tooltip._active[0].element.x;
+            const topY = chart.scales.y.top;
+            const bottomY = chart.scales.y.bottom;
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.strokeStyle = getCSSVar('--sep-strong') || 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.restore();
+          },
+        },
       },
       scales: {
         x: {
-          grid: { display: false },
-          border: { display: false },
-          ticks: { color: colorMute, font: { size: 11 }, maxTicksLimit: 8 },
+          display: true,
+          grid: { display: false, drawBorder: false },
+          ticks: { color: colorMute, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
         },
         y: {
-          grid: { color: colorGrid, drawBorder: false },
-          border: { display: false },
-          ticks: {
-            color: colorMute,
-            font: { size: 11 },
-            callback: (v) => isPct ? (v >= 0 ? '+' : '') + v.toFixed(1) + '%' : '¥' + (v / 10000).toFixed(1) + '万',
-            padding: 8,
-          },
+          display: false,
         },
       },
     },
@@ -5349,74 +5354,90 @@ function renderDashboard() {
   const labels = sorted.map(s => s.month);
   const totals = sorted.map(s => snapshotTotal(onlyActive(s)));
 
-  charts.total = new Chart(document.getElementById('chart-total'), {
+  // 总资产曲线 · Percento 风格
+  const totalCanvas = document.getElementById('chart-total');
+  const totalCtx = totalCanvas.getContext('2d');
+  const totalGradient = totalCtx.createLinearGradient(0, 0, 0, 280);
+  const accentRgb = hexToRgb(colorAccent);
+  totalGradient.addColorStop(0, `rgba(${accentRgb},0.25)`);
+  totalGradient.addColorStop(1, `rgba(${accentRgb},0)`);
+
+  const currentTotal = totals[totals.length - 1];
+  charts.total = new Chart(totalCanvas, {
     type: 'line',
     data: {
       labels,
       datasets: [{
-        label: '总资产',
         data: totals,
         borderColor: colorAccent,
-        backgroundColor: (ctx) => {
-          const c = ctx.chart.ctx;
-          const g = c.createLinearGradient(0, 0, 0, 280);
-          const rgb = hexToRgb(colorAccent);
-          g.addColorStop(0, `rgba(${rgb},0.20)`);
-          g.addColorStop(0.5, `rgba(${rgb},0.08)`);
-          g.addColorStop(1, `rgba(${rgb},0)`);
-          return g;
-        },
+        borderWidth: 3,
         fill: true,
-        tension: 0.35,
-        borderWidth: 2.6,
-        pointRadius: 4,
-        pointHoverRadius: 7,
+        backgroundColor: totalGradient,
+        tension: 0.4,
+        pointRadius: 0,
+        pointHoverRadius: 6,
         pointBackgroundColor: colorBg,
         pointBorderColor: colorAccent,
-        pointBorderWidth: 2.5,
+        pointBorderWidth: 2,
         pointHoverBorderWidth: 3,
       }],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 1000, easing: 'easeOutQuart' },
+      animation: { duration: 800, easing: 'easeOutQuart' },
       interaction: { mode: 'index', intersect: false },
+      onHover(e, elements) {
+        if (elements && elements.length > 0) {
+          const v = totals[elements[0].index];
+          if (v != null) renderHeroValue(v);
+        }
+      },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: colorTooltipBg,
-          borderColor: colorLine,
-          borderWidth: 1,
-          titleColor: colorInk,
-          bodyColor: colorInk,
-          padding: 14,
-          cornerRadius: 12,
+          backgroundColor: 'rgba(28,28,30,0.85)',
+          titleFont: { size: 12, weight: 'normal' },
+          bodyFont: { size: 14, weight: 'bold', family: 'JetBrains Mono' },
+          padding: 10,
+          cornerRadius: 8,
           displayColors: false,
-          titleFont: { size: 13, weight: '600' },
-          bodyFont: { size: 14, weight: '500' },
           callbacks: { label: (ctx) => fmt(ctx.parsed.y) },
+        },
+        // 十字准星线
+        crosshair: {
+          afterDraw(chart) {
+            if (!chart.tooltip || !chart.tooltip._active || !chart.tooltip._active.length) return;
+            const ctx = chart.ctx;
+            const x = chart.tooltip._active[0].element.x;
+            const topY = chart.scales.y.top;
+            const bottomY = chart.scales.y.bottom;
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.strokeStyle = getCSSVar('--sep-strong') || 'rgba(255,255,255,0.08)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.restore();
+          },
         },
       },
       scales: {
         x: {
-          grid: { display: false },
-          border: { display: false },
-          ticks: { color: colorMute, font: { size: 11 } },
+          display: true,
+          grid: { display: false, drawBorder: false },
+          ticks: { color: colorMute, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
         },
         y: {
-          grid: { color: colorGrid, drawBorder: false },
-          border: { display: false },
-          ticks: {
-            color: colorMute,
-            font: { size: 11 },
-            callback: (v) => '¥' + (v / 10000).toFixed(0) + '万',
-            padding: 8,
-          },
+          display: false,
         },
       },
     },
   });
+  // 鼠标离开图表时恢复当前总额
+  totalCanvas.addEventListener('mouseleave', () => renderHeroValue(currentTotal));
 
   // 饼图（仅活跃账户）
   const groupTotals = {};
