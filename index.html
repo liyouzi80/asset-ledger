@@ -2572,7 +2572,7 @@
           <button data-view="all" class="active">总览</button>
           <button data-view="investment">仅投资资产</button>
         </div>
-        <div class="hero-label"><span class="t-text-swap" id="hero-label-text">总 资 产</span> <span class="hero-arrow">›</span></div>
+        <div class="hero-label" onclick="openDrawer('assets')" style="cursor:pointer"><span class="t-text-swap" id="hero-label-text">总 资 产</span> <span class="hero-arrow">›</span></div>
         <div class="hero-value" id="kpi-total"><span class="hero-currency">¥</span>—</div>
         <div id="waterline-render-target"></div>
         <div class="hero-meta">
@@ -3074,7 +3074,7 @@ async function getPasskeyPRF(credentialIdBuf) {
 }
 
 // ============================================================
-// 存储层 · IndexedDB
+// 存储层 · Cloudflare D1 API
 // meta:    { id:'main', salt, verifier?, kdf:'pbkdf2'|'none',
 //            wrappedKeyByPassword?, wrappedKeyByPasskey?, passkeyCredId? }
 // vault:   { id:'main', payload }
@@ -3142,7 +3142,6 @@ async function dbClearAll() {
   clearLocalMirror();
 }
 
-async function openDB() { /* 不再需要；保留空函数让上层 init 流程不变 */ }
 
 // ============================================================
 // localStorage 主密钥缓存 — 免锁屏自动解锁
@@ -3311,6 +3310,7 @@ function applyTheme(mode) {
     actual = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
   document.documentElement.setAttribute('data-theme', actual);
+  Object.keys(cssVarCache).forEach(k => delete cssVarCache[k]);
   document.querySelectorAll('[data-theme-set]').forEach(b => {
     b.classList.toggle('active', b.dataset.themeSet === mode);
   });
@@ -4199,6 +4199,16 @@ function navTo(page) {
   // 切换页面时关闭抽屉（清理趋势图）
   const drawer = document.getElementById('drawer');
   if (drawer && drawer.classList.contains('open')) closeDrawer();
+  // 滚动浮现 + 紧凑 Hero 重绑定
+  const compact = document.getElementById('compact-hero');
+  if (compact) compact.classList.toggle('visible', false);
+  requestAnimationFrame(() => { requestAnimationFrame(initScrollReveal); });
+  if (page === 'dashboard') {
+    requestAnimationFrame(() => {
+      const hero = document.querySelector('.hero-block');
+      if (hero && compactHeroObserver) compactHeroObserver.observe(hero);
+    });
+  }
 }
 document.querySelectorAll('nav.nav button').forEach(b => {
   b.addEventListener('click', () => navTo(b.dataset.page));
@@ -4298,6 +4308,7 @@ function openDrawer(type, month) {
   document.body.style.overflow = 'hidden';
 }
 function closeDrawer() {
+  if (trendChartTimer) { clearTimeout(trendChartTimer); trendChartTimer = null; }
   const drawer = document.getElementById('drawer');
   drawer.classList.remove('open');
   drawer.classList.add('is-closing');
@@ -5566,8 +5577,12 @@ function destroyCharts() {
   charts = {};
   if (returnsModuleChart) { returnsModuleChart.destroy(); returnsModuleChart = null; }
 }
+const cssVarCache = {};
 function getCSSVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  if (!cssVarCache[name]) {
+    cssVarCache[name] = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+  return cssVarCache[name];
 }
 function hexToRgb(hex) {
   hex = hex.replace('#', '');
@@ -7234,21 +7249,6 @@ function initScrollReveal() {
   }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 }
-
-// 在每次页面切换后重新扫描 .reveal + 紧凑 Hero
-const origNavTo = navTo;
-navTo = function(page) {
-  origNavTo(page);
-  const compact = document.getElementById('compact-hero');
-  if (compact) compact.classList.toggle('visible', false);
-  requestAnimationFrame(() => { requestAnimationFrame(initScrollReveal); });
-  if (page === 'dashboard') {
-    requestAnimationFrame(() => {
-      const hero = document.querySelector('.hero-block');
-      if (hero && compactHeroObserver) compactHeroObserver.observe(hero);
-    });
-  }
-};
 
 // ============ 紧凑 Hero · 滚动吸附 ============
 let compactHeroObserver = null;
