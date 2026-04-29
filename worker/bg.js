@@ -1,26 +1,21 @@
 // /api/bg — 代理 Bing 每日壁纸，返回图片 URL
 // 浏览器端通过此接口获取壁纸，避免跨域问题
 
+import { addCorsHeaders, handleOptions } from './shared.js';
+
 const BING_URL = 'https://www.bing.com';
 const ARCHIVE_URL = BING_URL + '/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=zh-CN';
 
 export async function onRequest(context) {
   const { request } = context;
 
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
-  }
+  if (request.method === 'OPTIONS') return handleOptions(request);
 
   const headers = {
     'Content-Type': 'application/json',
     'Cache-Control': 'public, max-age=3600',
   };
+  addCorsHeaders(request, headers);
 
   if (request.method === 'GET') {
     try {

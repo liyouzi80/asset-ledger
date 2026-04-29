@@ -1,27 +1,15 @@
 // /api/meta — 加密元信息（salt + verifier）
 // 注意：所有数据在浏览器加密后才传过来，这里看到的全是密文
 
+import { addCorsHeaders, handleOptions, checkBodySize, noCacheHeaders } from './shared.js';
+
 export async function onRequest(context) {
   const { request, env } = context;
 
-  // CORS（同源不需要，但放着以防你以后跨域调试）
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    });
-  }
+  if (request.method === 'OPTIONS') return handleOptions(request);
 
-  const headers = {
-    'Content-Type': 'application/json',
-    'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-    'CDN-Cache-Control': 'no-store',
-    'Cloudflare-CDN-Cache-Control': 'no-store',
-    'Pragma': 'no-cache',
-  };
+  const headers = noCacheHeaders();
+  addCorsHeaders(request, headers);
 
   if (request.method === 'GET') {
     const row = await env.DB.prepare('SELECT * FROM meta WHERE id = ?').bind('main').first();
@@ -33,7 +21,15 @@ export async function onRequest(context) {
     }), { headers });
   }
 
+  if (request.method === 'DELETE') {
+    await env.DB.prepare('DELETE FROM meta WHERE id = ?').bind('main').run();
+    return new Response(JSON.stringify({ ok: true }), { headers });
+  }
+
   if (request.method === 'POST') {
+    const tooLarge = await checkBodySize(request);
+    if (tooLarge) return tooLarge;
+
     const body = await request.json();
     const { salt, verifier } = body || {};
     if (!salt || !verifier) {

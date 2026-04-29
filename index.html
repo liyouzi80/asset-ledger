@@ -55,6 +55,7 @@
     --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.06);
     --glow-blue:       rgba(94,106,210,0.05);
     --glow-purple:     rgba(113,112,255,0.03);
+    --hero-gradient:   linear-gradient(135deg, #0f1011 0%, #191a1b 100%);
   }
 
   /* =====================================================
@@ -93,6 +94,7 @@
     --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.7);
     --glow-blue:       rgba(0,113,227,0.04);
     --glow-purple:     rgba(41,151,255,0.02);
+    --hero-gradient:   var(--bg-1);
   }
 
 
@@ -586,7 +588,7 @@
   ===================================================== */
   .hero-block {
     position: relative;
-    background: linear-gradient(135deg, #0f1011 0%, #191a1b 100%);
+    background: var(--hero-gradient);
     border-radius: 32px;
     padding: 64px 56px 56px;
     margin-bottom: 14px;
@@ -3108,6 +3110,12 @@ async function apiPost(path, body) {
 // 上层兼容接口：保持 dbGet/dbPut 签名不变
 // meta 对象除了 salt/verifier，还可能有 wrappedKeyByPassword/wrappedKeyByPasskey/passkeyCredId/kdf
 // 服务端把这些扩展字段统一存进 verifier 的 _extra 里
+async function apiDelete(path) {
+  const r = await fetch(API_BASE + path, { method: 'DELETE', cache: 'no-store' });
+  if (!r.ok) throw new Error('API ' + path + ' 删除失败: ' + r.status);
+  return r.json();
+}
+
 async function dbGet(store) {
   if (store === 'meta') {
     const r = await apiGet('/api/meta');
@@ -3135,10 +3143,8 @@ async function dbPut(store, obj) {
 }
 
 async function dbClearAll() {
-  const dummySalt = bufToB64(randomBytes(16));
-  const dummyVerifier = { iv: bufToB64(randomBytes(12)), cipher: bufToB64(randomBytes(32)) };
-  await apiPost('/api/meta', { salt: dummySalt, verifier: dummyVerifier });
-  await apiPost('/api/vault', { payload: { iv: bufToB64(randomBytes(12)), cipher: bufToB64(randomBytes(16)) } });
+  await apiDelete('/api/meta');
+  await apiDelete('/api/vault');
   clearLocalMirror();
 }
 
@@ -3958,10 +3964,9 @@ function renderHeroValue(n) {
   const latest = state.snapshots.length > 0 ? state.snapshots[state.snapshots.length - 1] : null;
   if (latest) {
     let liqCash = 0, liqInvest = 0, liqLong = 0, totalDebt = 0;
-    const isInvestmentView = state.viewMode === 'investment';
-    const activeIds = isInvestmentView ? getActiveAccountIds() : null;
+    const activeIds = getActiveAccountIds();
     state.accounts.forEach(acc => {
-      if (activeIds && !activeIds.has(acc.id)) return;
+      if (!activeIds.has(acc.id)) return;
       const bal = Number(latest.entries[acc.id]?.balance || 0);
       if (acc.type === 'liability') {
         if (bal > 0) totalDebt += bal;
@@ -4325,6 +4330,9 @@ function closeDrawer() {
 }
 
 function openPieDrilldown(group, accounts, total) {
+  drawerState.type = 'assets';
+  drawerState.month = null;
+  drawerState.mode = 'grouped';
   const sorted = getSortedSnapshots();
   const latest = sorted[sorted.length - 1];
   document.getElementById('drawer-eyebrow').textContent = '资产分布';
@@ -6113,9 +6121,10 @@ let draftSaveTimer = null;
 // monthKey 参数通过闭包锁定，防止切月份时草稿错位串台
 function autoSaveDraft(monthKey) {
   if (draftSaveTimer) clearTimeout(draftSaveTimer);
+  const snapshot = JSON.stringify(state.editingDraft);
   draftSaveTimer = setTimeout(() => {
     try {
-      localStorage.setItem(draftKey(monthKey), JSON.stringify(state.editingDraft));
+      localStorage.setItem(draftKey(monthKey), snapshot);
     } catch {}
   }, 500);
 }
@@ -6302,18 +6311,6 @@ function renderEntry() {
     }
   });
 
-  container.querySelectorAll('[data-action]').forEach(b => {
-    b.addEventListener('click', () => handleEntryAction(b.dataset.action, b.dataset));
-  });
-
-  // 账户名点击 → 余额趋势图
-  container.querySelectorAll('[data-acc-trend]').forEach(el => {
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openAccountTrend(el.dataset.accTrend);
-    });
-  });
-
   document.getElementById('group-list').innerHTML = getAllGroups().map(g => `<option value="${escapeHtml(g)}">`).join('');
   setEntryDirty(false);
 }
@@ -6405,6 +6402,20 @@ document.getElementById('entry-month-next').addEventListener('click', () => {
 });
 document.getElementById('show-archived').addEventListener('change', () => renderEntry());
 document.getElementById('refresh-btn').addEventListener('click', refreshFromCloud);
+// 录入页事件委托：账户操作按钮 + 趋势图点击
+document.getElementById('entry-groups').addEventListener('click', (e) => {
+  const actionBtn = e.target.closest('[data-action]');
+  if (actionBtn) {
+    handleEntryAction(actionBtn.dataset.action, actionBtn.dataset);
+    return;
+  }
+  const trendEl = e.target.closest('[data-acc-trend]');
+  if (trendEl) {
+    e.stopPropagation();
+    openAccountTrend(trendEl.dataset.accTrend);
+  }
+});
+
 document.getElementById('entry-prefill').addEventListener('click', () => {
   const prev = state.snapshots.find(s => s.month === ymPrev(state.editingMonth));
   if (!prev) { showToast('上月无数据', 'error'); return; }
