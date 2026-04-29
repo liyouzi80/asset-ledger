@@ -1,0 +1,12 @@
+name = "asset-ledger"
+main = "worker/index.js"
+compatibility_date = "2025-01-01"
+
+[assets]
+directory = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "asset-ledger-db"
+# 替换为你的 D1 Database ID
+database_id = "your-d1-database-id"
