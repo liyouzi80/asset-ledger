@@ -3287,8 +3287,14 @@ let state = {
 let localBackupDirectoryHandle = null;
 
 function migrateAccounts(accounts) {
-  // 向后兼容：为旧账户补充 tag 字段
+  // 向后兼容：为旧账户补充/修正 tag 字段
   for (const a of accounts) {
+    if (a.group === '其他资产' || a.group === '信用卡') {
+      if (!a.tag || a.tag === 'investment') {
+        if (a.name && a.name.includes('欠款')) a.tag = 'credit';
+        else a.tag = 'cash';
+      }
+    }
     if (!a.tag) {
       if (a.type === 'liability') a.tag = 'liability';
       else if (a.group && (a.group.includes('券商') || a.group.includes('港股') || a.group.includes('A 股'))) a.tag = 'investment';
@@ -4146,7 +4152,7 @@ function daysBetween(monthA, monthB) {
 function getActiveAccountIds() {
   return new Set(state.accounts.filter(a => {
     if (a.archived) return false;
-    if (state.viewMode === 'investment') return a.tag === 'investment' || a.tag === 'long-term';
+    if (state.viewMode === 'investment') return (a.tag === 'investment' || a.tag === 'long-term') && a.group !== '其他资产';
     return true;
   }).map(a => a.id));
 }
