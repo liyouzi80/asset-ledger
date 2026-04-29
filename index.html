@@ -5423,7 +5423,7 @@ function renderDashboard() {
         borderWidth: 3,
         fill: true,
         backgroundColor: totalGradient,
-        tension: 0.4,
+        tension: 0.42,
         pointRadius: 0,
         pointHoverRadius: 6,
         pointBackgroundColor: colorBg,
@@ -5487,16 +5487,19 @@ function renderDashboard() {
         x: {
           display: true,
           grid: { display: false, drawBorder: false },
+          border: { display: false },
           ticks: { color: colorMute, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
         },
         y: {
           display: true,
+          position: 'right',
           grid: { display: false, drawBorder: false },
           border: { display: false },
           ticks: {
             color: colorMute,
-            font: { size: 10 },
-            padding: 6,
+            font: { size: 11, family: "'JetBrains Mono', monospace" },
+            maxTicksLimit: 5,
+            padding: 8,
             callback: (v) => '¥' + (v / 10000).toFixed(0) + '万',
           },
         },
@@ -5611,23 +5614,24 @@ function renderDashboard() {
         {
           label: '市场盈亏',
           data: pnls,
-          backgroundColor: pnls.map(v => v >= 0 ? `rgba(${greenRgb},0.78)` : `rgba(${redRgb},0.78)`),
-          hoverBackgroundColor: pnls.map(v => v >= 0 ? `rgba(${greenRgb},0.95)` : `rgba(${redRgb},0.95)`),
-          borderRadius: 8,
+          backgroundColor: pnls.map(v => v >= 0 ? `rgba(${greenRgb},0.85)` : `rgba(${redRgb},0.85)`),
+          hoverBackgroundColor: pnls.map(v => v >= 0 ? `rgba(${greenRgb},1)` : `rgba(${redRgb},1)`),
+          borderRadius: 4,
           borderSkipped: false,
-          barPercentage: 0.5,
-          categoryPercentage: 0.7,
+          barPercentage: 0.6,
+          categoryPercentage: 0.8,
           minBarLength: 3,
         },
         {
           label: '净入金',
           data: flows,
-          backgroundColor: `rgba(${greyRgb},0.25)`,
-          hoverBackgroundColor: `rgba(${greyRgb},0.40)`,
-          borderRadius: 8,
+          backgroundColor: `rgba(${greyRgb},0.35)`,
+          hoverBackgroundColor: `rgba(${greyRgb},0.55)`,
+          borderRadius: 4,
           borderSkipped: false,
-          barPercentage: 0.5,
-          categoryPercentage: 0.7,
+          barPercentage: 0.6,
+          categoryPercentage: 0.8,
+          minBarLength: 3,
         },
       ],
     },
@@ -5644,7 +5648,7 @@ function renderDashboard() {
           const v = chart.data.datasets[0].data[i];
           if (v == null || isNaN(v) || v === 0) return;
           const label = v >= 0 ? '+' + (v / 10000).toFixed(1) + '万' : (v / 10000).toFixed(1) + '万';
-          const y = v >= 0 ? bar.y - 8 : bar.y + 16;
+          const y = v >= 0 ? bar.y - 6 : bar.y + 14;
           ctx.fillStyle = v >= 0 ? colorGreen : colorRed;
           ctx.fillText(label, bar.x, y);
         });
@@ -5692,8 +5696,14 @@ function renderDashboard() {
         },
       },
       scales: {
-        x: { grid: { display: false }, border: { display: false }, ticks: { color: colorMute } },
+        x: {
+          stacked: true,
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: colorMute },
+        },
         y: {
+          stacked: true,
           grid: { color: colorGrid },
           border: { display: false },
           ticks: { color: colorMute, callback: (v) => (v >= 0 ? '+' : '') + (v / 10000).toFixed(1) + '万' },
