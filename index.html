@@ -3910,7 +3910,7 @@ function daysBetween(monthA, monthB) {
 function getActiveAccountIds() {
   return new Set(state.accounts.filter(a => {
     if (a.archived) return false;
-    if (state.viewMode === 'investment') return a.tag === 'investment' || a.tag === 'credit' || a.tag === 'long-term';
+    if (state.viewMode === 'investment') return a.tag === 'investment' || a.tag === 'long-term';
     return true;
   }).map(a => a.id));
 }
