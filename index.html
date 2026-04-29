@@ -908,6 +908,18 @@
   }
   .chart-wrap { position: relative; height: 280px; }
   .chart-wrap.tall { height: 320px; }
+  /* Donut 中心总额 */
+  .donut-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-52%);
+    text-align: center; pointer-events: none; z-index: 1;
+  }
+  .donut-center .val {
+    font-size: 32px; font-weight: 600;
+    font-family: 'JetBrains Mono', monospace; color: var(--ink);
+  }
+  .donut-center .lbl { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  [data-theme="light"] .donut-center .val { color: var(--ink); }
+  [data-theme="light"] .donut-center .lbl { color: var(--ink-3); }
 
   /* =====================================================
      表格
@@ -2178,6 +2190,7 @@
     header { padding: 0 10px; }
     .hero-block { padding: 24px 16px 22px; border-radius: 16px; }
     .hero-value { font-size: 36px; }
+    .donut-center .val { font-size: 22px; }
     .hero-currency, .hero-decimal { font-size: 18px; }
     .hero-label { font-size: 11px; }
     .hero-meta-text { font-size: 12px; }
@@ -2405,7 +2418,10 @@
             <button class="btn btn-ghost btn-sm" id="open-target-config">⚙ 目标配置</button>
           </div>
         </div>
-        <div class="chart-wrap tall"><canvas id="chart-pie"></canvas></div>
+        <div class="chart-wrap tall">
+          <canvas id="chart-pie"></canvas>
+          <div class="donut-center" id="donut-center"><div class="val">—</div><div class="lbl">总资产</div></div>
+        </div>
         <div id="target-deviation" style="margin-top:16px"></div>
       </div>
     </div>
@@ -4694,40 +4710,62 @@ function renderReturnsModule(allSorted, onlyActive) {
   secondaryLabelEl.textContent = secondaryLabel;
   rangeEl.textContent = series.points[0].month + ' → ' + last.month;
 
-  // 5. 绘制走势图（Chart.js，与总资产曲线同风格）
+  // 5. 绘制走势图（正负双色面积）
   if (returnsModuleChart) { returnsModuleChart.destroy(); returnsModuleChart = null; }
   const dataPoints = series.points;
   const labels = dataPoints.map(p => p.month);
   const isPct = indicator !== 'amount';
   const dataValues = dataPoints.map(p => isPct ? (valueOfIndicator(p, indicator) * 100) : valueOfIndicator(p, indicator));
-  const lastDataVal = dataValues[dataValues.length - 1];
-  const chartAccent = lastDataVal >= 0 ? colorGreen : colorRed;
-  const chartAccentRgb = hexToRgb(chartAccent);
 
-  // 收益率走势 · Percento 风格
+  const posValues = dataValues.map(v => Math.max(0, v));
+  const negValues = dataValues.map(v => Math.min(0, v));
+
+  const greenRgb = hexToRgb(colorGreen);
+  const redRgb = hexToRgb(colorRed);
+
   const retCtx = canvas.getContext('2d');
-  const retGradient = retCtx.createLinearGradient(0, 0, 0, 220);
-  retGradient.addColorStop(0, `rgba(${chartAccentRgb},0.25)`);
-  retGradient.addColorStop(1, `rgba(${chartAccentRgb},0)`);
+  const greenGrad = retCtx.createLinearGradient(0, 0, 0, 220);
+  greenGrad.addColorStop(0, `rgba(${greenRgb},0.25)`);
+  greenGrad.addColorStop(1, `rgba(${greenRgb},0)`);
+
+  const redGrad = retCtx.createLinearGradient(0, 220, 0, 0);
+  redGrad.addColorStop(0, `rgba(${redRgb},0.25)`);
+  redGrad.addColorStop(1, `rgba(${redRgb},0)`);
 
   returnsModuleChart = new Chart(canvas, {
     type: 'line',
     data: {
       labels,
-      datasets: [{
-        data: dataValues,
-        borderColor: chartAccent,
-        borderWidth: 3,
-        fill: true,
-        backgroundColor: retGradient,
-        tension: 0.4,
-        pointRadius: 0,
-        pointHoverRadius: 6,
-        pointBackgroundColor: colorBg,
-        pointBorderColor: chartAccent,
-        pointBorderWidth: 2,
-        pointHoverBorderWidth: 3,
-      }],
+      datasets: [
+        {
+          data: posValues,
+          borderColor: colorGreen,
+          borderWidth: 3,
+          fill: true,
+          backgroundColor: greenGrad,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointBackgroundColor: colorGreen,
+          pointBorderColor: colorBg,
+          pointBorderWidth: 2,
+          pointHoverBorderWidth: 3,
+        },
+        {
+          data: negValues,
+          borderColor: colorRed,
+          borderWidth: 3,
+          fill: true,
+          backgroundColor: redGrad,
+          tension: 0.4,
+          pointRadius: 0,
+          pointHoverRadius: 6,
+          pointBackgroundColor: colorRed,
+          pointBorderColor: colorBg,
+          pointBorderWidth: 2,
+          pointHoverBorderWidth: 3,
+        },
+      ],
     },
     options: {
       responsive: true,
@@ -4743,10 +4781,31 @@ function renderReturnsModule(allSorted, onlyActive) {
           padding: 10,
           cornerRadius: 8,
           displayColors: false,
+          filter: (ctx) => ctx.datasetIndex === 0,
           callbacks: {
-            label: (ctx) => isPct
-              ? (ctx.parsed.y >= 0 ? '+' : '') + ctx.parsed.y.toFixed(2) + '%'
-              : fmt(ctx.parsed.y),
+            label: (ctx) => {
+              const v = dataValues[ctx.dataIndex];
+              return isPct
+                ? (v >= 0 ? '+' : '') + v.toFixed(2) + '%'
+                : fmt(v);
+            },
+          },
+        },
+        zeroLine: {
+          afterDraw(chart) {
+            const yScale = chart.scales.y;
+            const zeroY = yScale.getPixelForValue(0);
+            if (zeroY <= yScale.top || zeroY >= yScale.bottom) return;
+            const ctx = chart.ctx;
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(chart.scales.x.left, zeroY);
+            ctx.lineTo(chart.scales.x.right, zeroY);
+            ctx.strokeStyle = getCSSVar('--ink-3') || '#8a8f98';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 5]);
+            ctx.stroke();
+            ctx.restore();
           },
         },
         crosshair: {
@@ -5225,6 +5284,8 @@ function renderDashboard() {
     document.getElementById('kpi-total').innerHTML = '<span class="hero-currency">¥</span>—';
     document.getElementById('kpi-total-sub').textContent = '尚无快照，请先到「录入」页创建第一份记录';
     document.getElementById('kpi-total-pill').classList.remove('show');
+    const dc = document.getElementById('donut-center');
+    if (dc) dc.innerHTML = '<div class="val">—</div><div class="lbl">总资产</div>';
     ['pnl', 'flow', 'ytd'].forEach(k => {
       const el = document.getElementById('hero-stat-' + k);
       if (el) el.textContent = '—';
@@ -5398,7 +5459,16 @@ function renderDashboard() {
         if (elements && elements.length > 0) {
           const v = totals[elements[0].index];
           if (v != null) renderHeroValue(v);
+          e.native.target.style.cursor = 'pointer';
+        } else {
+          e.native.target.style.cursor = 'default';
         }
+      },
+      onClick(e, elements) {
+        if (!elements || elements.length === 0) return;
+        const idx = elements[0].index;
+        const month = labels[idx];
+        if (month) openDrawer('pnl', month);
       },
       plugins: {
         legend: { display: false },
@@ -5541,6 +5611,12 @@ function renderDashboard() {
       },
     },
   });
+  // 环形图中心总额
+  (() => {
+    const pieTotal = pieData.reduce((a, b) => a + b, 0);
+    const dc = document.getElementById('donut-center');
+    if (dc) dc.innerHTML = '<div class="val"><span class="hero-currency" style="font-size:24px;margin-right:4px;vertical-align:baseline">¥</span>' + (pieTotal / 10000).toFixed(1) + '万</div><div class="lbl">总资产</div>';
+  })();
 
   renderTargetAllocation();
 
