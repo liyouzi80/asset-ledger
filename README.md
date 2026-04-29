@@ -1,4 +1,4 @@
-# ¥ Asset Ledger
+# Asset Ledger（个人资产负债表）
 
 > 端到端加密的个人资产负债表 — 跨券商、跨银行、跨币种的净值全景。**数据由你掌控，服务器只能看到密文。**
 
@@ -49,23 +49,6 @@ index.html (单文件 SPA · ~7400 行 · 零框架)
 | 数据库 | Cloudflare D1 (SQLite) · 键值模式 |
 | 主题 | Apple 浅色 + Linear 深色 · CSS 变量驱动 |
 | 部署 | GitHub Actions → `wrangler deploy` · push 即上线 |
-
-## 文件
-
-```
-asset-ledger/
-├── index.html                    ← 完整前端 (HTML + CSS + JS)
-├── worker/
-│   ├── index.js                  ← 路由分发
-│   ├── vault.js                  ← 加密账本 CRUD
-│   ├── meta.js                   ← 密钥元信息 CRUD
-│   ├── bg.js                     ← Bing 壁纸代理
-│   └── shared.js                 ← CORS / 缓存头
-├── wrangler.example.toml
-├── product-showcase.html         ← 产品展示图 (浏览器截图)
-├── .github/workflows/deploy.yml
-└── README.md
-```
 
 ## 部署
 
