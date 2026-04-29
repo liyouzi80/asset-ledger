@@ -1,0 +1,33 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Write wrangler.toml
+        run: |
+          cat > wrangler.toml << 'EOF'
+          name = "asset-ledger"
+          main = "worker/index.js"
+          compatibility_date = "2025-01-01"
+          [assets]
+          directory = "."
+          [[d1_databases]]
+          binding = "DB"
+          database_name = "${{ vars.D1_DATABASE_NAME || 'asset-ledger-db' }}"
+          database_id = "${{ secrets.D1_DATABASE_ID }}"
+          EOF
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
