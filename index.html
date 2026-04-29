@@ -404,6 +404,13 @@
     gap: 6px;
   }
   [data-theme="light"] .hero-label { color: var(--ink-3); }
+  .hero-arrow {
+    font-size: 16px;
+    color: rgba(255,255,255,0.25);
+    font-weight: 300;
+    transition: opacity 0.2s;
+  }
+  [data-theme="light"] .hero-arrow { color: rgba(0,0,0,0.20); }
   .hero-value {
     font-family: 'Inter', -apple-system, sans-serif;
     font-size: 96px;
@@ -2291,7 +2298,7 @@
           <button data-view="all" class="active">总览</button>
           <button data-view="investment">仅投资资产</button>
         </div>
-        <div class="hero-label">总 资 产</div>
+        <div class="hero-label">总 资 产 <span class="hero-arrow">›</span></div>
         <div class="hero-value" id="kpi-total"><span class="hero-currency">¥</span>—</div>
         <div id="waterline-render-target"></div>
         <div class="hero-meta">
@@ -5260,7 +5267,7 @@ function renderDashboard() {
   // Hero 总资产：拆 ¥ + 整数 + .小数
   renderHeroValue(total);
   document.getElementById('kpi-total-sub').textContent = (isInvestmentView ? '仅投资资产 · ' : '') + '截至 ' + latest.month;
-  document.querySelector('.hero-label').innerHTML = (isInvestmentView ? '投 资 资 产' : '总 资 产');
+  document.querySelector('.hero-label').innerHTML = (isInvestmentView ? '投 资 资 产' : '总 资 产') + ' <span class="hero-arrow">›</span>';
 
   // Hero pill: 月对月变化百分比
   const pill = document.getElementById('kpi-total-pill');
@@ -5431,7 +5438,15 @@ function renderDashboard() {
           ticks: { color: colorMute, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 },
         },
         y: {
-          display: false,
+          display: true,
+          grid: { display: false, drawBorder: false },
+          border: { display: false },
+          ticks: {
+            color: colorMute,
+            font: { size: 10 },
+            padding: 6,
+            callback: (v) => '¥' + (v / 10000).toFixed(0) + '万',
+          },
         },
       },
     },
