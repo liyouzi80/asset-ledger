@@ -41,6 +41,7 @@
 
 ```
 index.html              ← 单文件 SPA（~6500 行）
+check-summary.html      ← 收益率组件视觉一致性检查页
 └── functions/api/
     ├── meta.js         ← 密钥元信息 CRUD
     ├── vault.js        ← 加密账本 CRUD + 冲突检测
