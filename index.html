@@ -7288,7 +7288,6 @@ let compactHeroObserver = null;
   const savedTheme = localStorage.getItem('asset-theme') || 'system';
   applyTheme(savedTheme);
   loadBingWallpaper();
-  await openDB();
   await unlockOrInit();
   // 首次加载后激活滚动浮现
   requestAnimationFrame(() => { requestAnimationFrame(initScrollReveal); });
