@@ -95,6 +95,60 @@
     --glow-purple:     rgba(41,151,255,0.02);
   }
 
+
+  :root {
+    --resize-dur: 300ms;
+    --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --digit-dur: 500ms;
+    --digit-distance: 8px;
+    --digit-stagger: 70ms;
+    --digit-blur: 2px;
+    --digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
+    --digit-dir-x: 0;
+    --digit-dir-y: 1;
+    --badge-slide-dur: 260ms;
+    --badge-pop-dur: 500ms;
+    --badge-pop-close-dur: 180ms;
+    --badge-fade-dur: 400ms;
+    --badge-fade-close-dur: 180ms;
+    --badge-blur: 2px;
+    --badge-offset-x: -8.2px;
+    --badge-offset-y: 12.4px;
+    --badge-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --badge-pop-ease: cubic-bezier(0.34, 1.36, 0.64, 1);
+    --badge-close-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --text-swap-dur: 200ms;
+    --text-swap-translate-y: 8px;
+    --text-swap-blur: 2px;
+    --text-swap-ease: ease-out;
+    --dropdown-open-dur: 250ms;
+    --dropdown-close-dur: 150ms;
+    --dropdown-pre-scale: 0.97;
+    --dropdown-closing-scale: 0.99;
+    --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --modal-open-dur: 250ms;
+    --modal-close-dur: 150ms;
+    --modal-scale: 0.96;
+    --modal-scale-close: 0.96;
+    --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --panel-open-dur: 400ms;
+    --panel-close-dur: 350ms;
+    --panel-translate-y: 100px;
+    --panel-blur: 2px;
+    --panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --page-slide-dur: 200ms;
+    --page-fade-dur: 200ms;
+    --page-slide-distance: 8px;
+    --page-blur: 3px;
+    --page-stagger: 0ms;
+    --page-exit-enabled: 1;
+    --page-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --page-fade-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --icon-swap-dur: 200ms;
+    --icon-swap-blur: 2px;
+    --icon-swap-start-scale: 0.25;
+    --icon-swap-ease: ease-in-out;
+  }
   /* =====================================================
      基础重置
   ===================================================== */
@@ -312,17 +366,155 @@
   .reveal {
     opacity: 0;
     transform: translateY(30px) scale(0.97);
+    filter: blur(var(--panel-blur));
     transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+                filter 0.6s cubic-bezier(0.16, 1, 0.3, 1);
   }
   .reveal.revealed {
     opacity: 1;
     transform: translateY(0) scale(1);
+    filter: blur(0);
   }
   .reveal-delay-1 { transition-delay: 0.05s; }
   .reveal-delay-2 { transition-delay: 0.12s; }
   .reveal-delay-3 { transition-delay: 0.20s; }
   .reveal-delay-4 { transition-delay: 0.28s; }
+
+  /* =====================================================
+     Transitions.dev · 动效 CSS
+  ===================================================== */
+  /* Number pop-in */
+  @keyframes t-digit-pop-in {
+    0%   {
+      transform: translate(
+        calc(var(--digit-distance) * var(--digit-dir-x)),
+        calc(var(--digit-distance) * var(--digit-dir-y))
+      );
+      opacity: 0;
+      filter: blur(var(--digit-blur));
+    }
+    100% { transform: translate(0, 0); opacity: 1; filter: blur(0); }
+  }
+  .t-digit-group {
+    display: inline-flex;
+    align-items: baseline;
+  }
+  .t-digit {
+    display: inline-block;
+    will-change: transform, opacity, filter;
+  }
+  .t-digit-group.is-animating .t-digit {
+    animation: t-digit-pop-in var(--digit-dur) var(--digit-ease) both;
+  }
+  .t-digit-group.is-animating .t-digit[data-stagger="1"] {
+    animation-delay: var(--digit-stagger);
+  }
+  .t-digit-group.is-animating .t-digit[data-stagger="2"] {
+    animation-delay: calc(var(--digit-stagger) * 2);
+  }
+  /* Text states swap */
+  .t-text-swap {
+    display: inline-block;
+    transform: translateY(0);
+    filter: blur(0);
+    opacity: 1;
+    transition:
+      transform var(--text-swap-dur) var(--text-swap-ease),
+      filter    var(--text-swap-dur) var(--text-swap-ease),
+      opacity   var(--text-swap-dur) var(--text-swap-ease);
+    will-change: transform, filter, opacity;
+  }
+  .t-text-swap.is-exit {
+    transform: translateY(calc(var(--text-swap-translate-y) * -1));
+    filter: blur(var(--text-swap-blur));
+    opacity: 0;
+  }
+  .t-text-swap.is-enter-start {
+    transform: translateY(var(--text-swap-translate-y));
+    filter: blur(var(--text-swap-blur));
+    opacity: 0;
+    transition: none;
+  }
+  /* Modal */
+  .t-modal {
+    transform-origin: center;
+    transform: scale(var(--modal-scale));
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform var(--modal-open-dur) var(--modal-ease),
+      opacity   var(--modal-open-dur) var(--modal-ease);
+    will-change: transform, opacity;
+  }
+  .t-modal.is-open {
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .t-modal.is-closing {
+    transform: scale(var(--modal-scale-close));
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform var(--modal-close-dur) var(--modal-ease),
+      opacity   var(--modal-close-dur) var(--modal-ease);
+  }
+  /* Panel reveal */
+  .t-panel-slide {
+    transform: translateY(var(--panel-translate-y));
+    opacity: 0;
+    filter: blur(var(--panel-blur));
+    pointer-events: none;
+    transition:
+      transform var(--panel-close-dur) var(--panel-ease),
+      opacity   var(--panel-close-dur) var(--panel-ease),
+      filter    var(--panel-close-dur) var(--panel-ease);
+    will-change: transform, opacity, filter;
+  }
+  .t-panel-slide[data-open="true"] {
+    transform: translateY(0);
+    opacity: 1;
+    filter: blur(0);
+    pointer-events: auto;
+    transition:
+      transform var(--panel-open-dur) var(--panel-ease),
+      opacity   var(--panel-open-dur) var(--panel-ease),
+      filter    var(--panel-open-dur) var(--panel-ease);
+  }
+  /* Icon swap */
+  .t-icon-swap {
+    position: relative;
+    display: inline-grid;
+  }
+  .t-icon-swap .t-icon {
+    grid-area: 1 / 1;
+    transition:
+      opacity   var(--icon-swap-dur) var(--icon-swap-ease),
+      filter    var(--icon-swap-dur) var(--icon-swap-ease),
+      transform var(--icon-swap-dur) var(--icon-swap-ease);
+    will-change: opacity, filter, transform;
+  }
+  .t-icon-swap[data-state="a"] .t-icon[data-icon="a"],
+  .t-icon-swap[data-state="b"] .t-icon[data-icon="b"] {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+  .t-icon-swap[data-state="a"] .t-icon[data-icon="b"],
+  .t-icon-swap[data-state="b"] .t-icon[data-icon="a"] {
+    opacity: 0;
+    filter: blur(var(--icon-swap-blur));
+    transform: scale(var(--icon-swap-start-scale));
+  }
+  /* Accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .t-digit-group .t-digit,
+    .t-text-swap,
+    .t-modal,
+    .t-panel-slide,
+    .t-icon-swap .t-icon { animation: none !important; transition: none !important; }
+  }
 
   /* 紧凑 Hero · 滚动时吸附顶部 */
   .compact-hero {
@@ -1889,6 +2081,13 @@
     opacity: 1;
     pointer-events: auto;
   }
+  .drawer.is-closing {
+    transform: translate(-50%, -50%) scale(0.96);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
   .drawer-header {
     display: flex;
     justify-content: space-between;
@@ -2332,7 +2531,7 @@
       <button data-view="all" class="active">总览</button>
       <button data-view="investment">投资</button>
     </div>
-    <div class="ch-label">总资产</div>
+    <div class="ch-label t-text-swap" id="ch-label-text">总资产</div>
     <div class="ch-total" id="ch-total"><span class="ch-currency">¥</span>—</div>
     <div class="ch-arrow">›</div>
   </div>
@@ -2373,7 +2572,7 @@
           <button data-view="all" class="active">总览</button>
           <button data-view="investment">仅投资资产</button>
         </div>
-        <div class="hero-label">总 资 产 <span class="hero-arrow">›</span></div>
+        <div class="hero-label"><span class="t-text-swap" id="hero-label-text">总 资 产</span> <span class="hero-arrow">›</span></div>
         <div class="hero-value" id="kpi-total"><span class="hero-currency">¥</span>—</div>
         <div id="waterline-render-target"></div>
         <div class="hero-meta">
@@ -3699,6 +3898,36 @@ const fmtSign = (n) => {
 };
 
 // 微型趋势线 SVG · 苹果风格
+// 数字弹入动画 · transitions.dev number pop-in
+function setDigits(container, str) {
+  container.classList.remove('is-animating');
+  container.replaceChildren();
+  const chars = str.split('');
+  chars.forEach((ch, i) => {
+    const span = document.createElement('span');
+    span.className = 't-digit';
+    span.textContent = ch;
+    if (i === chars.length - 2) span.dataset.stagger = '1';
+    else if (i === chars.length - 1) span.dataset.stagger = '2';
+    container.appendChild(span);
+  });
+  void container.offsetHeight;
+  container.classList.add('is-animating');
+}
+// 文本交换动画 · transitions.dev text swap
+function swapText(el, next) {
+  const dur = parseFloat(
+    getComputedStyle(document.documentElement).getPropertyValue('--text-swap-dur')
+  ) || 200;
+  el.classList.add('is-exit');
+  setTimeout(() => {
+    el.textContent = next;
+    el.classList.remove('is-exit');
+    el.classList.add('is-enter-start');
+    void el.offsetHeight;
+    el.classList.remove('is-enter-start');
+  }, dur);
+}
 // Hero 总资产：拆 ¥ + 整数 + .小数（弱化货币符号）
 function renderHeroValue(n) {
   const el = document.getElementById('kpi-total');
@@ -3714,8 +3943,10 @@ function renderHeroValue(n) {
   const showDecimal = decimal !== '.00';
   const sign = n < 0 ? '-' : '';
   el.innerHTML = '<span class="hero-currency">' + sign + '¥</span>' +
-    '<span class="num-anim">' + intStr + '</span>' +
-    (showDecimal ? '<span class="hero-decimal num-anim">' + decimal + '</span>' : '');
+    '<span class="t-digit-group is-animating" id="kpi-total-int"></span>' +
+    (showDecimal ? '<span class="hero-decimal t-digit-group is-animating" id="kpi-total-dec"></span>' : '');
+  setDigits(document.getElementById('kpi-total-int'), intStr);
+  if (showDecimal) setDigits(document.getElementById('kpi-total-dec'), decimal);
 
   // 资产水位线
   const latest = state.snapshots.length > 0 ? state.snapshots[state.snapshots.length - 1] : null;
@@ -3765,7 +3996,8 @@ function renderKpiValue(elId, n, withSign) {
     if (n > 0) symbol = '+¥';
     else if (n < 0) symbol = '−¥';
   }
-  el.innerHTML = '<span class="sym">' + symbol + '</span><span class="num-anim">' + abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 }) + '</span>';
+  el.innerHTML = '<span class="sym">' + symbol + '</span><span class="t-digit-group is-animating" id="kpi-' + elId + '-digits"></span>';
+  setDigits(document.getElementById('kpi-' + elId + '-digits'), abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 }));
 }
 
 // Hero 内嵌统计值渲染
@@ -3782,7 +4014,8 @@ function renderHeroStatValue(elId, n, withSign) {
     if (n > 0) symbol = '+¥';
     else if (n < 0) symbol = '−¥';
   }
-  el.innerHTML = '<span class="hsym">' + symbol + '</span>' + abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+  el.innerHTML = '<span class="hsym">' + symbol + '</span><span class="t-digit-group is-animating" id="hs-' + elId + '-digits"></span>';
+  setDigits(document.getElementById('hs-' + elId + '-digits'), abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 }));
 }
 const ymNow = () => {
   const d = new Date();
@@ -4055,14 +4288,19 @@ function openDrawer(type, month) {
   drawerState.month = month;
   drawerState.mode = 'grouped';
   renderDrawer();
-  document.getElementById('drawer').classList.add('open');
+  const drawer = document.getElementById('drawer');
+  drawer.classList.remove('is-closing');
+  drawer.classList.add('open');
   document.getElementById('drawer-backdrop').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 function closeDrawer() {
-  document.getElementById('drawer').classList.remove('open');
+  const drawer = document.getElementById('drawer');
+  drawer.classList.remove('open');
+  drawer.classList.add('is-closing');
   document.getElementById('drawer-backdrop').classList.remove('open');
   document.body.style.overflow = '';
+  setTimeout(() => drawer.classList.remove('is-closing'), 150);
   if (accountTrendChart) { accountTrendChart.destroy(); accountTrendChart = null; }
 }
 
@@ -5387,7 +5625,7 @@ function renderDashboard() {
   // Hero 总资产：拆 ¥ + 整数 + .小数
   renderHeroValue(total);
   document.getElementById('kpi-total-sub').textContent = (isInvestmentView ? '仅投资资产 · ' : '') + '截至 ' + latest.month;
-  document.querySelector('.hero-label').innerHTML = (isInvestmentView ? '投 资 资 产' : '总 资 产') + ' <span class="hero-arrow">›</span>';
+  swapText(document.getElementById('hero-label-text'), isInvestmentView ? '投 资 资 产' : '总 资 产');
 
   // Hero pill: 月对月变化百分比
   const pill = document.getElementById('kpi-total-pill');
@@ -5588,9 +5826,13 @@ function renderDashboard() {
   // 紧凑 Hero 数据同步
   (() => {
     const el = document.getElementById('ch-total');
-    if (el) el.innerHTML = '<span class="ch-currency">¥</span>' + (currentTotal / 10000).toFixed(1) + '万';
+    if (el) {
+      const disp = (currentTotal / 10000).toFixed(1);
+      el.innerHTML = '<span class="ch-currency">¥</span><span class="t-digit-group is-animating" id="ch-total-digits"></span><span style="font-size:12px;color:var(--ink-3)">万</span>';
+      setDigits(document.getElementById('ch-total-digits'), disp);
+    }
     const label = document.querySelector('.compact-hero .ch-label');
-    if (label) label.textContent = isInvestmentView ? '投资资产' : '总资产';
+    if (label) swapText(label, isInvestmentView ? '投资资产' : '总资产');
     document.querySelectorAll('.compact-hero .ch-toggle button').forEach(b => {
       b.classList.toggle('active', b.dataset.view === (isInvestmentView ? 'investment' : 'all'));
     });
