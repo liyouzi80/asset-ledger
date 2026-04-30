@@ -6461,6 +6461,8 @@ document.getElementById('entry-prefill').addEventListener('click', () => {
   showToast('已填入上月余额');
 });
 document.getElementById('entry-cancel').addEventListener('click', () => {
+  clearPersistedDraft(state.editingMonth);
+  state.editingDraft = loadDraft(state.editingMonth);
   renderEntry();
   showToast('已恢复');
 });
