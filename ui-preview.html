@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UI Preview - Asset Ledger</title>
+<style>
+  :root {
+    --bg: #f5f6fa;
+    --card-bg: #fff;
+    --text: #1a1a2e;
+    --text-secondary: #6b7280;
+    --border: #e5e7eb;
+    --green: #059669;
+    --red: #dc2626;
+    --green-bg: #ecfdf5;
+    --red-bg: #fef2f2;
+    --brand: #4f46e5;
+  }
+  .dark {
+    --bg: #111827;
+    --card-bg: #1f2937;
+    --text: #f1f5f9;
+    --text-secondary: #9ca3af;
+    --border: #374151;
+    --green: #34d399;
+    --red: #f87171;
+    --green-bg: #064e3b;
+    --red-bg: #7f1d1d;
+    --brand: #818cf8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg); color: var(--text); padding: 24px 32px; transition: background .3s, color .3s;
+  }
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+  h1 { font-size:20px; font-weight:600; }
+  .theme-btn {
+    padding:6px 16px; border:1px solid var(--border); border-radius:6px; background:var(--card-bg);
+    color:var(--text); cursor:pointer; font-size:13px;
+  }
+
+  /* ——— Summary Bar ——— */
+  .summary-bar { display:flex; gap:16px; margin-bottom:24px; }
+  .summary-card {
+    flex:1; background:var(--card-bg); border:1px solid var(--border); border-radius:10px;
+    padding:16px 20px;
+  }
+  .summary-card .label { font-size:12px; color:var(--text-secondary); margin-bottom:4px; }
+  .summary-card .value { font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .summary-card .change { font-size:13px; margin-top:2px; }
+  .summary-card .change.up { color:var(--green); }
+  .summary-card .change.down { color:var(--red); }
+
+  /* ——— Filter Chips ——— */
+  .filter-section { margin-bottom:20px; }
+  .filter-label { font-size:12px; color:var(--text-secondary); margin-bottom:8px; }
+  .chip-group { display:flex; gap:8px; flex-wrap:wrap; }
+  .chip {
+    padding:6px 16px; border-radius:20px; border:1px solid var(--border); background:var(--card-bg);
+    color:var(--text); font-size:13px; cursor:pointer; transition: all .15s; user-select:none;
+  }
+  .chip:hover { border-color:var(--brand); color:var(--brand); }
+  .chip.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+
+  /* ——— Data Table ——— */
+  .table-wrap {
+    background:var(--card-bg); border:1px solid var(--border); border-radius:10px; overflow:hidden;
+  }
+  .table-header { padding:14px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .table-header h3 { font-size:15px; font-weight:600; }
+  .table-header .meta { font-size:12px; color:var(--text-secondary); }
+  table { width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums; }
+  th {
+    text-align:left; font-size:11px; font-weight:500; color:var(--text-secondary); text-transform:uppercase;
+    letter-spacing:.5px; padding:10px 16px; border-bottom:1px solid var(--border); white-space:nowrap;
+  }
+  th.right, td.right { text-align:right; }
+  td { padding:10px 16px; font-size:13px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:var(--bg); }
+  .tag {
+    display:inline-block; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:500;
+  }
+  .tag-short { background:var(--red-bg); color:var(--red); }
+  .tag-long  { background:var(--green-bg); color:var(--green); }
+
+  /* number signs */
+  .pos { color:var(--green); }
+  .neg { color:var(--red); }
+  .muted { color:var(--text-secondary); }
+
+  /* ——— Abbreviation Demo ——— */
+  .abbrev-demo { margin-top:24px; display:flex; gap:16px; flex-wrap:wrap; }
+  .abbrev-card {
+    background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:14px 20px; text-align:center; min-width:120px;
+  }
+  .abbrev-card .raw { font-size:11px; color:var(--text-secondary); }
+  .abbrev-card .short { font-size:18px; font-weight:600; margin-top:2px; }
+
+  .divider { margin:24px 0; border:none; border-top:1px solid var(--border); }
+
+  /* status dot */
+  .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .status-dot.ok { background:var(--green); }
+  .status-dot.warn { background:#f59e0b; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Asset Ledger · UI Preview</h1>
+  <button class="theme-btn" onclick="toggleTheme()">浅色 / 深色</button>
+</div>
+
+<!-- ====== 1. Summary Bar ====== -->
+<div class="summary-bar">
+  <div class="summary-card">
+    <div class="label">总资产 Total Assets</div>
+    <div class="value">¥1,234,567</div>
+    <div class="change up">+3.2% 较上月</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">总负债 Total Liabilities</div>
+    <div class="value">¥452,100</div>
+    <div class="change down">+1.8% 较上月</div>
+  </div>
+  <div class="summary-card">
+    <div class="label">净资产 Net Worth</div>
+    <div class="value">¥782,467</div>
+    <div class="change up">+4.1% 较上月</div>
+  </div>
+</div>
+
+<!-- ====== 2. Filter Chips ====== -->
+<div class="filter-section">
+  <div class="filter-label">选择月份</div>
+  <div class="chip-group">
+    <span class="chip">2026-01</span>
+    <span class="chip">2026-02</span>
+    <span class="chip">2026-03</span>
+    <span class="chip active">2026-04</span>
+    <span class="chip">2026-05</span>
+    <span class="chip">2026-06</span>
+  </div>
+</div>
+
+<div class="filter-section">
+  <div class="filter-label">账户分类</div>
+  <div class="chip-group">
+    <span class="chip active">全部</span>
+    <span class="chip">资产</span>
+    <span class="chip">负债</span>
+    <span class="chip">投资</span>
+    <span class="chip">现金</span>
+  </div>
+</div>
+
+<!-- ====== 3. Data Table ====== -->
+<div class="table-wrap">
+  <div class="table-header">
+    <h3>账户明细</h3>
+    <span class="meta">2026-04 · 共 8 个账户</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>账户</th>
+        <th>标签</th>
+        <th class="right">上月余额</th>
+        <th class="right">本月余额</th>
+        <th class="right">变动额</th>
+        <th class="right">变动率</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="status-dot ok"></span>工资卡</td>
+        <td><span class="tag tag-long">资产</span></td>
+        <td class="right">¥58,200.00</td>
+        <td class="right">¥62,500.00</td>
+        <td class="right pos">+4,300.00</td>
+        <td class="right pos">+7.39%</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span>股票账户</td>
+        <td><span class="tag tag-long">投资</span></td>
+        <td class="right">¥120,300.00</td>
+        <td class="right">¥115,800.00</td>
+        <td class="right neg">−4,500.00</td>
+        <td class="right neg">−3.74%</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span>房贷</td>
+        <td><span class="tag tag-short">负债</span></td>
+        <td class="right">¥400,000.00</td>
+        <td class="right">¥395,000.00</td>
+        <td class="right pos">+5,000.00</td>
+        <td class="right pos">+1.25%</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span>公积金</td>
+        <td><span class="tag tag-long">资产</span></td>
+        <td class="right">¥86,400.00</td>
+        <td class="right">¥92,100.00</td>
+        <td class="right pos">+5,700.00</td>
+        <td class="right pos">+6.60%</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot warn"></span>信用卡</td>
+        <td><span class="tag tag-short">负债</span></td>
+        <td class="right">¥12,500.00</td>
+        <td class="right">¥18,200.00</td>
+        <td class="right neg">−5,700.00</td>
+        <td class="right neg">−45.60%</td>
+      </tr>
+      <tr>
+        <td><span class="status-dot ok"></span>基金定投</td>
+        <td><span class="tag tag-long">投资</span></td>
+        <td class="right">¥35,000.00</td>
+        <td class="right">¥37,850.00</td>
+        <td class="right pos">+2,850.00</td>
+        <td class="right pos">+8.14%</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ====== 4. Number Abbreviation ====== -->
+<div class="abbrev-demo">
+  <div class="abbrev-card">
+    <div class="raw">1,234,567.89</div>
+    <div class="short">123.46万</div>
+  </div>
+  <div class="abbrev-card">
+    <div class="raw">98,765,432.10</div>
+    <div class="short">9,876.54万</div>
+  </div>
+  <div class="abbrev-card">
+    <div class="raw">1,500,000,000</div>
+    <div class="short">15.00亿</div>
+  </div>
+  <div class="abbrev-card">
+    <div class="raw">5,200.50</div>
+    <div class="short">5,200.50</div>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px;">
+  <div style="flex:1;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:20px;">
+    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">设计要点总结</h3>
+    <table style="font-size:13px;">
+      <tr><td style="padding:4px 12px 4px 0;color:var(--text-secondary);vertical-align:top;">字体</td><td style="padding:4px 0;">系统字体栈：SF / PingFang SC / 微软雅黑</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:var(--text-secondary);vertical-align:top;">数字</td><td style="padding:4px 0;">tabular-nums 等宽数字、右对齐、变号必带 +/−</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:var(--text-secondary);vertical-align:top;">缩写</td><td style="padding:4px 0;">≥1万用"万"，≥1亿用"亿"，保留两位小数</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:var(--text-secondary);vertical-align:top;">筛选</td><td style="padding:4px 0;">Pill/Chip 替代原生 select，更直观</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:var(--text-secondary);vertical-align:top;">概览</td><td style="padding:4px 0;">顶部三卡片：总资产 / 总负债 / 净资产 + 环比变动</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:var(--text-secondary);vertical-align:top;">色彩</td><td style="padding:4px 0;">绿涨红跌，负值用减号前缀；浅色/深色双主题</td></tr>
+    </table>
+  </div>
+</div>
+
+<script>
+function toggleTheme() {
+  document.documentElement.classList.toggle('dark');
+}
+</script>
+</body>
+</html>

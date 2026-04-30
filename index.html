@@ -97,6 +97,44 @@
     --hero-gradient:   var(--bg-1);
   }
 
+  /* =====================================================
+     Fintech · 金融科技主题
+  ===================================================== */
+  [data-theme="fintech"] {
+    --bg:                #f5f6fa;
+    --bg-1:              #ffffff;
+    --bg-2:              #f0f2f5;
+    --bg-3:              #e5e7eb;
+    --bg-glass:          rgba(255,255,255,0.92);
+    --ink:               #1a1a2e;
+    --ink-2:             #374151;
+    --ink-3:             #6b7280;
+    --ink-4:             #9ca3af;
+    --sep:               #e5e7eb;
+    --sep-strong:        #d1d5db;
+    --accent:            #4f46e5;
+    --accent-soft:       rgba(79,70,229,0.10);
+    --green:             #059669;
+    --green-soft:        rgba(5,150,105,0.10);
+    --red:               #dc2626;
+    --red-soft:          rgba(220,38,38,0.10);
+    --yellow:            #f59e0b;
+    --orange:            #ea580c;
+    --shadow-sm:         0 0 0 1px rgba(0,0,0,0.03);
+    --shadow-md:         0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.05);
+    --shadow-lg:         0 4px 16px rgba(0,0,0,0.06), 0 16px 48px rgba(0,0,0,0.06);
+    --chart-grid:        rgba(0,0,0,0.05);
+    --chart-tick:        rgba(0,0,0,0.35);
+    --tooltip-bg:        #ffffff;
+    --accent-gradient:   linear-gradient(135deg, #4f46e5, #7c3aed);
+    --accent-glow:       rgba(79,70,229,0.12);
+    --accent-purple:     #7c3aed;
+    --card-highlight:    inset 0 0.5px 0 rgba(0,0,0,0.04);
+    --glow-blue:         rgba(79,70,229,0.04);
+    --glow-purple:       rgba(124,58,237,0.02);
+    --hero-gradient:     linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  }
+
 
   :root {
     --resize-dur: 300ms;
@@ -181,7 +219,7 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     background-size: 256px;
   }
-  [data-theme="light"] html::before { opacity: 0.025; }
+  [data-theme="light"] html::before, [data-theme="fintech"] html::before { opacity: 0.025; }
   /* 环境光晕 */
   body::before {
     content: '';
@@ -276,8 +314,8 @@
     padding: 2px;
     gap: 0;
   }
-  [data-theme="light"] .nav,
-  [data-theme="light"] .theme-toggle {
+  [data-theme="light"] .nav, [data-theme="fintech"] .nav,
+  [data-theme="light"] .theme-toggle, [data-theme="fintech"] .theme-toggle {
     background: var(--bg-3);
   }
   .nav button, .theme-toggle button {
@@ -301,8 +339,8 @@
     font-weight: 600;
     box-shadow: var(--shadow-sm);
   }
-  [data-theme="light"] .nav button.active,
-  [data-theme="light"] .theme-toggle button.active {
+  [data-theme="light"] .nav button.active, [data-theme="fintech"] .nav button.active,
+  [data-theme="light"] .theme-toggle button.active, [data-theme="fintech"] .theme-toggle button.active {
     background: var(--bg);
   }
   .nav button.dirty::after {
@@ -615,7 +653,7 @@
     background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0v40M0 20h40' stroke='rgba(255,255,255,0.015)' stroke-width='0.5'/%3E%3C/svg%3E");
     pointer-events: none;
   }
-  [data-theme="light"] .hero-block::after {
+  [data-theme="light"] .hero-block::after, [data-theme="fintech"] .hero-block::after {
     background-image: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M20 0v40M0 20h40' stroke='rgba(0,0,0,0.025)' stroke-width='0.5'/%3E%3C/svg%3E");
   }
   .hero-block:hover {
@@ -623,7 +661,7 @@
     box-shadow: 0 32px 80px var(--accent-glow);
   }
   .hero-block:active { transform: translateY(-2px); }
-  [data-theme="light"] .hero-block {
+  [data-theme="light"] .hero-block, [data-theme="fintech"] .hero-block {
     background: var(--bg-1);
     box-shadow: 0 8px 48px rgba(0,0,0,0.04);
     border: 0.5px solid var(--sep);
@@ -645,10 +683,10 @@
     background: radial-gradient(circle, var(--glow-purple), transparent 65%);
     animation: heroGlow 5s ease-in-out infinite 1s;
   }
-  [data-theme="light"] .hero-bg-1 {
+  [data-theme="light"] .hero-bg-1, [data-theme="fintech"] .hero-bg-1 {
     background: radial-gradient(circle, var(--accent-glow), transparent 65%);
   }
-  [data-theme="light"] .hero-bg-2 {
+  [data-theme="light"] .hero-bg-2, [data-theme="fintech"] .hero-bg-2 {
     background: radial-gradient(circle, var(--glow-purple), transparent 65%);
   }
   .hero-content { position: relative; }
@@ -662,14 +700,14 @@
     align-items: center;
     gap: 6px;
   }
-  [data-theme="light"] .hero-label { color: var(--ink-3); }
+  [data-theme="light"] .hero-label, [data-theme="fintech"] .hero-label { color: var(--ink-3); }
   .hero-arrow {
     font-size: 16px;
     color: rgba(255,255,255,0.25);
     font-weight: 300;
     transition: opacity 0.2s;
   }
-  [data-theme="light"] .hero-arrow { color: rgba(0,0,0,0.20); }
+  [data-theme="light"] .hero-arrow, [data-theme="fintech"] .hero-arrow { color: rgba(0,0,0,0.20); }
   .hero-value {
     font-family: 'Inter', -apple-system, sans-serif;
     font-size: 96px;
@@ -679,7 +717,7 @@
     line-height: 0.95;
     font-variant-numeric: tabular-nums;
   }
-  [data-theme="light"] .hero-value { color: var(--ink); }
+  [data-theme="light"] .hero-value, [data-theme="fintech"] .hero-value { color: var(--ink); }
   .hero-currency {
     font-size: 40px;
     font-weight: 300;
@@ -687,13 +725,13 @@
     margin-right: 6px;
     vertical-align: 0.5em;
   }
-  [data-theme="light"] .hero-currency { color: var(--ink-3); }
+  [data-theme="light"] .hero-currency, [data-theme="fintech"] .hero-currency { color: var(--ink-3); }
   .hero-decimal {
     font-size: 40px;
     font-weight: 300;
     color: var(--ink-3);
   }
-  [data-theme="light"] .hero-decimal { color: var(--ink-3); }
+  [data-theme="light"] .hero-decimal, [data-theme="fintech"] .hero-decimal { color: var(--ink-3); }
   /* 资产水位线 */
   .waterline-container {
     display: flex;
@@ -758,7 +796,7 @@
     font-size: 14px;
     color: rgba(255,255,255,0.5);
   }
-  [data-theme="light"] .hero-meta-text { color: rgba(0,0,0,0.5); }
+  [data-theme="light"] .hero-meta-text, [data-theme="fintech"] .hero-meta-text { color: rgba(0,0,0,0.5); }
   /* =====================================================
      收益率模块（独立 chart-card 风格）
   ===================================================== */
@@ -778,8 +816,8 @@
     padding: 2px;
     gap: 0;
   }
-  [data-theme="light"] .returns-period-tabs,
-  [data-theme="light"] .returns-indicator-pick { background: var(--bg-3); }
+  [data-theme="light"] .returns-period-tabs, [data-theme="fintech"] .returns-period-tabs,
+  [data-theme="light"] .returns-indicator-pick, [data-theme="fintech"] .returns-indicator-pick { background: var(--bg-3); }
   .returns-period-tabs button,
   .returns-indicator-pick button {
     background: none;
@@ -804,8 +842,8 @@
     font-weight: 600;
     box-shadow: var(--shadow-sm);
   }
-  [data-theme="light"] .returns-period-tabs button.active,
-  [data-theme="light"] .returns-indicator-pick button.active { background: var(--bg); }
+  [data-theme="light"] .returns-period-tabs button.active, [data-theme="fintech"] .returns-period-tabs button.active,
+  [data-theme="light"] .returns-indicator-pick button.active, [data-theme="fintech"] .returns-indicator-pick button.active { background: var(--bg); }
 
   .returns-summary {
     display: flex;
@@ -901,7 +939,7 @@
     padding-top: 28px;
     border-top: 0.5px solid rgba(255,255,255,0.08);
   }
-  [data-theme="light"] .hero-stats {
+  [data-theme="light"] .hero-stats, [data-theme="fintech"] .hero-stats {
     border-top-color: rgba(0,0,0,0.06);
   }
   .hero-stat-item {
@@ -916,7 +954,7 @@
     letter-spacing: 0.03em;
     margin-bottom: 10px;
   }
-  [data-theme="light"] .hero-stat-label { color: rgba(0,0,0,0.45); }
+  [data-theme="light"] .hero-stat-label, [data-theme="fintech"] .hero-stat-label { color: rgba(0,0,0,0.45); }
   .hero-stat-value {
     font-family: 'Inter', sans-serif;
     font-size: 28px;
@@ -926,14 +964,14 @@
     color: white;
     font-variant-numeric: tabular-nums;
   }
-  [data-theme="light"] .hero-stat-value { color: #001530; }
+  [data-theme="light"] .hero-stat-value, [data-theme="fintech"] .hero-stat-value { color: #001530; }
   .hero-stat-value .hsym {
     font-size: 16px;
     font-weight: 400;
     color: rgba(255,255,255,0.4);
     margin-right: 3px;
   }
-  [data-theme="light"] .hero-stat-value .hsym { color: rgba(0,0,0,0.45); }
+  [data-theme="light"] .hero-stat-value .hsym, [data-theme="fintech"] .hero-stat-value .hsym { color: rgba(0,0,0,0.45); }
   .hero-stat-value.pos { color: var(--green); }
   .hero-stat-value.neg { color: var(--red); }
   .pos { color: var(--green) !important; }
@@ -952,7 +990,7 @@
     color: rgba(255,255,255,0.25);
     margin-top: 4px;
   }
-  [data-theme="light"] .hero-stat-sub { color: rgba(0,0,0,0.3); }
+  [data-theme="light"] .hero-stat-sub, [data-theme="fintech"] .hero-stat-sub { color: rgba(0,0,0,0.3); }
 
   .chart-card {
     background: var(--bg-1);
@@ -972,7 +1010,7 @@
     border-color: var(--sep-strong);
     box-shadow: var(--card-highlight), 0 12px 40px var(--accent-glow);
   }
-  [data-theme="light"] .chart-card:hover {
+  [data-theme="light"] .chart-card:hover, [data-theme="fintech"] .chart-card:hover {
     box-shadow: var(--card-highlight), 0 12px 40px rgba(0,0,0,0.04);
   }
 
@@ -985,7 +1023,7 @@
     padding: 2px;
     margin-bottom: 20px;
   }
-  [data-theme="light"] .view-toggle { background: var(--bg-3); }
+  [data-theme="light"] .view-toggle, [data-theme="fintech"] .view-toggle { background: var(--bg-3); }
   .view-toggle button {
     background: none;
     border: none;
@@ -1007,7 +1045,7 @@
     font-weight: 600;
     box-shadow: var(--shadow-sm);
   }
-  [data-theme="light"] .view-toggle button.active { background: var(--bg); }
+  [data-theme="light"] .view-toggle button.active, [data-theme="fintech"] .view-toggle button.active { background: var(--bg); }
 
   /* 标签徽章 */
   .tag-badge {
@@ -2167,8 +2205,8 @@
     font-weight: 600;
     box-shadow: var(--shadow-sm);
   }
-  [data-theme="light"] .drawer-mode-tabs { background: var(--bg-3); }
-  [data-theme="light"] .drawer-mode-tabs button.active { background: #fff; }
+  [data-theme="light"] .drawer-mode-tabs, [data-theme="fintech"] .drawer-mode-tabs { background: var(--bg-3); }
+  [data-theme="light"] .drawer-mode-tabs button.active, [data-theme="fintech"] .drawer-mode-tabs button.active { background: #fff; }
 
   .drawer-body {
     padding: 0 32px 32px;
@@ -2553,6 +2591,7 @@
         <button data-theme-set="light">浅色</button>
         <button data-theme-set="dark">深色</button>
         <button data-theme-set="system">系统</button>
+        <button data-theme-set="fintech">金融</button>
       </div>
       <button class="lock-btn" id="refresh-btn" title="刷新云端数据">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
