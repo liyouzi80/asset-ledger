@@ -6383,7 +6383,7 @@ function checkAnomalies(entries, prevMonthSnap) {
   for (const a of state.accounts) {
     const newEntry = entries[a.id];
     const oldEntry = prevMonthSnap.entries[a.id];
-    if (!newEntry || !oldEntry || !oldEntry.balance) continue;
+    if (!newEntry || !oldEntry || oldEntry.balance === null || oldEntry.balance === undefined || oldEntry.balance === '') continue;
     const newBal = Math.abs(Number(newEntry.balance) || 0);
     const oldBal = Math.abs(Number(oldEntry.balance) || 0);
     let change;
