@@ -6174,6 +6174,7 @@ function renderEntry() {
   const grouped = groupAccounts();
   const prevMonth = ymPrev(state.editingMonth);
   const prevSnap = state.snapshots.find(s => s.month === prevMonth);
+  const baseSnap = currentSnap || prevSnap;
   const container = document.getElementById('entry-groups');
   container.innerHTML = '';
 
@@ -6233,16 +6234,16 @@ function renderEntry() {
       row.className = 'entry-row' + (a.archived ? ' archived' : '');
       const draft = state.editingDraft[a.id];
       // 上月余额（存的是有符号值，显示用绝对值）
-      const prevBalSigned = prevSnap && prevSnap.entries[a.id] ? Number(prevSnap.entries[a.id].balance) || 0 : null;
-      const prevBalAbs = prevBalSigned !== null ? Math.abs(prevBalSigned) : null;
+      const baseBalSigned = baseSnap && baseSnap.entries[a.id] ? Number(baseSnap.entries[a.id].balance) || 0 : null;
+      const baseBalAbs = baseBalSigned !== null ? Math.abs(baseBalSigned) : null;
       // 当前输入（用户视角是绝对值）
       const currBalAbs = draft.balance === '' ? null : Number(draft.balance);
-      // 「较上月」用绝对值差比较直观（同性质账户，差额大小本就一致）
-      const delta = (prevBalAbs !== null && currBalAbs !== null) ? (currBalAbs - prevBalAbs) : null;
-      // 是否「沿用」状态：当前未填且上月有值
-      const isCarryOver = draft.balance === '' && prevBalAbs !== null;
+      // 对比基准快照的差额
+      const delta = (baseBalAbs !== null && currBalAbs !== null) ? (currBalAbs - baseBalAbs) : null;
+      // 是否「沿用」状态：当前未填且对比基准有值
+      const isCarryOver = draft.balance === '' && baseBalAbs !== null;
 
-      const balPlaceholder = prevBalAbs !== null ? prevBalAbs.toLocaleString('zh-CN') : '0';
+      const balPlaceholder = baseBalAbs !== null ? baseBalAbs.toLocaleString('zh-CN') : '0';
       const liabilityBadge = a.type === 'liability' ? '<span class="type-badge">负债</span>' : '';
       const carryBadge = isCarryOver ? '<span class="carry-badge">沿用</span>' : '';
 
@@ -6264,18 +6265,15 @@ function renderEntry() {
   }
 
   const debouncedBalanceUpdate = debounce((accId, value, target) => {
-    const prev = state.snapshots.find(s => s.month === ymPrev(state.editingMonth));
-    const prevBalSigned = prev && prev.entries[accId] ? Number(prev.entries[accId].balance) || 0 : null;
-    const prevBalAbs = prevBalSigned !== null ? Math.abs(prevBalSigned) : null;
+    const baseBalSigned = baseSnap && baseSnap.entries[accId] ? Number(baseSnap.entries[accId].balance) || 0 : null;
+    const baseBalAbs = baseBalSigned !== null ? Math.abs(baseBalSigned) : null;
     const v = value === '' ? null : Number(value);
-    // 输入框样式：填了就去掉「沿用」高亮
-    target.classList.toggle('is-carry', v === null && prevBalAbs !== null);
-    // 同步更新行上的「沿用」徽章
+    target.classList.toggle('is-carry', v === null && baseBalAbs !== null);
     const row = target.closest('.entry-row');
     if (row) {
       const existingBadge = row.querySelector('.carry-badge');
       if (v !== null && existingBadge) existingBadge.remove();
-      else if (v === null && prevBalAbs !== null && !existingBadge) {
+      else if (v === null && baseBalAbs !== null && !existingBadge) {
         const nameDiv = row.querySelector('.name');
         if (nameDiv) {
           const span = document.createElement('span');
@@ -6285,11 +6283,10 @@ function renderEntry() {
         }
       }
     }
-    // 更新「较上月」
     const cell = container.querySelector(`[data-delta="${accId}"]`);
     if (cell) {
-      if (prevBalAbs !== null && v !== null) {
-        const d = v - prevBalAbs;
+      if (baseBalAbs !== null && v !== null) {
+        const d = v - baseBalAbs;
         cell.textContent = (d >= 0 ? '+' : '') + Math.round(d).toLocaleString('zh-CN');
       } else cell.textContent = '—';
     }
