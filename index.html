@@ -4084,6 +4084,16 @@ function escapeHtml(s) {
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
   }[c]));
 }
+function evalFormula(str) {
+  if (!str || str[0] !== '=') return null;
+  const expr = str.slice(1).trim();
+  if (!expr || !/^[\d+\-*/().%\s]+$/.test(expr)) return null;
+  try {
+    const result = Function('"use strict"; return (' + expr + ')')();
+    if (typeof result !== 'number' || !isFinite(result)) return null;
+    return Number(result.toFixed(10));
+  } catch { return null; }
+}
 function debounce(fn, ms) {
   let timer;
   return (...args) => {
@@ -6299,9 +6309,31 @@ function renderEntry() {
     }
   };
 
+  const tryEvalFormula = (input) => {
+    const v = input.value.trim();
+    if (v[0] !== '=') return false;
+    const result = evalFormula(v);
+    if (result === null) return false;
+    input.value = result;
+    const accId = input.dataset.acc;
+    const field = input.dataset.field;
+    state.editingDraft[accId][field] = result;
+    setEntryDirty(true);
+    autoSaveDraft(state.editingMonth);
+    if (field === 'balance') debouncedBalanceUpdate(accId, result, input);
+    return true;
+  };
+
+  container.addEventListener('focusout', (e) => {
+    if (e.target.tagName === 'INPUT' && e.target.hasAttribute('data-acc')) {
+      tryEvalFormula(e.target);
+    }
+  });
+
   // Enter 跳转下一个输入框
   container.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey && !e.metaKey && !e.ctrlKey && e.target.tagName === 'INPUT') {
+      tryEvalFormula(e.target);
       const inputs = [...container.querySelectorAll('.entry-row:not(.header-row) input')];
       const idx = inputs.indexOf(e.target);
       if (idx >= 0 && idx < inputs.length - 1) {
