@@ -6473,14 +6473,16 @@ document.getElementById('entry-save').addEventListener('click', async () => {
   btn.innerHTML = '<span class="spinner"></span>保存中…';
 
   try {
-    const prev = state.snapshots.find(s => s.month === ymPrev(state.editingMonth));
+    const currentMonthSnap = state.snapshots.find(s => s.month === state.editingMonth);
+    const prevMonthSnap = state.snapshots.find(s => s.month === ymPrev(state.editingMonth));
+    const baseSnap = currentMonthSnap || prevMonthSnap;
     const entries = {};
     for (const a of state.accounts) {
       const d = state.editingDraft[a.id];
       let balance;
       if (d.balance === '' || d.balance === null || d.balance === undefined) {
-        if (prev && prev.entries[a.id] && prev.entries[a.id].balance !== '' && prev.entries[a.id].balance !== null && prev.entries[a.id].balance !== undefined) {
-          balance = Number(prev.entries[a.id].balance) || 0;
+        if (baseSnap && baseSnap.entries[a.id] && baseSnap.entries[a.id].balance !== '' && baseSnap.entries[a.id].balance !== null && baseSnap.entries[a.id].balance !== undefined) {
+          balance = Number(baseSnap.entries[a.id].balance) || 0;
         } else {
           balance = 0;
         }
@@ -6495,9 +6497,8 @@ document.getElementById('entry-save').addEventListener('click', async () => {
     state.editingMonth = monthKey;
     const snap = { month: monthKey, entries, updatedAt: Date.now() };
 
-    // 重大变化检查
-    const prevMonthSnap = state.snapshots.find(s => s.month === ymPrev(monthKey));
-    const anomalies = checkAnomalies(entries, prevMonthSnap || prev);
+    // 重大变化检查：本月有快照则对比本月，否则对比上月
+    const anomalies = checkAnomalies(entries, baseSnap);
 
     const doSave = async () => {
       state.snapshots = state.snapshots.filter(s => s.month !== monthKey);
