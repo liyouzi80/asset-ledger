@@ -6386,8 +6386,13 @@ function checkAnomalies(entries, prevMonthSnap) {
     if (!newEntry || !oldEntry || !oldEntry.balance) continue;
     const newBal = Math.abs(Number(newEntry.balance) || 0);
     const oldBal = Math.abs(Number(oldEntry.balance) || 0);
-    if (oldBal === 0) continue;
-    const change = (newBal - oldBal) / oldBal;
+    let change;
+    if (oldBal === 0) {
+      if (newBal === 0) continue;
+      change = 1; // 0→非0 视为 100% 变化，触发提醒
+    } else {
+      change = (newBal - oldBal) / oldBal;
+    }
     if (Math.abs(change) > state.anomalyThreshold) {
       anomalies.push({ account: a, prevBal: oldBal, currBal: newBal, change });
     }
@@ -6399,6 +6404,10 @@ let pendingAnomalySave = null;
 document.getElementById('anomaly-cancel').addEventListener('click', () => {
   document.getElementById('anomaly-modal').classList.remove('active');
   pendingAnomalySave = null;
+  // 恢复草稿：清除 localStorage 并从快照重新加载，避免异常修改残留
+  clearPersistedDraft(state.editingMonth);
+  state.editingDraft = loadDraft(state.editingMonth);
+  renderEntry();
 });
 document.getElementById('anomaly-confirm').addEventListener('click', async () => {
   document.getElementById('anomaly-modal').classList.remove('active');
