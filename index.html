@@ -1299,6 +1299,23 @@
     border-radius: 20px;
     overflow: hidden;
   }
+  .table-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--sep);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .table-header h3 { font-size: 15px; font-weight: 600; color: var(--ink); }
+  .table-header .meta { font-size: 12px; color: var(--ink-3); }
+
+  .trend-arrow { display: inline-block; width: 18px; font-size: 13px; }
+  .trend-arrow.up  { color: var(--green); }
+  .trend-arrow.dn  { color: var(--red); }
+  .trend-arrow.flat{ color: var(--ink-4); }
+
+  .pnl-bg.pos { background: var(--green-soft); }
+  .pnl-bg.neg { background: var(--red-soft); }
 
   .data-table {
     width: 100%;
@@ -1325,6 +1342,7 @@
     font-variant-numeric: tabular-nums;
   }
   .data-table td:first-child { text-align: left; color: var(--ink); font-weight: 500; }
+  .data-table .right { text-align: right; }
   .data-table thead th {
     position: sticky;
     top: 0;
@@ -2589,9 +2607,9 @@
       </nav>
       <div class="theme-toggle" role="group">
         <button data-theme-set="light">浅色</button>
+        <button data-theme-set="fintech">靛蓝</button>
         <button data-theme-set="dark">深色</button>
         <button data-theme-set="system">系统</button>
-        <button data-theme-set="fintech">金融</button>
       </div>
       <button class="lock-btn" id="refresh-btn" title="刷新云端数据">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -3603,10 +3621,25 @@ async function unlockOrInit() {
         return;
       }
     } catch (e) {
-      // 密钥失效（解密/校验失败）→ 清除缓存，降级到锁屏
+      // 网络请求失败 → 尝试本地镜像离线解锁
+      console.warn('Auto-unlock via network failed, trying local mirror:', e.message);
+    }
+    // 离线降级：从本地镜像恢复
+    try {
+      const mirror = readLocalMirror();
+      if (mirror) {
+        const data = await decryptJSON(mirror.payload, state.masterKey);
+        state.accounts = migrateAccounts(data.accounts || []);
+        state.snapshots = data.snapshots || [];
+        state.groupOrder = data.groupOrder && data.groupOrder.length ? data.groupOrder : [...DEFAULT_GROUP_ORDER];
+        state.targetAllocation = data.targetAllocation || {};
+        await enterApp();
+        return;
+      }
+    } catch (e) {
       state.masterKey = null;
       localStorage.removeItem(LOCAL_KEY_STORAGE);
-      console.error('Auto-unlock failed:', e);
+      console.error('Auto-unlock failed (network + mirror):', e);
     }
   }
 
@@ -6864,26 +6897,28 @@ function renderHistory() {
   const query = (document.getElementById('history-search').value || '').trim().toLowerCase();
   const sorted = query ? allSorted.filter(s => s.month.includes(query)) : allSorted;
 
-  let html = '<div class="table-card"><table class="data-table"><thead><tr><th>月份</th><th>总资产</th><th>市场盈亏</th><th>净入金</th><th>较上月变动</th><th></th></tr></thead><tbody>';
+  let html = '<div class="table-card"><div class="table-header"><h3>月度快照</h3><span class="meta">共 ' + sorted.length + ' 个月' + (query ? ' · 搜索: ' + escapeHtml(query) : '') + '</span></div><table class="data-table"><thead><tr><th>月份</th><th class="right">总资产</th><th class="right">市场盈亏</th><th class="right">净入金</th><th class="right">环比变动</th><th></th></tr></thead><tbody>';
   for (let i = 0; i < sorted.length; i++) {
     const s = sorted[i];
-    // 从全量快照里找上月，而不是从过滤后列表找，避免搜索模式下 PnL 算错
     const prevInAll = allSorted.find(x => x.month === ymPrev(s.month)) || null;
     const total = snapshotTotal(s);
     const pnl = monthlyPnL(s, prevInAll);
     const flow = snapshotFlow(s);
     const change = prevInAll ? total - snapshotTotal(prevInAll) : null;
-    html += `<tr>
-      <td><span style="cursor:pointer;color:var(--accent)" title="对比此月" data-compare="${s.month}">${s.month}</span></td>
-      <td>${fmt(total)}</td>
-      <td class="${pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : '')}">${fmtSign(pnl)}</td>
-      <td>${fmtSign(flow)}</td>
-      <td class="${change > 0 ? 'pos' : (change < 0 ? 'neg' : '')}">${change !== null ? fmtSign(change) : '—'}</td>
-      <td style="text-align:right">
-        <button class="icon-btn" data-edit-month="${s.month}">编辑</button>
-        <button class="icon-btn danger" data-del-month="${s.month}">删除</button>
-      </td>
-    </tr>`;
+    const pct = (change !== null && prevInAll) ? (change / snapshotTotal(prevInAll) * 100) : null;
+    const trendArrow = pct !== null ? (pct > 0.5 ? '<span class="trend-arrow up">↗</span>' : (pct < -0.5 ? '<span class="trend-arrow dn">↘</span>' : '<span class="trend-arrow flat">→</span>')) : '';
+    const pnlClass = pnl > 0 ? 'pnl-bg pos' : (pnl < 0 ? 'pnl-bg neg' : '');
+    html += '<tr>' +
+      '<td>' + trendArrow + '<span style="cursor:pointer;color:var(--accent)" title="查看明细" data-month-drill="' + s.month + '">' + s.month + '</span></td>' +
+      '<td class="right">' + fmt(total) + '</td>' +
+      '<td class="right ' + pnlClass + '">' + fmtSign(pnl) + '</td>' +
+      '<td class="right">' + fmtSign(flow) + '</td>' +
+      '<td class="right ' + (pct !== null ? (pct > 0 ? 'pos' : (pct < 0 ? 'neg' : '')) : '') + '">' + (pct !== null ? (pct > 0 ? '+' : '') + pct.toFixed(2) + '%' : '—') + '</td>' +
+      '<td class="right">' +
+        '<button class="icon-btn" data-edit-month="' + s.month + '">编辑</button> ' +
+        '<button class="icon-btn danger" data-del-month="' + s.month + '">删除</button>' +
+      '</td>' +
+    '</tr>';
   }
   html += '</tbody></table></div>';
   root.innerHTML = html;
@@ -6931,17 +6966,9 @@ function renderHistory() {
     renderHistory();
     showToast('已删除');
   }));
-  // 月份名称点击 → 填入对比
-  root.querySelectorAll('[data-compare]').forEach(b => b.addEventListener('click', () => {
-    const m = b.dataset.compare;
-    const a = document.getElementById('history-compare-a');
-    const bEl = document.getElementById('history-compare-b');
-    if (!a.value || a.value === bEl.value) {
-      a.value = m;
-    } else {
-      bEl.value = m;
-    }
-    runHistoryCompare();
+  // 月份名称点击 → 打开盈亏明细抽屉
+  root.querySelectorAll('[data-month-drill]').forEach(b => b.addEventListener('click', () => {
+    openDrawer('pnl', b.dataset.monthDrill);
   }));
 }
 
