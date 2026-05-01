@@ -2691,8 +2691,7 @@
   /* --- Responsive --- */
   @media (max-width: 900px) {
     [data-theme="suba"] .hero-block { padding: 28px 20px 24px; }
-    [data-theme="suba"] .history-summary-cards { flex-direction: column; }
-    [data-theme="suba"] .chart-card { padding: 16px; }
+      [data-theme="suba"] .chart-card { padding: 16px; }
   }
   @media (max-width: 480px) {
     [data-theme="suba"] .hero-block { padding: 20px 16px 18px; border-radius: 16px; }
@@ -2982,7 +2981,6 @@
         <button class="btn btn-ghost btn-sm" id="export-csv">CSV</button>
       </div>
     </div>
-    <div id="history-summary-cards" class="history-summary-cards"></div>
     <div id="history-content"></div>
     <div id="history-compare-result" style="display:none;margin-top:12px"></div>
   </section>
@@ -7086,59 +7084,9 @@ function renderTargetAllocation() {
 }
 
 // ============================================================
-// 素白主题 · 历史页摘要卡片
-// ============================================================
-function isSubaTheme() {
-  const t = state.theme;
-  if (t === 'suba') return true;
-  if (t === 'system') {
-    return document.documentElement.getAttribute('data-theme') === 'suba';
-  }
-  return false;
-}
-
-function renderHistorySummaryCards() {
-  const container = document.getElementById('history-summary-cards');
-  if (!container) return;
-  if (!isSubaTheme()) { container.innerHTML = ''; return; }
-
-  const allSorted = getSortedSnapshots();
-  if (allSorted.length === 0) { container.innerHTML = ''; return; }
-
-  const latest = allSorted[allSorted.length - 1];
-  const totalLatest = snapshotTotal(latest);
-  const flowLatest = snapshotFlow(latest);
-
-  let totalPnL = toBig(0);
-  let totalFlow = toBig(0);
-  for (let i = 1; i < allSorted.length; i++) {
-    totalPnL = totalPnL.plus(monthlyPnL(allSorted[i], allSorted[i - 1]));
-    totalFlow = totalFlow.plus(snapshotFlow(allSorted[i]));
-  }
-
-  container.innerHTML =
-    '<div class="summary-card">' +
-      '<div class="label">最新总资产</div>' +
-      '<div class="value">¥' + fmt(totalLatest) + '</div>' +
-      '<div class="change">' + latest.month + '</div>' +
-    '</div>' +
-    '<div class="summary-card">' +
-      '<div class="label">累计市场盈亏</div>' +
-      '<div class="value ' + (totalPnL.gte(0) ? 'pos' : 'neg') + '">' + fmtSign(totalPnL) + '</div>' +
-      '<div class="change">共 ' + allSorted.length + ' 个月</div>' +
-    '</div>' +
-    '<div class="summary-card">' +
-      '<div class="label">累计净入金</div>' +
-      '<div class="value">¥' + fmt(totalFlow) + '</div>' +
-      '<div class="change">历史汇总</div>' +
-    '</div>';
-}
-
-// ============================================================
 // 历史
 // ============================================================
 function renderHistory() {
-  renderHistorySummaryCards();
   const root = document.getElementById('history-content');
   // 清除上次的断月横幅
   document.querySelectorAll('.gap-banner').forEach(el => el.remove());
