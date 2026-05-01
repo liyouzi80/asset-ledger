@@ -47,7 +47,7 @@ index.html (单文件 SPA · ~7400 行 · 零框架)
 | 运算 | Big.js · 任意精度十进制 |
 | 后端 | Cloudflare Workers · 5 文件 · ~200 行 |
 | 数据库 | Cloudflare D1 (SQLite) · 键值模式 |
-| 主题 | Apple 浅色 + Linear 深色 · CSS 变量驱动 |
+| 主题 | Apple 浅色 · 素白瓷白 · Linear 深色 · CSS 变量驱动 |
 | 部署 | GitHub Actions → `wrangler deploy` · push 即上线 |
 
 ## 部署
