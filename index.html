@@ -1558,6 +1558,14 @@ async function enterApp() {
   document.getElementById('lock-error').textContent = '';
   try {
     navTo('dashboard');
+    // V2 素白主题：解锁后确保 V2 数据填充
+    if (document.documentElement.getAttribute('data-theme') === 'suba') {
+      setTimeout(function() {
+        var v2m = document.getElementById('v2-main-content');
+        if (v2m) { v2m.style.display = 'flex'; }
+        if (typeof populateV2Dashboard === 'function') populateV2Dashboard();
+      }, 300);
+    }
   } catch (e) {
     console.error('renderDashboard failed:', e);
     // 渲染错误不影响解锁状态，锁屏已关闭
@@ -5145,10 +5153,12 @@ let compactHeroObserver = null;
     }
   };
 
-  // 填充 V2 KPI 卡片
+  // 填充 V2 KPI 卡片（暴露到全局供 enterApp 等调用）
+  window.populateV2Dashboard = populateV2Dashboard;
   function populateV2Dashboard() {
-    const sorted = getSortedSnapshots();
-    if (!sorted || sorted.length === 0) return;
+    try {
+      const sorted = getSortedSnapshots();
+      if (!sorted || sorted.length === 0) { console.warn('v2: no sorted snapshots'); return; }
 
     const activeIds = getActiveAccountIds();
     const onlyActive = (snap) => filterSnapshotEntries(snap, activeIds);
@@ -5241,6 +5251,7 @@ let compactHeroObserver = null;
 
     // 目标配置
     renderV2TargetConfig();
+    } catch(e) { console.error('populateV2Dashboard error:', e); }
   }
 
   function renderV2TargetConfig() {
