@@ -89,15 +89,15 @@
     </div>
     <div class="v2-section">
       <div class="v2-section-head"><h2>资产走势</h2><div class="meta"><div class="v2-filter-group"><button>近1月</button><button>近3月</button><button>近6月</button><button class="active">年初至今</button></div></div></div>
-      <div class="v2-charts-grid"><div class="v2-chart-card"><div class="v2-chart-placeholder"><span class="icon">📈</span><span class="label">总资产曲线</span><span class="sub">月度时间序列</span></div></div><div class="v2-chart-card"><div class="v2-chart-placeholder"><span class="icon">🍩</span><span class="label">资产分布</span><span class="sub">最新月份占比</span></div></div></div>
+      <div class="v2-charts-grid"><div class="v2-chart-card"><h3 style="font-size:14px;font-weight:600;margin-bottom:4px">总资产曲线</h3><div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">每月末总资产</div><div style="position:relative;height:280px"><canvas id="v2-chart-total"></canvas></div></div><div class="v2-chart-card"><h3 style="font-size:14px;font-weight:600;margin-bottom:4px">资产分布</h3><div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">最新月份各分组占比</div><div style="position:relative;height:280px"><canvas id="v2-chart-pie"></canvas></div></div></div>
     </div>
     <div class="v2-section">
       <div class="v2-section-head"><h2>收益率走势</h2><div class="meta"><div class="v2-filter-group"><button>近1月</button><button>近3月</button><button>近6月</button><button class="active">年初至今</button></div><div class="v2-filter-group" style="margin-left:8px"><button class="active">TWR</button><button>简单</button><button>盈亏额</button></div></div></div>
-      <div class="v2-chart-card"><div class="v2-chart-placeholder"><span class="icon">📉</span><span class="label">收益率曲线</span><span class="sub">TWR 剔除入金/出金影响</span></div></div>
+      <div class="v2-chart-card"><div style="position:relative;height:260px"><canvas id="v2-chart-returns"></canvas></div><div style="font-size:12px;color:var(--ink-4);margin-top:12px">TWR 累计收益率剔除入金/出金影响</div></div>
     </div>
     <div class="v2-section">
       <div class="v2-section-head"><h2>盈亏分析</h2></div>
-      <div class="v2-chart-card"><div class="v2-chart-placeholder"><span class="icon">📊</span><span class="label">每月盈亏 vs 净入金</span><span class="sub">绿/红为市场盈亏，灰为当月净入金</span></div></div>
+      <div class="v2-chart-card"><div style="position:relative;height:280px"><canvas id="v2-chart-pnl"></canvas></div></div>
     </div>
     <div class="v2-section" id="v2-target-config-section">
       <div class="v2-section-head">
@@ -5251,7 +5251,170 @@ let compactHeroObserver = null;
 
     // 目标配置
     renderV2TargetConfig();
+    // V2 图表
+    renderV2Charts();
     } catch(e) { console.error('populateV2Dashboard error:', e); }
+  }
+
+  // V2 图表渲染
+  var v2Charts = {};
+  function renderV2Charts() {
+    var sorted = getSortedSnapshots();
+    if (!sorted || sorted.length < 2) return;
+    var activeIds = getActiveAccountIds();
+    var onlyActive = function(s) { return filterSnapshotEntries(s, activeIds); };
+    var labels = sorted.map(function(s) { return s.month; });
+    var totals = sorted.map(function(s) { return snapshotTotal(onlyActive(s)); });
+    var pnls = sorted.map(function(s, i) { return monthlyPnL(onlyActive(s), i > 0 ? onlyActive(sorted[i - 1]) : null); });
+    var flows = sorted.map(function(s) { return snapshotFlow(onlyActive(s)); });
+    var latest = sorted[sorted.length - 1];
+    var lastActive = onlyActive(latest);
+
+    // CSS 变量
+    var cs = getComputedStyle(document.documentElement);
+    var cAccent = cs.getPropertyValue('--accent').trim() || '#0071e3';
+    var cGreen  = cs.getPropertyValue('--green').trim()  || '#2e8b57';
+    var cRed    = cs.getPropertyValue('--red').trim()    || '#d94040';
+    var cMute   = cs.getPropertyValue('--ink-3').trim()  || '#8e8e8e';
+    var cSep    = cs.getPropertyValue('--sep').trim()    || '#e8e8e8';
+    var cBg     = cs.getPropertyValue('--bg-1').trim()   || '#fafafa';
+
+    Chart.defaults.color = cMute;
+    Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+    Chart.defaults.font.size = 12;
+
+    // --- 总资产曲线 ---
+    var totalCanvas = document.getElementById('v2-chart-total');
+    if (totalCanvas) {
+      if (v2Charts.total) v2Charts.total.destroy();
+      var ctx2d = totalCanvas.getContext('2d');
+      var grad = ctx2d.createLinearGradient(0, 0, 0, 280);
+      grad.addColorStop(0, cAccent + '33');
+      grad.addColorStop(1, cAccent + '00');
+      v2Charts.total = new Chart(totalCanvas, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: totals, borderColor: cAccent, borderWidth: 2.5,
+            fill: true, backgroundColor: grad, tension: 0.42,
+            pointRadius: 0, pointHoverRadius: 5,
+            pointBackgroundColor: cBg, pointBorderColor: cAccent, pointBorderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          animation: { duration: 800, easing: 'easeOutQuart' },
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { display: true, grid: { display: false }, border: { display: false }, ticks: { color: cMute, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } },
+            y: { display: true, position: 'right', grid: { display: false }, border: { display: false }, ticks: { color: cMute, font: { size: 11, family: "'JetBrains Mono', monospace" }, maxTicksLimit: 5, padding: 8, callback: function(v) { return '¥' + (v / 10000).toFixed(0) + '万'; } } },
+          },
+        },
+      });
+    }
+
+    // --- 资产分布饼图 ---
+    var pieCanvas = document.getElementById('v2-chart-pie');
+    if (pieCanvas) {
+      if (v2Charts.pie) v2Charts.pie.destroy();
+      var groupTotals = {};
+      for (var i = 0; i < state.accounts.length; i++) {
+        var a = state.accounts[i];
+        if (a.archived) continue;
+        var e = lastActive.entries[a.id];
+        if (!e || !e.balance) continue;
+        groupTotals[a.group] = (groupTotals[a.group] || 0) + Number(e.balance);
+      }
+      var pieLabels = Object.keys(groupTotals);
+      var pieData = pieLabels.map(function(l) { return groupTotals[l]; });
+      var palette = [cAccent, cGreen, '#f59e0b', cRed, '#7170ff', '#8b5cf6', '#38bdf8'];
+      v2Charts.pie = new Chart(pieCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: pieLabels,
+          datasets: [{ data: pieData, backgroundColor: pieLabels.map(function(_, i) { return palette[i % palette.length]; }), borderColor: cBg, borderWidth: 3, hoverOffset: 8 }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, cutout: '68%',
+          animation: { animateRotate: true, duration: 900, easing: 'easeOutQuart' },
+          plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 }, boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'circle' } } },
+        },
+      });
+    }
+
+    // --- 收益率走势 ---
+    var retCanvas = document.getElementById('v2-chart-returns');
+    if (retCanvas && sorted.length >= 2) {
+      if (v2Charts.returns) v2Charts.returns.destroy();
+      // Simple returns: month-over-month % change
+      var rets = [];
+      for (var i = 1; i < sorted.length; i++) {
+        var currT = snapshotTotal(onlyActive(sorted[i]));
+        var prevT = snapshotTotal(onlyActive(sorted[i - 1]));
+        var f = snapshotFlow(onlyActive(sorted[i]));
+        if (prevT > 0) rets.push({ month: labels[i], value: ((currT - prevT - f) / prevT * 100) });
+      }
+      v2Charts.returns = new Chart(retCanvas, {
+        type: 'line',
+        data: {
+          labels: rets.map(function(r) { return r.month; }),
+          datasets: [{
+            data: rets.map(function(r) { return r.value; }),
+            borderColor: cGreen, borderWidth: 2.5,
+            fill: true, backgroundColor: cGreen + '15', tension: 0.42,
+            pointRadius: 0, pointHoverRadius: 5,
+            pointBackgroundColor: cBg, pointBorderColor: cGreen, pointBorderWidth: 2,
+          }],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          animation: { duration: 800, easing: 'easeOutQuart' },
+          interaction: { mode: 'index', intersect: false },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ctx.parsed.y.toFixed(2) + '% TWR'; } } } },
+          scales: {
+            x: { display: true, grid: { display: false }, border: { display: false }, ticks: { color: cMute, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } },
+            y: { display: true, position: 'right', grid: { display: false }, border: { display: false }, ticks: { color: cMute, font: { size: 11, family: "'JetBrains Mono', monospace" }, maxTicksLimit: 5, callback: function(v) { return v.toFixed(1) + '%'; } } },
+          },
+        },
+      });
+    }
+
+    // --- 盈亏柱图 ---
+    var pnlCanvas = document.getElementById('v2-chart-pnl');
+    if (pnlCanvas) {
+      if (v2Charts.pnl) v2Charts.pnl.destroy();
+      v2Charts.pnl = new Chart(pnlCanvas, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '市场盈亏',
+              data: pnls,
+              backgroundColor: pnls.map(function(v) { return v >= 0 ? cGreen + 'd9' : cRed + 'd9'; }),
+              borderRadius: 4, borderSkipped: false, barPercentage: 0.6, categoryPercentage: 0.7,
+            },
+            {
+              label: '净入金',
+              data: flows,
+              backgroundColor: cMute + '66',
+              borderRadius: 4, borderSkipped: false, barPercentage: 0.6, categoryPercentage: 0.7,
+            },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          animation: { duration: 800, easing: 'easeOutQuart' },
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, usePointStyle: true, pointStyle: 'rectRounded', padding: 16, font: { size: 12 } } } },
+          scales: {
+            x: { stacked: false, grid: { display: false }, border: { display: false }, ticks: { color: cMute, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } },
+            y: { stacked: false, grid: { display: false }, border: { display: false }, ticks: { color: cMute, font: { size: 11, family: "'JetBrains Mono', monospace" }, maxTicksLimit: 5, callback: function(v) { return '¥' + (v / 10000).toFixed(0) + '万'; } } },
+          },
+        },
+      });
+    }
   }
 
   function renderV2TargetConfig() {
