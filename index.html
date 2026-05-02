@@ -5147,45 +5147,47 @@ let compactHeroObserver = null;
 
   // 填充 V2 KPI 卡片
   function populateV2Dashboard() {
-    if (!state.data || !state.data.monthly || !state.data.monthly.length) return;
-    const months = state.data.monthly;
-    const latest = months[months.length - 1];
-    const prev = months.length > 1 ? months[months.length - 2] : null;
+    const sorted = getSortedSnapshots();
+    if (!sorted || sorted.length === 0) return;
+
+    const activeIds = getActiveAccountIds();
+    const onlyActive = (snap) => filterSnapshotEntries(snap, activeIds);
+    const latest = sorted[sorted.length - 1];
+    const prev = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
+    const total = snapshotTotal(onlyActive(latest));
+    const prevTotal = prev ? snapshotTotal(onlyActive(prev)) : null;
+    const pnl = monthlyPnL(onlyActive(latest), onlyActive(prev));
+    const flow = snapshotFlow(onlyActive(latest));
 
     // 总资产
-    const totalAssets = Object.entries(latest.accounts || {})
-      .filter(([_, v]) => (v.balance || 0) > 0)
-      .reduce((sum, [_, v]) => sum + (v.balance || 0), 0);
-    const prevTotal = prev ? Object.entries(prev.accounts || {})
-      .filter(([_, v]) => (v.balance || 0) > 0)
-      .reduce((sum, [_, v]) => sum + (v.balance || 0), 0) : totalAssets;
-
     const totalEl = document.getElementById('v2-kpi-total');
     if (totalEl) {
-      totalEl.textContent = '¥' + totalAssets.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+      totalEl.textContent = '¥' + total.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
       const deltaEl = document.getElementById('v2-kpi-total-delta');
-      if (deltaEl && prevTotal) {
-        const deltaPct = ((totalAssets - prevTotal) / prevTotal * 100);
+      if (deltaEl && prevTotal && prevTotal > 0) {
+        const deltaPct = ((total - prevTotal) / prevTotal * 100);
         const cls = deltaPct >= 0 ? 'up' : 'down';
         const sign = deltaPct >= 0 ? '+' : '';
         deltaEl.className = 'v2-kpi-card-delta ' + cls;
         deltaEl.innerHTML = (deltaPct >= 0 ? '▲' : '▼') + ' ' + sign + deltaPct.toFixed(1) + '%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span>';
+      } else {
+        deltaEl.innerHTML = '';
       }
       const waterline = totalEl.closest('.v2-kpi-card').querySelector('.v2-waterline .fill');
-      if (waterline) waterline.style.width = Math.min(95, totalAssets / 15000000 * 100) + '%';
+      if (waterline) waterline.style.width = '72%';
       const insight = document.getElementById('v2-kpi-total-insight');
-      if (insight) insight.textContent = prevTotal && totalAssets >= prevTotal ? '资产持续增长' : '加载更多数据后显示分析';
+      if (insight) insight.textContent = prevTotal && total >= prevTotal ? '资产持续增长' : '截至 ' + latest.month;
     }
 
     // 资产负债率
-    const totalLiabilities = Object.entries(latest.accounts || {})
-      .filter(([_, v]) => (v.balance || 0) < 0)
-      .reduce((sum, [_, v]) => sum + Math.abs(v.balance || 0), 0);
-    const ratio = totalAssets > 0 ? (totalLiabilities / totalAssets * 100) : 0;
-    const prevLiabilities = prev ? Object.entries(prev.accounts || {})
-      .filter(([_, v]) => (v.balance || 0) < 0)
-      .reduce((sum, [_, v]) => sum + Math.abs(v.balance || 0), 0) : totalLiabilities;
-    const prevRatio = prevTotal > 0 ? (prevLiabilities / prevTotal * 100) : ratio;
+    const liabTotal = Object.values(latest.entries || {})
+      .filter(e => (e.balance || 0) < 0)
+      .reduce((s, e) => s + Math.abs(e.balance || 0), 0);
+    const ratio = total > 0 ? (liabTotal / total * 100) : 0;
+    const prevLiab = prev ? Object.values(prev.entries || {})
+      .filter(e => (e.balance || 0) < 0)
+      .reduce((s, e) => s + Math.abs(e.balance || 0), 0) : liabTotal;
+    const prevRatio = prevTotal > 0 ? (prevLiab / prevTotal * 100) : ratio;
 
     const ratioEl = document.getElementById('v2-kpi-ratio');
     if (ratioEl) {
@@ -5204,29 +5206,28 @@ let compactHeroObserver = null;
       if (insight) insight.textContent = ratio < 50 ? '负债率处于健康区间（< 50%）' : ratio < 70 ? '负债率偏高，建议关注' : '负债率较高，需注意风险';
     }
 
-    // 本月盈亏 (TWR from returns data)
-    if (state.returns && state.returns.latest) {
-      const pnlEl = document.getElementById('v2-kpi-pnl');
-      const twr = state.returns.latest.twr;
-      if (pnlEl && twr !== undefined) {
-        const formatted = (twr >= 0 ? '+¥' : '-¥') + Math.abs(twr).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
-        pnlEl.textContent = formatted;
-        pnlEl.style.color = twr >= 0 ? 'var(--green)' : 'var(--red)';
-        const deltaEl = document.getElementById('v2-kpi-pnl-delta');
-        if (deltaEl) {
-          deltaEl.className = 'v2-kpi-card-delta ' + (twr >= 0 ? 'up' : 'down');
-          const twrPct = state.returns.latest.twr_pct;
-          deltaEl.innerHTML = (twr >= 0 ? '▲' : '▼') + ' ' + (twrPct >= 0 ? '+' : '') + (twrPct || 0).toFixed(1) + '%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">TWR</span>';
-        }
+    // 本月盈亏
+    const pnlEl = document.getElementById('v2-kpi-pnl');
+    if (pnlEl) {
+      const sign = pnl >= 0 ? '+' : '';
+      pnlEl.textContent = sign + '¥' + Math.abs(Math.round(pnl)).toLocaleString('zh-CN');
+      pnlEl.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
+      const deltaEl = document.getElementById('v2-kpi-pnl-delta');
+      if (deltaEl) {
+        deltaEl.className = 'v2-kpi-card-delta ' + (pnl >= 0 ? 'up' : 'down');
+        const pnlPct = prevTotal > 0 ? (pnl / prevTotal * 100) : 0;
+        deltaEl.innerHTML = (pnl >= 0 ? '▲' : '▼') + ' ' + (pnl >= 0 ? '+' : '') + pnlPct.toFixed(1) + '%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span>';
       }
+      const insightEl = document.getElementById('v2-kpi-pnl-insight');
+      if (insightEl) insightEl.textContent = pnl >= 0 ? '本月实现盈利' : '本月出现亏损';
     }
 
     // 本月净流入
-    const flow = latest.flow || 0;
     const flowEl = document.getElementById('v2-kpi-flow');
     if (flowEl) {
       const sign = flow >= 0 ? '+' : '';
-      flowEl.textContent = sign + '¥' + Math.abs(flow).toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+      flowEl.textContent = sign + '¥' + Math.abs(Math.round(flow)).toLocaleString('zh-CN');
+      flowEl.style.color = flow >= 0 ? 'var(--ink)' : 'var(--red)';
       const deltaEl = document.getElementById('v2-kpi-flow-delta');
       if (deltaEl) {
         deltaEl.className = 'v2-kpi-card-delta neutral';
@@ -5235,7 +5236,7 @@ let compactHeroObserver = null;
       const waterline = flowEl.closest('.v2-kpi-card').querySelector('.v2-waterline .fill');
       if (waterline) waterline.style.width = '45%';
       const insight = document.getElementById('v2-kpi-flow-insight');
-      if (insight) insight.textContent = '月度现金流数据';
+      if (insight) insight.textContent = flow > 0 ? '本月净流入为正' : flow < 0 ? '本月净流出' : '无净流入/流出';
     }
 
     // 目标配置
