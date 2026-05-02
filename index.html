@@ -26,10 +26,6 @@
       <button class="v2-sidebar-item active" data-v2-nav="dashboard">总览面板</button>
       <button class="v2-sidebar-item" data-v2-nav="entry">录入快照</button>
       <button class="v2-sidebar-item" data-v2-nav="history">历史明细</button>
-      <div class="v2-sidebar-section" style="margin-top:4px">分析</div>
-      <button class="v2-sidebar-item">资产走势</button>
-      <button class="v2-sidebar-item">收益率走势</button>
-      <button class="v2-sidebar-item">盈亏分析</button>
       <div class="v2-sidebar-section" style="margin-top:4px">设置</div>
       <button class="v2-sidebar-item v2-settings-btn" data-action="manage-passkey">管理 Passkey</button>
       <button class="v2-sidebar-item v2-settings-btn" data-action="export-data">导出加密备份</button>
@@ -49,7 +45,6 @@
         <span class="v2-theme-badge"><span style="width:8px;height:8px;border-radius:50%;background:var(--accent)"></span> 素白 v2</span>
       </div>
       <div class="v2-topbar-actions">
-        <select class="v2-period-select"><option>2026年4月</option></select>
         <button class="v2-btn v2-btn-ghost">导出 CSV</button>
         <button class="v2-btn v2-btn-primary">＋ 录入快照</button>
       </div>
@@ -84,12 +79,12 @@
       </div>
     </div>
     <div class="v2-section">
-      <div class="v2-section-head"><h2>资产走势</h2><div class="meta"><div class="v2-filter-group"><button>近1月</button><button>近3月</button><button>近6月</button><button class="active">年初至今</button></div></div></div>
+      <div class="v2-section-head"><h2>资产走势</h2></div>
       <div class="v2-charts-grid"><div class="v2-chart-card"><h3 style="font-size:14px;font-weight:600;margin-bottom:4px">总资产曲线</h3><div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">每月末总资产</div><div style="position:relative;height:280px"><canvas id="v2-chart-total"></canvas></div></div><div class="v2-chart-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px"><div><h3 style="font-size:14px;font-weight:600;margin-bottom:2px">资产分布</h3><div style="font-size:12px;color:var(--ink-4)">最新月份各分组占比</div></div><button class="v2-btn v2-btn-ghost" id="v2-open-target-modal">⚙ 目标配置</button></div><div style="position:relative;height:240px"><canvas id="v2-chart-pie"></canvas></div></div></div>
     </div>
     <div class="v2-section">
-      <div class="v2-section-head"><h2>收益率走势</h2><div class="meta"><div class="v2-filter-group"><button>近1月</button><button>近3月</button><button>近6月</button><button class="active">年初至今</button></div><div class="v2-filter-group" style="margin-left:8px"><button class="active">TWR</button><button>简单</button><button>盈亏额</button></div></div></div>
-      <div class="v2-chart-card"><div style="position:relative;height:260px"><canvas id="v2-chart-returns"></canvas></div><div style="font-size:12px;color:var(--ink-4);margin-top:12px">TWR 累计收益率剔除入金/出金影响</div></div>
+      <div class="v2-section-head"><h2>收益率走势</h2><div class="meta"><div class="v2-filter-group" id="v2-returns-indicator"><button class="active" data-indicator="twr">TWR</button><button data-indicator="simple">简单</button><button data-indicator="pnl">盈亏额</button><button data-indicator="xirr">XIRR</button></div></div></div>
+      <div class="v2-chart-card"><div style="position:relative;height:260px"><canvas id="v2-chart-returns"></canvas></div><div style="font-size:12px;color:var(--ink-4);margin-top:12px" id="v2-returns-caption">TWR 累计收益率剔除入金/出金影响</div></div>
     </div>
     <div class="v2-section">
       <div class="v2-section-head"><h2>盈亏分析</h2></div>
@@ -5191,7 +5186,7 @@ let compactHeroObserver = null;
         const cls = deltaPp <= 0 ? 'down' : 'up';
         const sign = deltaPp <= 0 ? '' : '+';
         deltaEl.className = 'v2-kpi-card-delta ' + cls;
-        deltaEl.innerHTML = (deltaPp <= 0 ? '▼' : '▲') + ' ' + sign + deltaPp.toFixed(1) + 'pp<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span>';
+        deltaEl.innerHTML = (deltaPp <= 0 ? '▼' : '▲') + ' ' + sign + deltaPp.toFixed(1) + '%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span>';
       }
       const waterline = ratioEl.closest('.v2-kpi-card').querySelector('.v2-waterline .fill');
       if (waterline) waterline.style.width = Math.min(95, ratio) + '%';
@@ -5232,8 +5227,9 @@ let compactHeroObserver = null;
       if (insight) insight.textContent = flow > 0 ? '本月净流入为正' : flow < 0 ? '本月净流出' : '无净流入/流出';
     }
 
-    // V2 图表
+    // V2 图表 + 表格
     renderV2Charts();
+    renderV2Table();
     } catch(e) { console.error('populateV2Dashboard error:', e); }
   }
 
@@ -5325,42 +5321,10 @@ let compactHeroObserver = null;
       });
     }
 
-    // --- 收益率走势 ---
-    var retCanvas = document.getElementById('v2-chart-returns');
-    if (retCanvas && sorted.length >= 2) {
-      if (v2Charts.returns) v2Charts.returns.destroy();
-      // Simple returns: month-over-month % change
-      var rets = [];
-      for (var i = 1; i < sorted.length; i++) {
-        var currT = snapshotTotal(onlyActive(sorted[i]));
-        var prevT = snapshotTotal(onlyActive(sorted[i - 1]));
-        var f = snapshotFlow(onlyActive(sorted[i]));
-        if (prevT > 0) rets.push({ month: labels[i], value: ((currT - prevT - f) / prevT * 100) });
-      }
-      v2Charts.returns = new Chart(retCanvas, {
-        type: 'line',
-        data: {
-          labels: rets.map(function(r) { return r.month; }),
-          datasets: [{
-            data: rets.map(function(r) { return r.value; }),
-            borderColor: cGreen, borderWidth: 2.5,
-            fill: true, backgroundColor: cGreen + '15', tension: 0.42,
-            pointRadius: 0, pointHoverRadius: 5,
-            pointBackgroundColor: cBg, pointBorderColor: cGreen, pointBorderWidth: 2,
-          }],
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          animation: { duration: 800, easing: 'easeOutQuart' },
-          interaction: { mode: 'index', intersect: false },
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(ctx) { return ctx.parsed.y.toFixed(2) + '% TWR'; } } } },
-          scales: {
-            x: { display: true, grid: { display: false }, border: { display: false }, ticks: { color: cMute, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } },
-            y: { display: true, position: 'right', grid: { display: false }, border: { display: false }, ticks: { color: cMute, font: { size: 11, family: "'JetBrains Mono', monospace" }, maxTicksLimit: 5, callback: function(v) { return v.toFixed(1) + '%'; } } },
-          },
-        },
-      });
-    }
+    // --- 收益率走势（委托 renderV2ReturnsChart） ---
+    var activeIndicator = document.querySelector('#v2-returns-indicator .active');
+    var indicator = activeIndicator ? activeIndicator.dataset.indicator : 'twr';
+    renderV2ReturnsChart(indicator);
 
     // --- 盈亏柱图 ---
     var pnlCanvas = document.getElementById('v2-chart-pnl');
@@ -5396,6 +5360,229 @@ let compactHeroObserver = null;
         },
       });
     }
+  }
+
+  // 预计算收益率序列（共享给 renderV2ReturnsChart 使用）
+  var v2ReturnsSeries = null;
+  function buildV2ReturnsSeries() {
+    var sorted = getSortedSnapshots();
+    if (!sorted || sorted.length < 2) return null;
+    var activeIds = getActiveAccountIds();
+    var onlyActive = function(s) { return filterSnapshotEntries(s, activeIds); };
+    var inception = sorted[0];
+    var startBalance = snapshotTotal(onlyActive(inception));
+    var inceptionMonth = inception.month;
+    var twrFactor = Big(1);
+    var pnlCum = 0;
+    var points = [{ month: inceptionMonth, twrCum: 0, simpleCum: 0, pnlCum: 0, xirrCum: null }];
+    for (var i = 1; i < sorted.length; i++) {
+      var curr = sorted[i];
+      var prev = sorted[i - 1];
+      var periodPnL = monthlyPnL(onlyActive(curr), onlyActive(prev));
+      var periodStart = snapshotTotal(onlyActive(prev));
+      pnlCum += periodPnL;
+      if (periodStart > 0) twrFactor = twrFactor.times(Big(1).plus(Big(periodPnL).div(Big(periodStart))));
+      var xirrAtPoint = null;
+      if (startBalance > 0) {
+        var xf = [{ amount: -startBalance, days: 0 }];
+        for (var j = 1; j <= i; j++) {
+          var f = snapshotFlow(onlyActive(sorted[j]));
+          if (f !== 0) xf.push({ amount: -f, days: daysBetween(inceptionMonth, sorted[j].month) });
+        }
+        var endBal = snapshotTotal(onlyActive(curr));
+        if (endBal > 0) {
+          xf.push({ amount: endBal, days: daysBetween(inceptionMonth, curr.month) });
+          xirrAtPoint = calculateXIRR(xf);
+        }
+      }
+      points.push({
+        month: curr.month,
+        twrCum: twrFactor.minus(1).toNumber(),
+        simpleCum: startBalance > 0 ? pnlCum / startBalance : 0,
+        pnlCum: pnlCum,
+        xirrCum: xirrAtPoint
+      });
+    }
+    return points;
+  }
+
+  function renderV2ReturnsChart(indicator) {
+    var retCanvas = document.getElementById('v2-chart-returns');
+    if (!retCanvas) return;
+    var points = v2ReturnsSeries || buildV2ReturnsSeries();
+    v2ReturnsSeries = points;
+    if (!points || points.length < 2) return;
+    if (v2Charts.returns) v2Charts.returns.destroy();
+
+    var cs = getComputedStyle(document.documentElement);
+    var cGreen  = cs.getPropertyValue('--green').trim()  || '#2e8b57';
+    var cRed    = cs.getPropertyValue('--red').trim()    || '#d94040';
+    var cAccent = cs.getPropertyValue('--accent').trim() || '#0071e3';
+    var cMute   = cs.getPropertyValue('--ink-3').trim()  || '#8e8e8e';
+    var cBg     = cs.getPropertyValue('--bg-1').trim()   || '#fafafa';
+
+    var labels = points.map(function(p) { return p.month; });
+    var data, lineColor, yLabel, tooltipLabel;
+    var isPnl = false;
+
+    if (indicator === 'twr') {
+      data = points.map(function(p) { return p.twrCum * 100; });
+      lineColor = cGreen;
+      yLabel = '%';
+      tooltipLabel = '% TWR';
+    } else if (indicator === 'simple') {
+      data = points.map(function(p) { return p.simpleCum * 100; });
+      lineColor = cAccent;
+      yLabel = '%';
+      tooltipLabel = '% 简单';
+    } else if (indicator === 'pnl') {
+      data = points.map(function(p) { return p.pnlCum; });
+      lineColor = cRed;
+      isPnl = true;
+      yLabel = '¥';
+      tooltipLabel = ' 盈亏额';
+    } else if (indicator === 'xirr') {
+      data = points.map(function(p) { return p.xirrCum !== null ? p.xirrCum * 100 : null; });
+      lineColor = '#f59e0b';
+      yLabel = '%';
+      tooltipLabel = '% XIRR';
+    }
+
+    // Skip first point for XIRR (it's null)
+    var chartLabels = labels;
+    var chartData = data;
+    if (indicator === 'xirr') {
+      chartLabels = labels.slice(1);
+      chartData = data.slice(1);
+    }
+
+    v2Charts.returns = new Chart(retCanvas, {
+      type: 'line',
+      data: {
+        labels: chartLabels,
+        datasets: [{
+          data: chartData,
+          borderColor: lineColor, borderWidth: 2.5,
+          fill: true, backgroundColor: lineColor + '15', tension: 0.42,
+          pointRadius: 0, pointHoverRadius: 5,
+          pointBackgroundColor: cBg, pointBorderColor: lineColor, pointBorderWidth: 2,
+          spanGaps: false,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        animation: { duration: 600, easing: 'easeOutQuart' },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(ctx) {
+            if (ctx.parsed.y == null) return '';
+            if (isPnl) return '¥' + Math.round(ctx.parsed.y).toLocaleString('zh-CN') + tooltipLabel;
+            return ctx.parsed.y.toFixed(2) + tooltipLabel;
+          } } } },
+        scales: {
+          x: { display: true, grid: { display: false }, border: { display: false }, ticks: { color: cMute, font: { size: 11 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 6 } },
+          y: { display: true, position: 'right', grid: { display: false }, border: { display: false }, ticks: { color: cMute, font: { size: 11, family: "'JetBrains Mono', monospace" }, maxTicksLimit: 5, callback: function(v) { if (isPnl) return '¥' + (v / 10000).toFixed(0) + '万'; return v.toFixed(1) + '%'; } } },
+        },
+      },
+    });
+
+    // 更新 caption
+    var captionEl = document.getElementById('v2-returns-caption');
+    if (captionEl) {
+      var captions = {
+        twr: 'TWR 时间加权收益率 — 剔除入金/出金影响',
+        simple: '简单收益率 — 累计盈亏 / 期初总资产',
+        pnl: '累计盈亏额 — 各月市场盈亏之和',
+        xirr: 'XIRR 内部收益率（年化）— 考虑每笔现金流的时间价值'
+      };
+      captionEl.textContent = captions[indicator] || '';
+    }
+  }
+
+  // 收益率走势指标切换
+  var v2IndicatorGroup = document.getElementById('v2-returns-indicator');
+  if (v2IndicatorGroup) {
+    v2IndicatorGroup.addEventListener('click', function(e) {
+      var btn = e.target.closest('button');
+      if (!btn || !btn.dataset.indicator) return;
+      v2IndicatorGroup.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      v2ReturnsSeries = buildV2ReturnsSeries();
+      renderV2ReturnsChart(btn.dataset.indicator);
+    });
+  }
+
+  // 资产明细表
+  function renderV2Table() {
+    var tbody = document.getElementById('v2-table-body');
+    if (!tbody) return;
+    var sorted = getSortedSnapshots();
+    if (!sorted || sorted.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--ink-4);padding:40px">暂无数据</td></tr>'; return; }
+    var activeIds = getActiveAccountIds();
+    var latest = sorted[sorted.length - 1];
+    var prev = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
+    var onlyActive = function(s) { return filterSnapshotEntries(s, activeIds); };
+    var latestActive = onlyActive(latest);
+    var prevActive = prev ? onlyActive(prev) : null;
+    var total = snapshotTotal(latestActive);
+    var accounts = state.accounts.filter(function(a) { return !a.archived && activeIds.has(a.id); });
+
+    // 排序：先按分组再按余额绝对值降序（用最新快照余额）
+    accounts.sort(function(a, b) {
+      var ga = a.group || '未分组', gb = b.group || '未分组';
+      if (ga !== gb) return ga.localeCompare(gb, 'zh');
+      var ea = latestActive.entries[a.id], eb = latestActive.entries[b.id];
+      var ba = Math.abs(ea ? (ea.balance || 0) : 0), bb = Math.abs(eb ? (eb.balance || 0) : 0);
+      return bb - ba;
+    });
+
+    var typeLabels = { asset: '资产', liability: '负债', equity: '权益' };
+    var rows = '';
+    accounts.forEach(function(a) {
+      var e = latestActive.entries[a.id];
+      var balance = e ? Number(e.balance || 0) : 0;
+      var prevBalance = prevActive && prevActive.entries[a.id] ? Number(prevActive.entries[a.id].balance || 0) : null;
+      var pct = total > 0 ? (Math.abs(balance) / total * 100) : 0;
+      var momPct = prevBalance !== null && Math.abs(prevBalance) > 0 ? ((Math.abs(balance) - Math.abs(prevBalance)) / Math.abs(prevBalance) * 100) : null;
+      var typeClass = a.type === 'liability' ? 'v2-badge-liability' : a.type === 'equity' ? 'v2-badge-equity' : 'v2-badge-asset';
+      var tagClass = a.tag === 'investment' ? 'v2-badge-investment' : 'v2-badge-cash';
+      var tagLabel = a.tag === 'investment' ? '投资' : '流动';
+      var waterlinePct = Math.min(95, pct);
+      rows += '<tr>' +
+        '<td><input type="checkbox" data-acc-id="' + escHtml(a.id) + '"></td>' +
+        '<td style="font-weight:500">' + escHtml(a.name) + '</td>' +
+        '<td>' + escHtml(a.group || '未分组') + '</td>' +
+        '<td><span class="v2-badge ' + typeClass + '">' + (typeLabels[a.type] || '资产') + '</span> <span class="v2-badge ' + tagClass + '">' + tagLabel + '</span></td>' +
+        '<td style="text-align:right;font-family:JetBrains Mono,monospace;font-weight:500;color:' + (balance >= 0 ? 'var(--ink)' : 'var(--red)') + '">¥' + Math.abs(balance).toLocaleString('zh-CN', {maximumFractionDigits:0}) + '</td>' +
+        '<td style="text-align:right;font-family:JetBrains Mono,monospace;color:var(--ink-3)">' + (prevBalance !== null ? '¥' + Math.abs(prevBalance).toLocaleString('zh-CN', {maximumFractionDigits:0}) : '—') + '</td>' +
+        '<td style="text-align:right;font-family:JetBrains Mono,monospace;font-size:12px;color:' + (momPct !== null ? (momPct >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--ink-3)') + '">' + (momPct !== null ? (momPct >= 0 ? '+' : '') + momPct.toFixed(1) + '%' : '—') + '</td>' +
+        '<td style="text-align:right;font-family:JetBrains Mono,monospace;color:var(--ink-3)">' + pct.toFixed(1) + '%</td>' +
+        '<td><div class="v2-waterline"><div class="fill" style="width:' + waterlinePct + '%"></div></div></td>' +
+        '</tr>';
+    });
+    tbody.innerHTML = rows || '<tr><td colspan="9" style="text-align:center;color:var(--ink-4);padding:40px">暂无数据</td></tr>';
+
+    // 表格行动画
+    tbody.querySelectorAll('tr').forEach(function(tr, i) {
+      tr.style.animationDelay = (i * 0.04) + 's';
+    });
+
+    // 分页信息
+    var pageInfo = document.getElementById('v2-table-page-info');
+    if (pageInfo) pageInfo.textContent = '共 ' + accounts.length + ' 行';
+  }
+
+  // 导出 CSV 按钮
+  var v2ExportBtn = document.querySelector('.v2-topbar .v2-btn-ghost');
+  if (v2ExportBtn && v2ExportBtn.textContent.trim() === '导出 CSV') {
+    v2ExportBtn.addEventListener('click', exportCSV);
+  }
+
+  // 录入快照按钮
+  var v2EntryBtn = document.querySelector('.v2-topbar .v2-btn-primary');
+  if (v2EntryBtn && v2EntryBtn.textContent.includes('录入快照')) {
+    v2EntryBtn.addEventListener('click', function() { navTo('entry'); });
   }
 
   function renderV2TargetConfig() {
@@ -5463,6 +5650,7 @@ let compactHeroObserver = null;
   // 主题切换后重新绑定
   const origPopulate = populateV2Dashboard;
   populateV2Dashboard = function() {
+    v2ReturnsSeries = null; // 强制重建收益率序列
     origPopulate();
     setTimeout(() => {
       document.querySelectorAll('.v2-section, .v2-table-section').forEach(el => {
