@@ -89,7 +89,7 @@
     </div>
     <div class="v2-section">
       <div class="v2-section-head"><h2>资产走势</h2><div class="meta"><div class="v2-filter-group"><button>近1月</button><button>近3月</button><button>近6月</button><button class="active">年初至今</button></div></div></div>
-      <div class="v2-charts-grid"><div class="v2-chart-card"><h3 style="font-size:14px;font-weight:600;margin-bottom:4px">总资产曲线</h3><div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">每月末总资产</div><div style="position:relative;height:280px"><canvas id="v2-chart-total"></canvas></div></div><div class="v2-chart-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px"><div><h3 style="font-size:14px;font-weight:600;margin-bottom:2px">资产分布</h3><div style="font-size:12px;color:var(--ink-4)">最新月份各分组占比</div></div><button class="v2-btn v2-btn-ghost" id="v2-open-target-modal">⚙ 目标配置</button></div><div style="position:relative;height:240px"><canvas id="v2-chart-pie"></canvas></div><div id="v2-target-deviation" style="margin-top:16px"></div></div></div>
+      <div class="v2-charts-grid"><div class="v2-chart-card"><h3 style="font-size:14px;font-weight:600;margin-bottom:4px">总资产曲线</h3><div style="font-size:12px;color:var(--ink-4);margin-bottom:12px">每月末总资产</div><div style="position:relative;height:280px"><canvas id="v2-chart-total"></canvas></div></div><div class="v2-chart-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px"><div><h3 style="font-size:14px;font-weight:600;margin-bottom:2px">资产分布</h3><div style="font-size:12px;color:var(--ink-4)">最新月份各分组占比</div></div><button class="v2-btn v2-btn-ghost" id="v2-open-target-modal">⚙ 目标配置</button></div><div style="position:relative;height:240px"><canvas id="v2-chart-pie"></canvas></div></div></div>
     </div>
     <div class="v2-section">
       <div class="v2-section-head"><h2>收益率走势</h2><div class="meta"><div class="v2-filter-group"><button>近1月</button><button>近3月</button><button>近6月</button><button class="active">年初至今</button></div><div class="v2-filter-group" style="margin-left:8px"><button class="active">TWR</button><button>简单</button><button>盈亏额</button></div></div></div>
@@ -5236,8 +5236,6 @@ let compactHeroObserver = null;
       if (insight) insight.textContent = flow > 0 ? '本月净流入为正' : flow < 0 ? '本月净流出' : '无净流入/流出';
     }
 
-    // 目标配置
-    renderV2TargetConfig();
     // V2 图表
     renderV2Charts();
     } catch(e) { console.error('populateV2Dashboard error:', e); }
