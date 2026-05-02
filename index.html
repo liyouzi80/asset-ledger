@@ -91,9 +91,9 @@
       <div class="v2-chart-card"><div style="position:relative;height:280px"><canvas id="v2-chart-pnl"></canvas></div></div>
     </div>
     <div class="v2-table-section">
-      <div class="v2-section-head"><h2>资产明细</h2><div class="meta"><div class="v2-filter-group"><button class="active">全部</button><button>流动资产</button><button>投资资产</button></div></div></div>
+      <div class="v2-section-head"><h2>资产明细</h2><div class="meta"><div class="v2-filter-group" id="v2-table-filter"><button class="active" data-tag="">全部</button><button data-tag="cash">流动资产</button><button data-tag="investment">投资资产</button></div></div></div>
       <div class="v2-table-card">
-        <div class="v2-table-toolbar"><div class="v2-table-toolbar-left"><input class="v2-table-search" placeholder="搜索科目…"><span class="v2-row-select-count">已选 0 / 0 行</span></div><div class="v2-table-toolbar-right"><button class="v2-btn v2-btn-ghost">导出</button></div></div>
+        <div class="v2-table-toolbar"><div class="v2-table-toolbar-left"><input class="v2-table-search" placeholder="搜索科目…"><span class="v2-row-select-count" id="v2-row-count"></span></div><div class="v2-table-toolbar-right"></div></div>
         <div style="overflow-x:auto"><table class="v2-table"><thead><tr><th style="width:32px"><input type="checkbox"></th><th>科目</th><th>分类</th><th>性质</th><th style="text-align:right">余额</th><th style="text-align:right">上月</th><th style="text-align:right">环比</th><th style="text-align:right">占比</th><th style="width:100px">水位线</th></tr></thead><tbody id="v2-table-body"><tr><td colspan="9" style="text-align:center;color:var(--ink-4);padding:40px">加载中…</td></tr></tbody></table></div>
         <div class="v2-table-footer"><span id="v2-table-page-info">第 1 页，共 1 页</span><div class="v2-pagination"><button disabled>‹</button><button class="active">1</button><button disabled>›</button></div></div>
       </div>
@@ -5514,7 +5514,7 @@ let compactHeroObserver = null;
   }
 
   // 资产明细表
-  function renderV2Table() {
+  function renderV2Table(tagFilter) {
     var tbody = document.getElementById('v2-table-body');
     if (!tbody) return;
     var sorted = getSortedSnapshots();
@@ -5526,7 +5526,12 @@ let compactHeroObserver = null;
     var latestActive = onlyActive(latest);
     var prevActive = prev ? onlyActive(prev) : null;
     var total = snapshotTotal(latestActive);
-    var accounts = state.accounts.filter(function(a) { return !a.archived && activeIds.has(a.id); });
+    var accounts = state.accounts.filter(function(a) {
+      if (a.archived || !activeIds.has(a.id)) return false;
+      if (tagFilter === 'investment') return a.tag === 'investment';
+      if (tagFilter === 'cash') return a.tag !== 'investment';
+      return true;
+    });
 
     // 排序：先按分组再按余额绝对值降序（用最新快照余额）
     accounts.sort(function(a, b) {
@@ -5583,6 +5588,46 @@ let compactHeroObserver = null;
   var v2EntryBtn = document.querySelector('.v2-topbar .v2-btn-primary');
   if (v2EntryBtn && v2EntryBtn.textContent.includes('录入快照')) {
     v2EntryBtn.addEventListener('click', function() { navTo('entry'); });
+  }
+
+  // 资产明细表标签筛选
+  var v2TableFilter = document.getElementById('v2-table-filter');
+  var v2TableCurrentTag = '';
+  if (v2TableFilter) {
+    v2TableFilter.addEventListener('click', function(e) {
+      var btn = e.target.closest('button');
+      if (!btn || btn.dataset.tag === undefined) return;
+      v2TableFilter.querySelectorAll('button').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      v2TableCurrentTag = btn.dataset.tag;
+      renderV2Table(v2TableCurrentTag);
+      // 同步搜索框：重新应用搜索过滤
+      var searchInput = document.querySelector('.v2-table-search');
+      if (searchInput && searchInput.value) applyV2TableSearch(searchInput.value);
+    });
+  }
+
+  // 资产明细表搜索
+  function applyV2TableSearch(query) {
+    var tbody = document.getElementById('v2-table-body');
+    if (!tbody) return;
+    var q = (query || '').toLowerCase().trim();
+    var rows = tbody.querySelectorAll('tr');
+    var visible = 0;
+    rows.forEach(function(tr) {
+      if (tr.querySelector('td[colspan]')) return; // 空状态行
+      var name = (tr.querySelector('td:nth-child(2)') || {}).textContent || '';
+      var match = !q || name.toLowerCase().includes(q);
+      tr.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    var pageInfo = document.getElementById('v2-table-page-info');
+    if (pageInfo) pageInfo.textContent = q ? '找到 ' + visible + ' 行' : '共 ' + visible + ' 行';
+  }
+
+  var v2TableSearch = document.querySelector('.v2-table-search');
+  if (v2TableSearch) {
+    v2TableSearch.addEventListener('input', function() { applyV2TableSearch(this.value); });
   }
 
   function renderV2TargetConfig() {
