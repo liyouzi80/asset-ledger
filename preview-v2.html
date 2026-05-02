@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>资产负债表 v2 · 素白</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* =====================================================
+     V2 素白 · CSS 变量
+  ===================================================== */
+  :root {
+    --bg:          #ffffff;
+    --bg-1:        #fafafa;
+    --bg-2:        #f5f5f5;
+    --bg-3:        #ebebeb;
+    --bg-glass:    rgba(255,255,255,0.82);
+    --ink:         #1a1a1a;
+    --ink-2:       #555555;
+    --ink-3:       #8e8e8e;
+    --ink-4:       #b0b0b0;
+    --sep:         #e8e8e8;
+    --sep-strong:  #d0d0d0;
+    --accent:      #0071e3;
+    --accent-soft: rgba(0,113,227,0.08);
+    --green:       #2e8b57;
+    --green-soft:  rgba(46,139,87,0.08);
+    --red:         #d94040;
+    --red-soft:    rgba(217,64,64,0.08);
+    --yellow:      #b8860b;
+    --orange:      #cc6d1e;
+    --shadow-sm:   0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md:   0 4px 24px rgba(0,0,0,0.06);
+    --card-highlight: inset 0 0.5px 0 rgba(0,0,0,0.06);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Inter', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* =====================================================
+     Layout
+  ===================================================== */
+  .app-shell { display: flex; min-height: 100vh; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px; background: var(--bg-1);
+    border-right: 1px solid var(--sep);
+    display: flex; flex-direction: column;
+    position: sticky; top: 0; height: 100vh;
+  }
+  .sidebar-brand {
+    padding: 20px; display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--sep);
+  }
+  .sidebar-brand .brand-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #0071e3, #40a9ff);
+    border-radius: 8px; display: flex; align-items: center;
+    justify-content: center; font-size: 16px; font-weight: 700; color: #fff;
+  }
+  .sidebar-brand .brand-name { font-weight: 600; font-size: 15px; }
+  .sidebar-nav {
+    flex: 1; padding: 12px 8px;
+    display: flex; flex-direction: column; gap: 2px;
+  }
+  .sidebar-section {
+    padding: 12px 12px 4px; font-size: 11px; font-weight: 600;
+    color: var(--ink-4); text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .sidebar-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; color: var(--ink-2);
+    cursor: pointer; transition: all 0.12s; text-decoration: none;
+  }
+  .sidebar-item:hover { background: var(--bg-3); color: var(--ink); }
+  .sidebar-item.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .sidebar-item .badge {
+    margin-left: auto; font-size: 10px; font-weight: 600;
+    padding: 2px 6px; border-radius: 10px;
+    background: var(--accent-soft); color: var(--accent);
+  }
+  .sidebar-footer {
+    padding: 12px 20px; border-top: 1px solid var(--sep);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .sidebar-footer .avatar {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--bg-3); display: flex; align-items: center;
+    justify-content: center; font-size: 11px; font-weight: 600; color: var(--ink-3);
+  }
+  .sidebar-footer .user-info { font-size: 12px; color: var(--ink-3); }
+
+  /* Main */
+  .main {
+    flex: 1; min-width: 0; padding: 32px 40px;
+    display: flex; flex-direction: column; gap: 32px;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .topbar h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .btn {
+    padding: 8px 16px; border-radius: 8px; border: none;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-ghost {
+    background: transparent; color: var(--ink-2);
+    border: 1px solid var(--sep-strong);
+  }
+  .btn-ghost:hover { background: var(--bg-3); }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+
+  /* =====================================================
+     KPI Cards
+  ===================================================== */
+  .kpi-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  }
+  .kpi-card {
+    background: var(--bg);
+    border: 1px solid var(--sep);
+    border-radius: 14px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 6px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .kpi-card:hover {
+    border-color: var(--sep-strong);
+    box-shadow: var(--shadow-md);
+  }
+  .kpi-card-header {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .kpi-card-label {
+    font-size: 11px; font-weight: 600; color: var(--ink-4);
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .kpi-card-icon {
+    width: 34px; height: 34px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .kpi-card-icon.blue   { background: rgba(0,113,227,0.08); color: var(--accent); }
+  .kpi-card-icon.green  { background: var(--green-soft); color: var(--green); }
+  .kpi-card-icon.red    { background: var(--red-soft); color: var(--red); }
+  .kpi-card-icon.yellow { background: rgba(184,134,11,0.08); color: var(--yellow); }
+
+  .kpi-card-value {
+    font-family: 'JetBrains Mono', 'SF Mono', monospace;
+    font-size: 28px; font-weight: 600; letter-spacing: -0.02em;
+  }
+  .kpi-card-delta {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500;
+  }
+  .kpi-card-delta.up      { color: var(--green); }
+  .kpi-card-delta.down    { color: var(--red); }
+  .kpi-card-delta.neutral { color: var(--ink-3); }
+  .kpi-card-insight {
+    font-size: 12px; color: var(--ink-3); line-height: 1.5;
+    border-top: 1px solid var(--sep); padding-top: 12px; margin-top: 6px;
+  }
+
+  /* Waterline mini bar */
+  .waterline-bar {
+    height: 4px; border-radius: 2px; background: var(--bg-3); overflow: hidden;
+  }
+  .waterline-bar .fill {
+    height: 100%; border-radius: 2px;
+    background: linear-gradient(90deg, #0071e3, #40a9ff);
+    transition: width 0.5s ease;
+  }
+
+  /* =====================================================
+     Section Header
+  ===================================================== */
+  .section-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 4px 0;
+  }
+  .section-head h2 { font-size: 17px; font-weight: 700; }
+  .section-head .meta { display: flex; align-items: center; gap: 12px; }
+  .filter-group {
+    display: flex; gap: 2px;
+    background: var(--bg-3); border-radius: 8px; padding: 3px;
+  }
+  .filter-group button {
+    padding: 6px 14px; border: none; background: transparent;
+    border-radius: 6px; font-size: 12px; font-weight: 500;
+    color: var(--ink-3); cursor: pointer; font-family: inherit;
+    transition: all 0.12s;
+  }
+  .filter-group button.active {
+    background: #fff; color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .filter-group button:hover:not(.active) { color: var(--ink-2); }
+
+  /* Period select */
+  .period-select {
+    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--sep);
+    background: var(--bg); color: var(--ink-2); font-size: 13px;
+    font-family: inherit; cursor: pointer;
+  }
+
+  /* =====================================================
+     Chart Cards
+  ===================================================== */
+  .chart-card {
+    background: var(--bg);
+    border: 1px solid var(--sep);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+  }
+  .chart-placeholder {
+    height: 240px;
+    background: var(--bg-2);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 8px;
+    color: var(--ink-4);
+  }
+  .chart-placeholder .icon { font-size: 40px; }
+  .chart-placeholder .label { font-size: 14px; font-weight: 500; }
+  .chart-placeholder .sub  { font-size: 12px; }
+
+  .charts-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+
+  /* =====================================================
+     Asset Table
+  ===================================================== */
+  .table-card {
+    background: var(--bg);
+    border: 1px solid var(--sep);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+  }
+  .table-toolbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--sep);
+  }
+  .table-toolbar-left  { display: flex; align-items: center; gap: 12px; }
+  .table-toolbar-right { display: flex; align-items: center; gap: 12px; }
+  .table-search {
+    background: var(--bg-2); border: 1px solid transparent;
+    border-radius: 8px; padding: 7px 12px; font-size: 13px;
+    color: var(--ink); font-family: inherit; width: 220px;
+    outline: none; transition: border-color 0.12s;
+  }
+  .table-search:focus { border-color: var(--accent); background: var(--bg); }
+  .table-search::placeholder { color: var(--ink-4); }
+  .row-select-count { font-size: 12px; color: var(--ink-3); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left; padding: 10px 20px;
+    font-size: 11px; font-weight: 600; color: var(--ink-4);
+    text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--sep);
+    background: var(--bg-1); user-select: none;
+  }
+  tbody td {
+    padding: 13px 20px; font-size: 13px;
+    border-bottom: 1px solid var(--sep); vertical-align: middle;
+  }
+  tbody tr:hover { background: var(--bg-1); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 500;
+  }
+  .badge-asset      { background: rgba(0,113,227,0.07); color: var(--accent); }
+  .badge-liability  { background: var(--red-soft); color: var(--red); }
+  .badge-equity     { background: var(--green-soft); color: var(--green); }
+  .badge-cash       { background: rgba(184,134,11,0.07); color: var(--yellow); }
+  .badge-investment { background: rgba(64,169,255,0.08); color: #0071e3; }
+
+  .mono { font-family: 'JetBrains Mono', 'SF Mono', monospace; font-size: 13px; }
+  .text-muted { color: var(--ink-3); font-size: 12px; }
+
+  /* Pagination */
+  .table-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-top: 1px solid var(--sep);
+    font-size: 12px; color: var(--ink-3);
+  }
+  .pagination { display: flex; gap: 4px; }
+  .pagination button {
+    width: 32px; height: 32px; border-radius: 8px;
+    border: 1px solid var(--sep); background: transparent;
+    color: var(--ink-2); font-size: 13px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-family: inherit; transition: all 0.12s;
+  }
+  .pagination button:hover { background: var(--bg-3); }
+  .pagination button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .pagination button:disabled { opacity: 0.3; cursor: default; }
+
+  /* =====================================================
+     Theme toggle in topbar
+  ===================================================== */
+  .theme-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 12px; border-radius: 20px;
+    font-size: 12px; font-weight: 500; color: var(--ink-2);
+    border: 1px solid var(--sep);
+    background: var(--bg-2);
+  }
+  .theme-badge .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* Responsive */
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .sidebar { width: 200px; }
+    .main { padding: 24px; }
+  }
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .kpi-grid { grid-template-columns: 1fr; }
+    .main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">¥</div>
+      <div class="brand-name">资产负债表</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section">概览</div>
+      <a class="sidebar-item active">总览面板</a>
+      <a class="sidebar-item">负债与权益</a>
+
+      <div class="sidebar-section" style="margin-top:4px">分析</div>
+      <a class="sidebar-item">资产走势</a>
+      <a class="sidebar-item">收益率走势</a>
+      <a class="sidebar-item">盈亏分析</a>
+
+      <div class="sidebar-section" style="margin-top:4px">数据</div>
+      <a class="sidebar-item">录入快照</a>
+      <a class="sidebar-item">历史明细 <span class="badge">24</span></a>
+      <a class="sidebar-item">目标配置</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="avatar">YT</div>
+      <div class="user-info">yangtao@icloud.com</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <h1>总览</h1>
+        <span class="theme-badge"><span class="dot"></span>素白 v2</span>
+      </div>
+      <div class="topbar-actions">
+        <select class="period-select">
+          <option>2026年4月</option>
+          <option>2026年3月</option>
+          <option>2026年2月</option>
+        </select>
+        <button class="btn btn-ghost btn-sm">导出 CSV</button>
+        <button class="btn btn-primary">＋ 录入快照</button>
+      </div>
+    </div>
+
+    <!-- ① KPI 概览卡片 -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-card-label">总资产</span>
+          <span class="kpi-card-icon blue">💰</span>
+        </div>
+        <div class="kpi-card-value">¥12,508,340</div>
+        <div class="kpi-card-delta up">▲ +8.2%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span></div>
+        <div class="waterline-bar"><div class="fill" style="width:72%"></div></div>
+        <div class="kpi-card-insight">连续 3 个月增长，主要由投资资产增值驱动</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-card-label">资产负债率</span>
+          <span class="kpi-card-icon green">📊</span>
+        </div>
+        <div class="kpi-card-value">37.2%</div>
+        <div class="kpi-card-delta down">▼ -3.1pp<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span></div>
+        <div class="waterline-bar"><div class="fill" style="width:37%"></div></div>
+        <div class="kpi-card-insight">负债率持续改善，处于健康区间（< 50%）</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-card-label">本月盈亏</span>
+          <span class="kpi-card-icon green">📈</span>
+        </div>
+        <div class="kpi-card-value" style="color:var(--green)">+¥847,200</div>
+        <div class="kpi-card-delta up">▲ +6.7%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">TWR</span></div>
+        <div class="kpi-card-insight">超额完成月度目标（+5%），科技股贡献最大</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-card-label">本月净流入</span>
+          <span class="kpi-card-icon yellow">💸</span>
+        </div>
+        <div class="kpi-card-value">+¥320,000</div>
+        <div class="kpi-card-delta neutral">● 持平<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span></div>
+        <div class="waterline-bar"><div class="fill" style="width:45%"></div></div>
+        <div class="kpi-card-insight">定投计划正常执行，无异常大额进出</div>
+      </div>
+    </div>
+
+    <!-- ② 资产走势 -->
+    <div>
+      <div class="section-head">
+        <h2>资产走势</h2>
+        <div class="meta">
+          <div class="filter-group">
+            <button>近 1 月</button>
+            <button>近 3 月</button>
+            <button>近 6 月</button>
+            <button class="active">年初至今</button>
+          </div>
+          <span style="font-size:12px;color:var(--ink-3)">月度演进</span>
+        </div>
+      </div>
+      <div class="charts-grid" style="margin-top:12px">
+        <div class="chart-card">
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:4px">总资产曲线</h3>
+          <div style="font-size:12px;color:var(--ink-4);margin-bottom:16px">每月末总资产</div>
+          <div class="chart-placeholder">
+            <span class="icon">📈</span>
+            <span class="label">总资产曲线图</span>
+            <span class="sub">月度时间序列</span>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3 style="font-size:14px;font-weight:600;margin-bottom:4px">资产分布</h3>
+          <div style="font-size:12px;color:var(--ink-4);margin-bottom:16px">最新月份各分组占比</div>
+          <div class="chart-placeholder">
+            <span class="icon">🍩</span>
+            <span class="label">资产分布图</span>
+            <span class="sub">饼图 / 环形图</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ③ 收益率走势 -->
+    <div>
+      <div class="section-head">
+        <h2>收益率走势</h2>
+        <div class="meta">
+          <div class="filter-group">
+            <button>近 1 月</button>
+            <button>近 3 月</button>
+            <button>近 6 月</button>
+            <button class="active">年初至今</button>
+          </div>
+          <div class="filter-group" style="margin-left:8px">
+            <button class="active">TWR</button>
+            <button>简单</button>
+            <button>盈亏额</button>
+            <button>XIRR</button>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card" style="margin-top:12px">
+        <div class="chart-placeholder">
+          <span class="icon">📉</span>
+          <span class="label">收益率走势图</span>
+          <span class="sub">期间累计收益 · TWR 剔除入金/出金影响</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ④ 盈亏分析 -->
+    <div>
+      <div class="section-head">
+        <h2>盈亏分析</h2>
+        <span class="meta" style="font-size:12px;color:var(--ink-3)">市场盈亏与现金流</span>
+      </div>
+      <div class="chart-card" style="margin-top:12px">
+        <div class="chart-placeholder">
+          <span class="icon">📊</span>
+          <span class="label">每月盈亏 vs 净入金</span>
+          <span class="sub">绿/红为市场盈亏，灰为当月净入金</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⑤ 资产明细表格 -->
+    <div>
+      <div class="section-head">
+        <h2>资产明细</h2>
+        <div class="meta">
+          <div class="filter-group">
+            <button class="active">全部</button>
+            <button>流动资产</button>
+            <button>投资资产</button>
+            <button>固定资产</button>
+          </div>
+          <select class="period-select" style="margin-left:8px">
+            <option>最近 3 个月</option>
+            <option>本月</option>
+            <option>本季度</option>
+            <option>本年度</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-card" style="margin-top:12px">
+        <div class="table-toolbar">
+          <div class="table-toolbar-left">
+            <input class="table-search" placeholder="搜索科目…">
+            <span class="row-select-count">已选 0 / 12 行</span>
+          </div>
+          <div class="table-toolbar-right">
+            <button class="btn btn-ghost btn-sm">导出</button>
+            <button class="btn btn-ghost btn-sm">列设置</button>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th style="width:32px"><input type="checkbox"></th>
+              <th>科目名称</th>
+              <th>分类</th>
+              <th>性质</th>
+              <th style="text-align:right">余额</th>
+              <th style="text-align:right">上月余额</th>
+              <th style="text-align:right">环比</th>
+              <th style="text-align:right">占比</th>
+              <th style="width:100px">水位线</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td style="font-weight:500">银行存款 · 招商</td>
+              <td><span class="badge badge-cash">现金</span></td>
+              <td><span class="badge badge-asset">资产</span></td>
+              <td class="mono" style="text-align:right">¥2,450,000</td>
+              <td class="mono text-muted" style="text-align:right">¥2,380,000</td>
+              <td class="mono" style="text-align:right;color:var(--green)">+2.9%</td>
+              <td class="mono text-muted" style="text-align:right">19.6%</td>
+              <td><div class="waterline-bar"><div class="fill" style="width:78%"></div></div></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td style="font-weight:500">证券账户 · 华泰</td>
+              <td><span class="badge badge-investment">投资</span></td>
+              <td><span class="badge badge-asset">资产</span></td>
+              <td class="mono" style="text-align:right">¥5,820,000</td>
+              <td class="mono text-muted" style="text-align:right">¥5,100,000</td>
+              <td class="mono" style="text-align:right;color:var(--green)">+14.1%</td>
+              <td class="mono text-muted" style="text-align:right">46.5%</td>
+              <td><div class="waterline-bar"><div class="fill" style="width:92%"></div></div></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td style="font-weight:500">养老金账户</td>
+              <td><span class="badge badge-investment">投资</span></td>
+              <td><span class="badge badge-asset">资产</span></td>
+              <td class="mono" style="text-align:right">¥1,850,000</td>
+              <td class="mono text-muted" style="text-align:right">¥1,820,000</td>
+              <td class="mono" style="text-align:right;color:var(--green)">+1.6%</td>
+              <td class="mono text-muted" style="text-align:right">14.8%</td>
+              <td><div class="waterline-bar"><div class="fill" style="width:65%"></div></div></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td style="font-weight:500">房地产 · 自住</td>
+              <td><span class="badge badge-asset">固定</span></td>
+              <td><span class="badge badge-asset">资产</span></td>
+              <td class="mono" style="text-align:right">¥2,388,340</td>
+              <td class="mono text-muted" style="text-align:right">¥2,388,340</td>
+              <td class="mono" style="text-align:right;color:var(--ink-3)">0.0%</td>
+              <td class="mono text-muted" style="text-align:right">19.1%</td>
+              <td><div class="waterline-bar"><div class="fill" style="width:50%"></div></div></td>
+            </tr>
+            <tr style="background:var(--bg-1)">
+              <td></td>
+              <td style="font-weight:600">小计 · 资产</td>
+              <td></td><td></td>
+              <td class="mono" style="text-align:right;font-weight:600">¥12,508,340</td>
+              <td class="mono text-muted" style="text-align:right">¥11,688,340</td>
+              <td class="mono" style="text-align:right;color:var(--green);font-weight:600">+7.0%</td>
+              <td class="mono" style="text-align:right;font-weight:600">100%</td>
+              <td></td>
+            </tr>
+            <tr style="border-top:2px solid var(--sep)">
+              <td><input type="checkbox"></td>
+              <td style="font-weight:500;color:var(--red)">住房贷款</td>
+              <td><span class="badge badge-liability">贷款</span></td>
+              <td><span class="badge badge-liability">负债</span></td>
+              <td class="mono" style="text-align:right;color:var(--red)">¥3,200,000</td>
+              <td class="mono text-muted" style="text-align:right">¥3,250,000</td>
+              <td class="mono" style="text-align:right;color:var(--green)">-1.5%</td>
+              <td class="mono text-muted" style="text-align:right">68.8%</td>
+              <td><div class="waterline-bar"><div class="fill" style="width:55%"></div></div></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td style="font-weight:500;color:var(--red)">消费贷款</td>
+              <td><span class="badge badge-liability">贷款</span></td>
+              <td><span class="badge badge-liability">负债</span></td>
+              <td class="mono" style="text-align:right;color:var(--red)">¥850,000</td>
+              <td class="mono text-muted" style="text-align:right">¥920,000</td>
+              <td class="mono" style="text-align:right;color:var(--green)">-7.6%</td>
+              <td class="mono text-muted" style="text-align:right">18.3%</td>
+              <td><div class="waterline-bar"><div class="fill" style="width:30%"></div></div></td>
+            </tr>
+            <tr>
+              <td><input type="checkbox"></td>
+              <td style="font-weight:500;color:var(--red)">信用卡账单</td>
+              <td><span class="badge badge-liability">消费</span></td>
+              <td><span class="badge badge-liability">负债</span></td>
+              <td class="mono" style="text-align:right;color:var(--red)">¥600,000</td>
+              <td class="mono text-muted" style="text-align:right">¥580,000</td>
+              <td class="mono" style="text-align:right;color:var(--red)">+3.4%</td>
+              <td class="mono text-muted" style="text-align:right">12.9%</td>
+              <td><div class="waterline-bar"><div class="fill" style="width:25%"></div></div></td>
+            </tr>
+            <tr style="background:var(--bg-1)">
+              <td></td>
+              <td style="font-weight:600;color:var(--red)">小计 · 负债</td>
+              <td></td><td></td>
+              <td class="mono" style="text-align:right;font-weight:600;color:var(--red)">¥4,650,000</td>
+              <td class="mono text-muted" style="text-align:right">¥4,750,000</td>
+              <td class="mono" style="text-align:right;color:var(--green);font-weight:600">-2.1%</td>
+              <td class="mono" style="text-align:right;font-weight:600">100%</td>
+              <td></td>
+            </tr>
+            <tr style="border-top:2px solid var(--sep);background:rgba(0,113,227,0.03)">
+              <td></td>
+              <td style="font-weight:700">净资产</td>
+              <td><span class="badge badge-equity">权益</span></td>
+              <td></td>
+              <td class="mono" style="text-align:right;font-weight:700;font-size:15px">¥7,858,340</td>
+              <td class="mono text-muted" style="text-align:right">¥6,938,340</td>
+              <td class="mono" style="text-align:right;color:var(--green);font-weight:700;font-size:14px">+13.3%</td>
+              <td class="mono" style="text-align:right;font-weight:700">62.8%</td>
+              <td><div class="waterline-bar"><div class="fill" style="width:82%"></div></div></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="table-footer">
+          <span>第 1 页，共 1 页 (12 项)</span>
+          <div class="pagination">
+            <button disabled>‹</button>
+            <button class="active">1</button>
+            <button disabled>›</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+</body>
+</html>

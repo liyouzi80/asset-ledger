@@ -3,7 +3,7 @@ main = "worker/index.js"
 compatibility_date = "2025-01-01"
 
 [assets]
-directory = "."
+directory = "./static"
 
 [[d1_databases]]
 binding = "DB"

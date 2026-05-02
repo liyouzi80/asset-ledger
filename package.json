@@ -2,7 +2,9 @@
   "name": "asset-ledger",
   "private": true,
   "scripts": {
-    "deploy": "wrangler deploy"
+    "sync": "mkdir -p static/css && cp index.html static/ && cp css/*.css static/css/",
+    "dev": "npm run sync && wrangler dev",
+    "deploy": "npm run sync && wrangler deploy"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

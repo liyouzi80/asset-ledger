@@ -1,0 +1,181 @@
+/* =====================================================
+     CSS 变量系统 · 苹果设计语言
+  ===================================================== */
+  /* =====================================================
+     Linear Dark · 暗色主题
+     灵感来源: Linear.app — 极暗画布、半透白边框、蓝紫强调
+  ===================================================== */
+  :root, [data-theme="dark"] {
+    /* 背景层级 · luminance stepping */
+    --bg:          #08090a;
+    --bg-1:        #0f1011;
+    --bg-2:        #191a1b;
+    --bg-3:        #28282c;
+    --bg-glass:    rgba(15,16,17,0.85);
+    /* 前景 · near-white 防眼疲劳 */
+    --ink:         #f7f8f8;
+    --ink-2:       #d0d6e0;
+    --ink-3:       #8a8f98;
+    --ink-4:       #62666d;
+    /* 分割线 · 半透明白 */
+    --sep:         rgba(255,255,255,0.05);
+    --sep-strong:  rgba(255,255,255,0.08);
+    /* 强调色 · Linear 招牌 indigo-violet */
+    --accent:      #5e6ad2;
+    --accent-soft: rgba(94,106,210,0.14);
+    /* 语义色 */
+    --green:       #27a644;
+    --green-soft:  rgba(39,166,68,0.13);
+    --red:         #f87171;
+    --red-soft:    rgba(248,113,113,0.13);
+    --yellow:      #fbbf24;
+    --orange:      #fb923c;
+    /* 阴影 · 暗面亮度递进代替传统 drop shadow */
+    --shadow-sm:   0 1px 2px rgba(0,0,0,0.25);
+    --shadow-md:   0 4px 24px rgba(0,0,0,0.35);
+    --shadow-lg:   0 20px 60px rgba(0,0,0,0.50);
+    /* 图表 */
+    --chart-grid:  rgba(255,255,255,0.04);
+    --chart-tick:  rgba(255,255,255,0.25);
+    --tooltip-bg:  #191a1b;
+    /* 渐变 & 辉光 */
+    --accent-gradient: linear-gradient(135deg, #5e6ad2, #7170ff);
+    --accent-glow:     rgba(94,106,210,0.22);
+    --accent-purple:   #7170ff;
+    --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.06);
+    --glow-blue:       rgba(94,106,210,0.05);
+    --glow-purple:     rgba(113,112,255,0.03);
+    --hero-gradient:   linear-gradient(135deg, #0f1011 0%, #191a1b 100%);
+  }
+
+  /* =====================================================
+     Apple Light · 浅色主题
+     灵感来源: Apple.com — 留白为主、SF 风格、蓝黑克制
+  ===================================================== */
+  [data-theme="light"] {
+    --bg:          #ffffff;
+    --bg-1:        #f5f5f7;
+    --bg-2:        #e8e8ed;
+    --bg-3:        #dcdce0;
+    --bg-glass:    rgba(255,255,255,0.76);
+    --ink:         #1d1d1f;
+    --ink-2:       rgba(29,29,31,0.82);
+    --ink-3:       #6e6e73;
+    --ink-4:       #aeaeb2;
+    --sep:         #d2d2d7;
+    --sep-strong:  #86868b;
+    --accent:      #0071e3;
+    --accent-soft: rgba(0,113,227,0.10);
+    --green:       #34c759;
+    --green-soft:  rgba(52,199,89,0.10);
+    --red:         #ff3b30;
+    --red-soft:    rgba(255,59,48,0.10);
+    --yellow:      #ff9500;
+    --orange:      #ff9f0a;
+    --shadow-sm:   0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03);
+    --shadow-md:   0 4px 24px rgba(0,0,0,0.05), 0 1px 8px rgba(0,0,0,0.03);
+    --shadow-lg:   0 20px 60px rgba(0,0,0,0.08), 0 4px 24px rgba(0,0,0,0.04);
+    --chart-grid:  rgba(0,0,0,0.04);
+    --chart-tick:  rgba(0,0,0,0.35);
+    --tooltip-bg:  #ffffff;
+    --accent-gradient: linear-gradient(135deg, #0071e3, #2997ff);
+    --accent-glow:     rgba(0,113,227,0.14);
+    --accent-purple:   #2997ff;
+    --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.7);
+    --glow-blue:       rgba(0,113,227,0.04);
+    --glow-purple:     rgba(41,151,255,0.02);
+    --hero-gradient:   var(--bg-1);
+  }
+
+  /* =====================================================
+     素白 (Subai) · 素净瓷白主题
+  ===================================================== */
+  [data-theme="suba"] {
+    --bg:                #f8f9fc;
+    --bg-1:              #ffffff;
+    --bg-2:              #f0f2f6;
+    --bg-3:              #e3e6ed;
+    --bg-glass:          rgba(255,255,255,0.88);
+    --ink:               #1a1f36;
+    --ink-2:             #374059;
+    --ink-3:             #6b7394;
+    --ink-4:             #9ca3b8;
+    --sep:               #e8ecf2;
+    --sep-strong:        #cdd3de;
+    --accent:            #4f5de4;
+    --accent-soft:       rgba(79,93,228,0.08);
+    --green:             #10b981;
+    --green-soft:        rgba(16,185,129,0.08);
+    --red:               #ef4444;
+    --red-soft:          rgba(239,68,68,0.08);
+    --yellow:            #f59e0b;
+    --orange:            #f97316;
+    --shadow-sm:         0 0 0 1px rgba(0,0,0,0.03);
+    --shadow-md:         0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.04);
+    --shadow-lg:         0 4px 16px rgba(0,0,0,0.04), 0 16px 48px rgba(0,0,0,0.05);
+    --chart-grid:        rgba(0,0,0,0.04);
+    --chart-tick:        rgba(0,0,0,0.35);
+    --tooltip-bg:        #ffffff;
+    --accent-gradient:   linear-gradient(135deg, #4f5de4, #7c6ff7);
+    --accent-glow:       rgba(79,93,228,0.12);
+    --accent-purple:     #7c6ff7;
+    --card-highlight:    inset 0 0.5px 0 rgba(0,0,0,0.02);
+    --glow-blue:         rgba(79,93,228,0.03);
+    --glow-purple:       rgba(124,111,247,0.02);
+    --hero-gradient:     linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%);
+  }
+
+
+  :root {
+    --resize-dur: 300ms;
+    --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --digit-dur: 500ms;
+    --digit-distance: 8px;
+    --digit-stagger: 70ms;
+    --digit-blur: 2px;
+    --digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
+    --digit-dir-x: 0;
+    --digit-dir-y: 1;
+    --badge-slide-dur: 260ms;
+    --badge-pop-dur: 500ms;
+    --badge-pop-close-dur: 180ms;
+    --badge-fade-dur: 400ms;
+    --badge-fade-close-dur: 180ms;
+    --badge-blur: 2px;
+    --badge-offset-x: -8.2px;
+    --badge-offset-y: 12.4px;
+    --badge-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --badge-pop-ease: cubic-bezier(0.34, 1.36, 0.64, 1);
+    --badge-close-ease: cubic-bezier(0.4, 0, 0.2, 1);
+    --text-swap-dur: 200ms;
+    --text-swap-translate-y: 8px;
+    --text-swap-blur: 2px;
+    --text-swap-ease: ease-out;
+    --dropdown-open-dur: 250ms;
+    --dropdown-close-dur: 150ms;
+    --dropdown-pre-scale: 0.97;
+    --dropdown-closing-scale: 0.99;
+    --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --modal-open-dur: 250ms;
+    --modal-close-dur: 150ms;
+    --modal-scale: 0.96;
+    --modal-scale-close: 0.96;
+    --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --panel-open-dur: 400ms;
+    --panel-close-dur: 350ms;
+    --panel-translate-y: 100px;
+    --panel-blur: 2px;
+    --panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --page-slide-dur: 200ms;
+    --page-fade-dur: 200ms;
+    --page-slide-distance: 8px;
+    --page-blur: 3px;
+    --page-stagger: 0ms;
+    --page-exit-enabled: 1;
+    --page-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --page-fade-ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --icon-swap-dur: 200ms;
+    --icon-swap-blur: 2px;
+    --icon-swap-start-scale: 0.25;
+    --icon-swap-ease: ease-in-out;
+  }
