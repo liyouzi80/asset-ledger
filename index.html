@@ -51,30 +51,28 @@
     </div>
     <div class="v2-kpi-grid">
       <div class="v2-kpi-card">
-        <div class="v2-kpi-card-header"><span class="v2-kpi-card-label">总资产</span><span class="v2-kpi-card-icon blue">💰</span></div>
+        <div class="v2-kpi-card-top"><span class="v2-kpi-card-label">总资产</span><span class="v2-kpi-card-icon blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M8 10h8M12 6c-1.5 2-1.5 6 0 8M12 6c1.5 2 1.5 6 0 8"/></svg></span></div>
         <div class="v2-kpi-card-value" id="v2-kpi-total">¥—</div>
         <div class="v2-kpi-card-delta" id="v2-kpi-total-delta"></div>
-        <div class="v2-waterline"><div class="fill" style="width:0%"></div></div>
         <div class="v2-kpi-card-insight" id="v2-kpi-total-insight">加载中…</div>
       </div>
       <div class="v2-kpi-card">
-        <div class="v2-kpi-card-header"><span class="v2-kpi-card-label">资产负债率</span><span class="v2-kpi-card-icon green">📊</span></div>
+        <div class="v2-kpi-card-top"><span class="v2-kpi-card-label">资产负债率</span><span class="v2-kpi-card-icon green"><svg viewBox="0 0 24 24"><rect x="4" y="14" width="3" height="7" rx="0.4"/><rect x="10.5" y="9" width="3" height="12" rx="0.4"/><rect x="17" y="4" width="3" height="17" rx="0.4"/></svg></span></div>
         <div class="v2-kpi-card-value" id="v2-kpi-ratio">—</div>
         <div class="v2-kpi-card-delta" id="v2-kpi-ratio-delta"></div>
         <div class="v2-waterline"><div class="fill" style="width:0%"></div></div>
         <div class="v2-kpi-card-insight" id="v2-kpi-ratio-insight">加载中…</div>
       </div>
       <div class="v2-kpi-card">
-        <div class="v2-kpi-card-header"><span class="v2-kpi-card-label">本月盈亏</span><span class="v2-kpi-card-icon green">📈</span></div>
+        <div class="v2-kpi-card-top"><span class="v2-kpi-card-label">本月盈亏</span><span class="v2-kpi-card-icon green"><svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><circle cx="21" cy="7" r="1.2"/></svg></span></div>
         <div class="v2-kpi-card-value" id="v2-kpi-pnl">—</div>
         <div class="v2-kpi-card-delta" id="v2-kpi-pnl-delta"></div>
         <div class="v2-kpi-card-insight" id="v2-kpi-pnl-insight">加载中…</div>
       </div>
       <div class="v2-kpi-card">
-        <div class="v2-kpi-card-header"><span class="v2-kpi-card-label">本月净流入</span><span class="v2-kpi-card-icon yellow">💸</span></div>
+        <div class="v2-kpi-card-top"><span class="v2-kpi-card-label">本月净流入</span><span class="v2-kpi-card-icon yellow"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="7" x2="12" y2="17"/><polyline points="9 14 12 17 15 14"/></svg></span></div>
         <div class="v2-kpi-card-value" id="v2-kpi-flow">—</div>
         <div class="v2-kpi-card-delta" id="v2-kpi-flow-delta"></div>
-        <div class="v2-waterline"><div class="fill" style="width:0%"></div></div>
         <div class="v2-kpi-card-insight" id="v2-kpi-flow-insight">加载中…</div>
       </div>
     </div>
@@ -94,7 +92,7 @@
       <div class="v2-section-head"><h2>资产明细</h2><div class="meta"><div class="v2-filter-group" id="v2-table-filter"><button class="active" data-tag="">全部</button><button data-tag="cash">流动资产</button><button data-tag="investment">投资资产</button></div></div></div>
       <div class="v2-table-card">
         <div class="v2-table-toolbar"><div class="v2-table-toolbar-left"><input class="v2-table-search" placeholder="搜索科目…"><span class="v2-row-select-count" id="v2-row-count"></span></div><div class="v2-table-toolbar-right"></div></div>
-        <div style="overflow-x:auto"><table class="v2-table"><thead><tr><th style="width:32px"><input type="checkbox"></th><th>科目</th><th>分类</th><th>性质</th><th style="text-align:right">余额</th><th style="text-align:right">上月</th><th style="text-align:right">环比</th><th style="text-align:right">占比</th><th style="width:100px">水位线</th></tr></thead><tbody id="v2-table-body"><tr><td colspan="9" style="text-align:center;color:var(--ink-4);padding:40px">加载中…</td></tr></tbody></table></div>
+        <div style="overflow-x:auto"><table class="v2-table"><thead><tr><th>科目</th><th>分类</th><th style="text-align:right">余额</th><th style="text-align:right">上月</th><th style="text-align:right">环比</th><th style="text-align:right">占比</th></tr></thead><tbody id="v2-table-body"><tr><td colspan="6" style="text-align:center;color:var(--ink-4);padding:40px">加载中…</td></tr></tbody></table></div>
         <div class="v2-table-footer"><span id="v2-table-page-info">第 1 页，共 1 页</span><div class="v2-pagination"><button disabled>‹</button><button class="active">1</button><button disabled>›</button></div></div>
       </div>
     </div>
@@ -5518,7 +5516,7 @@ let compactHeroObserver = null;
     var tbody = document.getElementById('v2-table-body');
     if (!tbody) return;
     var sorted = getSortedSnapshots();
-    if (!sorted || sorted.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--ink-4);padding:40px">暂无数据</td></tr>'; return; }
+    if (!sorted || sorted.length === 0) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--ink-4);padding:40px">暂无数据</td></tr>'; return; }
     var activeIds = getActiveAccountIds();
     var latest = sorted[sorted.length - 1];
     var prev = sorted.length >= 2 ? sorted[sorted.length - 2] : null;
@@ -5553,20 +5551,20 @@ let compactHeroObserver = null;
       var typeClass = a.type === 'liability' ? 'v2-badge-liability' : a.type === 'equity' ? 'v2-badge-equity' : 'v2-badge-asset';
       var tagClass = a.tag === 'investment' ? 'v2-badge-investment' : 'v2-badge-cash';
       var tagLabel = a.tag === 'investment' ? '投资' : '流动';
-      var waterlinePct = Math.min(95, pct);
+            var waterlinePct = Math.min(95, pct);
+      var momColor = momPct !== null ? (momPct >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--ink-3)';
+      var momText = momPct !== null ? (momPct >= 0 ? '+' : '') + momPct.toFixed(1) + '%' : '—';
+      var balanceColor = a.type === 'liability' ? 'var(--red)' : 'var(--ink)';
       rows += '<tr>' +
-        '<td><input type="checkbox" data-acc-id="' + escHtml(a.id) + '"></td>' +
-        '<td style="font-weight:500">' + escHtml(a.name) + '</td>' +
-        '<td>' + escHtml(a.group || '未分组') + '</td>' +
-        '<td><span class="v2-badge ' + typeClass + '">' + (typeLabels[a.type] || '资产') + '</span> <span class="v2-badge ' + tagClass + '">' + tagLabel + '</span></td>' +
-        '<td style="text-align:right;font-family:JetBrains Mono,monospace;font-weight:500;color:' + (balance >= 0 ? 'var(--ink)' : 'var(--red)') + '">¥' + Math.abs(balance).toLocaleString('zh-CN', {maximumFractionDigits:0}) + '</td>' +
+        '<td style="font-weight:500;' + (a.type === 'liability' ? 'color:var(--red)' : '') + '">' + escHtml(a.name) + '</td>' +
+        '<td><span class="v2-badge ' + tagClass + '">' + escHtml(a.group || '未分组') + '</span></td>' +
+        '<td style="text-align:right;font-family:JetBrains Mono,monospace;font-weight:500;color:' + balanceColor + '">¥' + Math.abs(balance).toLocaleString('zh-CN', {maximumFractionDigits:0}) + '</td>' +
         '<td style="text-align:right;font-family:JetBrains Mono,monospace;color:var(--ink-3)">' + (prevBalance !== null ? '¥' + Math.abs(prevBalance).toLocaleString('zh-CN', {maximumFractionDigits:0}) : '—') + '</td>' +
-        '<td style="text-align:right;font-family:JetBrains Mono,monospace;font-size:12px;color:' + (momPct !== null ? (momPct >= 0 ? 'var(--green)' : 'var(--red)') : 'var(--ink-3)') + '">' + (momPct !== null ? (momPct >= 0 ? '+' : '') + momPct.toFixed(1) + '%' : '—') + '</td>' +
+        '<td style="text-align:right;font-family:JetBrains Mono,monospace;font-size:12px;color:' + momColor + '">' + momText + '</td>' +
         '<td style="text-align:right;font-family:JetBrains Mono,monospace;color:var(--ink-3)">' + pct.toFixed(1) + '%</td>' +
-        '<td><div class="v2-waterline"><div class="fill" style="width:' + waterlinePct + '%"></div></div></td>' +
         '</tr>';
-    });
-    tbody.innerHTML = rows || '<tr><td colspan="9" style="text-align:center;color:var(--ink-4);padding:40px">暂无数据</td></tr>';
+	    });
+tbody.innerHTML = rows || '<tr><td colspan="6" style="text-align:center;color:var(--ink-4);padding:40px">暂无数据</td></tr>';
 
     // 表格行动画
     tbody.querySelectorAll('tr').forEach(function(tr, i) {

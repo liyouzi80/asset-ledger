@@ -88,41 +88,42 @@
   }
 
   /* =====================================================
-     素白 (Subai) · 素净瓷白主题
+     素白 (Subai) · Apple Design Language
+     白色浮卡 + 浅灰底 + 克制配色 + SF 风格排版
   ===================================================== */
   [data-theme="suba"] {
-    --bg:                #f8f9fc;
+    --bg:                #f2f2f7;
     --bg-1:              #ffffff;
-    --bg-2:              #f0f2f6;
-    --bg-3:              #e3e6ed;
-    --bg-glass:          rgba(255,255,255,0.88);
-    --ink:               #1a1f36;
-    --ink-2:             #374059;
-    --ink-3:             #6b7394;
-    --ink-4:             #9ca3b8;
-    --sep:               #e8ecf2;
-    --sep-strong:        #cdd3de;
-    --accent:            #4f5de4;
-    --accent-soft:       rgba(79,93,228,0.08);
-    --green:             #10b981;
-    --green-soft:        rgba(16,185,129,0.08);
-    --red:               #ef4444;
-    --red-soft:          rgba(239,68,68,0.08);
-    --yellow:            #f59e0b;
-    --orange:            #f97316;
-    --shadow-sm:         0 0 0 1px rgba(0,0,0,0.03);
-    --shadow-md:         0 1px 3px rgba(0,0,0,0.04), 0 4px 20px rgba(0,0,0,0.04);
-    --shadow-lg:         0 4px 16px rgba(0,0,0,0.04), 0 16px 48px rgba(0,0,0,0.05);
+    --bg-2:              #f5f5f7;
+    --bg-3:              #ebebf0;
+    --bg-glass:          rgba(242,242,247,0.76);
+    --ink:               #1d1d1f;
+    --ink-2:             #6e6e73;
+    --ink-3:             #aeaeb2;
+    --ink-4:             #c7c7cc;
+    --sep:               rgba(0,0,0,0.06);
+    --sep-strong:        rgba(0,0,0,0.10);
+    --accent:            #007AFF;
+    --accent-soft:       rgba(0,122,255,0.08);
+    --green:             #34C759;
+    --green-soft:        rgba(52,199,89,0.08);
+    --red:               #FF3B30;
+    --red-soft:          rgba(255,59,48,0.08);
+    --yellow:            #FF9500;
+    --orange:            #FF9500;
+    --shadow-sm:         0 1px 2px rgba(0,0,0,0.03), 0 0 0 0.5px rgba(0,0,0,0.04);
+    --shadow-md:         0 4px 16px rgba(0,0,0,0.05), 0 0 0 0.5px rgba(0,0,0,0.06);
+    --shadow-lg:         0 8px 32px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.06);
     --chart-grid:        rgba(0,0,0,0.04);
     --chart-tick:        rgba(0,0,0,0.35);
     --tooltip-bg:        #ffffff;
-    --accent-gradient:   linear-gradient(135deg, #4f5de4, #7c6ff7);
-    --accent-glow:       rgba(79,93,228,0.12);
-    --accent-purple:     #7c6ff7;
-    --card-highlight:    inset 0 0.5px 0 rgba(0,0,0,0.02);
-    --glow-blue:         rgba(79,93,228,0.03);
-    --glow-purple:       rgba(124,111,247,0.02);
-    --hero-gradient:     linear-gradient(180deg, #ffffff 0%, #f4f6fb 100%);
+    --accent-gradient:   linear-gradient(135deg, #007AFF, #5856D6);
+    --accent-glow:       rgba(0,122,255,0.10);
+    --accent-purple:     #5856D6;
+    --card-highlight:    inset 0 0.5px 0 rgba(0,0,0,0.04);
+    --glow-blue:         rgba(0,122,255,0.03);
+    --glow-purple:       rgba(88,86,214,0.02);
+    --hero-gradient:     var(--bg);
   }
 
 
