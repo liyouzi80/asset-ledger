@@ -149,15 +149,6 @@
 
 <div class="app">
 
-  <div class="compact-hero" id="compact-hero">
-    <div class="ch-toggle" id="ch-toggle">
-      <button data-view="all" class="active">总览</button>
-      <button data-view="investment">投资</button>
-    </div>
-    <div class="ch-label t-text-swap" id="ch-label-text">总资产</div>
-    <div class="ch-total" id="ch-total"><span class="ch-currency">¥</span>—</div>
-    <div class="ch-arrow">›</div>
-  </div>
 
   <header>
     <div class="brand" id="brand-home" style="cursor:pointer">
@@ -1903,15 +1894,8 @@ function navTo(page) {
   // 切换页面时关闭抽屉（清理趋势图）
   const drawer = document.getElementById('drawer');
   if (drawer && drawer.classList.contains('open')) closeDrawer();
-  // 滚动浮现 + 紧凑 Hero 重绑定
-  const compact = document.getElementById('compact-hero');
-  if (compact) compact.classList.toggle('visible', false);
   requestAnimationFrame(() => { requestAnimationFrame(initScrollReveal); });
   if (page === 'dashboard') {
-    requestAnimationFrame(() => {
-      const hero = document.querySelector('.hero-block');
-      if (hero && compactHeroObserver) compactHeroObserver.observe(hero);
-    });
   }
 }
 document.querySelectorAll('nav.nav button').forEach(b => {
@@ -3548,21 +3532,6 @@ function renderDashboard() {
   });
   // 鼠标离开图表时恢复当前总额
   totalCanvas.addEventListener('mouseleave', () => renderHeroValue(currentTotal));
-  // 紧凑 Hero 数据同步
-  (() => {
-    const el = document.getElementById('ch-total');
-    if (el) {
-      const disp = (currentTotal / 10000).toFixed(1);
-      el.innerHTML = '<span class="ch-currency">¥</span><span class="t-digit-group is-animating" id="ch-total-digits"></span><span style="font-size:12px;color:var(--ink-3)">万</span>';
-      setDigits(document.getElementById('ch-total-digits'), disp);
-    }
-    const label = document.querySelector('.compact-hero .ch-label');
-    if (label) swapText(label, isInvestmentView ? '投资资产' : '总资产');
-    document.querySelectorAll('.compact-hero .ch-toggle button').forEach(b => {
-      b.classList.toggle('active', b.dataset.view === (isInvestmentView ? 'investment' : 'all'));
-    });
-  })();
-
   // 饼图（仅活跃账户）
   const groupTotals = {};
   const pieGroupMap = {};
@@ -4984,40 +4953,6 @@ function initScrollReveal() {
   }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 }
-
-// ============ 紧凑 Hero · 滚动吸附 ============
-let compactHeroObserver = null;
-(function initCompactHero() {
-  const hero = document.querySelector('.hero-block');
-  const compact = document.getElementById('compact-hero');
-  if (!hero || !compact) return;
-
-  compactHeroObserver = new IntersectionObserver(([entry]) => {
-    compact.classList.toggle('visible', !entry.isIntersecting && entry.boundingClientRect.top < 0);
-  }, { threshold: 0 });
-  compactHeroObserver.observe(hero);
-
-  compact.addEventListener('click', (e) => {
-    if (e.target.closest('.ch-toggle')) return;
-    if (state.snapshots.length === 0) return;
-    openDrawer('assets');
-  });
-
-  compact.querySelectorAll('.ch-toggle button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const view = btn.dataset.view;
-      state.viewMode = view;
-      document.getElementById('view-toggle').querySelectorAll('button').forEach(b => {
-        b.classList.toggle('active', b.dataset.view === view);
-      });
-      compact.querySelectorAll('.ch-toggle button').forEach(b => {
-        b.classList.toggle('active', b.dataset.view === view);
-      });
-      destroyCharts();
-      renderDashboard();
-    });
-  });
-})();
 
 // ============================================================
 // V2 · 素白主题 JS
