@@ -143,7 +143,7 @@
   background: var(--accent); color: #fff;
   box-shadow: 0 2px 6px rgba(0,122,255,0.2);
 }
-.v2-btn-primary:hover { filter: brightness(1.08); }
+.v2-btn-primary:hover { background: #0068d9; }
 .v2-btn-ghost {
   background: #fff; color: var(--ink-2);
   box-shadow: 0 0 0 0.5px rgba(0,0,0,0.08);
@@ -160,7 +160,7 @@
 }
 .v2-kpi-card {
   background: var(--card, #fff);
-  border-radius: 14px;
+  border-radius: 18px;
   padding: 22px 24px 20px;
   box-shadow: var(--shadow-sm);
   display: flex; flex-direction: column; gap: 10px;
@@ -197,8 +197,9 @@
 
 /* Value */
 .v2-kpi-card-value {
-  font-family: 'JetBrains Mono', 'SF Mono', monospace;
-  font-size: 26px; font-weight: 550; letter-spacing: -0.025em;
+  font-family: 'Inter', -apple-system, 'SF Pro Display', 'PingFang SC', sans-serif;
+  font-size: 28px; font-weight: 600; letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
 }
 /* Delta — text only, no pill */
@@ -401,21 +402,21 @@
 
 /* ── 录入/历史页保留 ── */
 [data-theme="suba"] .group-section {
-  border: 1px solid var(--sep); border-radius: 12px;
+  border: 0.5px solid var(--sep); border-radius: 12px;
   box-shadow: var(--shadow-sm); overflow: hidden;
 }
 [data-theme="suba"] .group-title-bar {
-  background: var(--bg-2); border-bottom: 1px solid var(--sep);
+  background: var(--bg-2); border-bottom: 0.5px solid var(--sep);
 }
 [data-theme="suba"] .history-search {
-  border: 1px solid var(--sep); border-radius: 16px;
+  border: 0.5px solid var(--sep); border-radius: 16px;
   padding: 6px 14px; background: #fff;
 }
 [data-theme="suba"] .history-toolbar {
   background: transparent; border: none; padding: 0; margin-bottom: 20px;
 }
 [data-theme="suba"] .table-card {
-  border: 1px solid var(--sep); border-radius: 14px;
+  border: 0.5px solid var(--sep); border-radius: 14px;
   box-shadow: var(--shadow-sm); overflow: hidden;
 }
 [data-theme="suba"] .drawer {
