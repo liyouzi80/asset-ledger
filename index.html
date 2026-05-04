@@ -54,26 +54,26 @@
         <div class="v2-kpi-card-top"><span class="v2-kpi-card-label">总资产</span><span class="v2-kpi-card-icon blue"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6v12M8 10h8M12 6c-1.5 2-1.5 6 0 8M12 6c1.5 2 1.5 6 0 8"/></svg></span></div>
         <div class="v2-kpi-card-value" id="v2-kpi-total">¥—</div>
         <div class="v2-kpi-card-delta" id="v2-kpi-total-delta"></div>
-        <div class="v2-kpi-card-insight" id="v2-kpi-total-insight">加载中…</div>
+        <div class="v2-kpi-card-insight t-text-swap" id="v2-kpi-total-insight">加载中…</div>
       </div>
       <div class="v2-kpi-card">
         <div class="v2-kpi-card-top"><span class="v2-kpi-card-label">资产负债率</span><span class="v2-kpi-card-icon green"><svg viewBox="0 0 24 24"><rect x="4" y="14" width="3" height="7" rx="0.4"/><rect x="10.5" y="9" width="3" height="12" rx="0.4"/><rect x="17" y="4" width="3" height="17" rx="0.4"/></svg></span></div>
         <div class="v2-kpi-card-value" id="v2-kpi-ratio">—</div>
         <div class="v2-kpi-card-delta" id="v2-kpi-ratio-delta"></div>
         <div class="v2-waterline"><div class="fill" style="width:0%"></div></div>
-        <div class="v2-kpi-card-insight" id="v2-kpi-ratio-insight">加载中…</div>
+        <div class="v2-kpi-card-insight t-text-swap" id="v2-kpi-ratio-insight">加载中…</div>
       </div>
       <div class="v2-kpi-card">
         <div class="v2-kpi-card-top"><span class="v2-kpi-card-label">本月盈亏</span><span class="v2-kpi-card-icon green"><svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 7"/><circle cx="21" cy="7" r="1.2"/></svg></span></div>
         <div class="v2-kpi-card-value" id="v2-kpi-pnl">—</div>
         <div class="v2-kpi-card-delta" id="v2-kpi-pnl-delta"></div>
-        <div class="v2-kpi-card-insight" id="v2-kpi-pnl-insight">加载中…</div>
+        <div class="v2-kpi-card-insight t-text-swap" id="v2-kpi-pnl-insight">加载中…</div>
       </div>
       <div class="v2-kpi-card">
         <div class="v2-kpi-card-top"><span class="v2-kpi-card-label">本月净流入</span><span class="v2-kpi-card-icon yellow"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="7" x2="12" y2="17"/><polyline points="9 14 12 17 15 14"/></svg></span></div>
         <div class="v2-kpi-card-value" id="v2-kpi-flow">—</div>
         <div class="v2-kpi-card-delta" id="v2-kpi-flow-delta"></div>
-        <div class="v2-kpi-card-insight" id="v2-kpi-flow-insight">加载中…</div>
+        <div class="v2-kpi-card-insight t-text-swap" id="v2-kpi-flow-insight">加载中…</div>
       </div>
     </div>
     <div class="v2-section">
@@ -82,7 +82,7 @@
     </div>
     <div class="v2-section">
       <div class="v2-section-head"><h2>收益率走势</h2><div class="meta"><div class="v2-filter-group" id="v2-returns-indicator"><button class="active" data-indicator="twr">TWR</button><button data-indicator="simple">简单</button><button data-indicator="pnl">盈亏额</button><button data-indicator="xirr">XIRR</button></div></div></div>
-      <div class="v2-chart-card"><div style="position:relative;height:260px"><canvas id="v2-chart-returns"></canvas></div><div style="font-size:12px;color:var(--ink-4);margin-top:12px" id="v2-returns-caption">TWR 累计收益率剔除入金/出金影响</div></div>
+      <div class="v2-chart-card"><div style="position:relative;height:260px"><canvas id="v2-chart-returns"></canvas></div><div class="t-text-swap" style="font-size:12px;color:var(--ink-4);margin-top:12px" id="v2-returns-caption">TWR 累计收益率剔除入金/出金影响</div></div>
     </div>
     <div class="v2-section">
       <div class="v2-section-head"><h2>盈亏分析</h2></div>
@@ -4974,6 +4974,21 @@ function initScrollReveal() {
       if (targetId) {
         const el = document.getElementById(targetId);
         if (el) el.click();
+        // 本地备份：同步 V2 标记并应用弹出动画
+        if (action === 'enable-local-backup') {
+          setTimeout(() => {
+            const v1Status = document.getElementById('backup-status');
+            const v2Status = document.getElementById('v2-backup-status');
+            if (v1Status && v2Status && v1Status.style.display !== 'none') {
+              v2Status.style.display = '';
+              v2Status.classList.add('t-badge-dot', 'is-animating');
+              v2Status.addEventListener('animationend', function h() {
+                v2Status.classList.remove('is-animating');
+                v2Status.removeEventListener('animationend', h);
+              }, { once: true });
+            }
+          }, 300);
+        }
       }
     });
   });
@@ -5068,6 +5083,15 @@ function initScrollReveal() {
   window.populateV2Dashboard = populateV2Dashboard;
   function populateV2Dashboard() {
     try {
+      // 文字过渡辅助
+      var swapText = function(el, text) {
+        if (!el || el.textContent === text) return;
+        el.classList.add('is-swapping');
+        el.textContent = text;
+        void el.offsetHeight;
+        el.classList.remove('is-swapping');
+      };
+
       const sorted = getSortedSnapshots();
       if (!sorted || sorted.length === 0) { console.warn('v2: no sorted snapshots'); return; }
 
@@ -5090,14 +5114,14 @@ function initScrollReveal() {
         const cls = deltaPct >= 0 ? 'up' : 'down';
         const sign = deltaPct >= 0 ? '+' : '';
         deltaEl.className = 'v2-kpi-card-delta ' + cls;
-        deltaEl.innerHTML = (deltaPct >= 0 ? '▲' : '▼') + ' ' + sign + deltaPct.toFixed(1) + '%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span>';
+        deltaEl.innerHTML = (deltaPct >= 0 ? '<svg style="vertical-align:-0.12em" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>' : '<svg style="vertical-align:-0.12em" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>') + ' ' + sign + deltaPct.toFixed(1) + '%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span>';
       } else {
         deltaEl.innerHTML = '';
       }
       const waterline = totalEl.closest('.v2-kpi-card').querySelector('.v2-waterline .fill');
       if (waterline) waterline.style.width = '72%';
       const insight = document.getElementById('v2-kpi-total-insight');
-      if (insight) insight.textContent = prevTotal && total >= prevTotal ? '资产持续增长' : '截至 ' + latest.month;
+      if (insight) swapText(insight, prevTotal && total >= prevTotal ? '资产持续增长' : '截至 ' + latest.month);
     }
 
     // 资产负债率
@@ -5119,12 +5143,12 @@ function initScrollReveal() {
         const cls = deltaPp <= 0 ? 'down' : 'up';
         const sign = deltaPp <= 0 ? '' : '+';
         deltaEl.className = 'v2-kpi-card-delta ' + cls;
-        deltaEl.innerHTML = (deltaPp <= 0 ? '▼' : '▲') + ' ' + sign + deltaPp.toFixed(1) + '%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span>';
+        deltaEl.innerHTML = (deltaPp <= 0 ? '<svg style="vertical-align:-0.12em" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>' : '<svg style="vertical-align:-0.12em" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>') + ' ' + sign + deltaPp.toFixed(1) + '%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span>';
       }
       const waterline = ratioEl.closest('.v2-kpi-card').querySelector('.v2-waterline .fill');
       if (waterline) waterline.style.width = Math.min(95, ratio) + '%';
       const insight = document.getElementById('v2-kpi-ratio-insight');
-      if (insight) insight.textContent = ratio < 50 ? '负债率处于健康区间（< 50%）' : ratio < 70 ? '负债率偏高，建议关注' : '负债率较高，需注意风险';
+      if (insight) swapText(insight, ratio < 50 ? '负债率处于健康区间（< 50%）' : ratio < 70 ? '负债率偏高，建议关注' : '负债率较高，需注意风险');
     }
 
     // 本月盈亏
@@ -5137,10 +5161,10 @@ function initScrollReveal() {
       if (deltaEl) {
         deltaEl.className = 'v2-kpi-card-delta ' + (pnl >= 0 ? 'up' : 'down');
         const pnlPct = prevTotal > 0 ? (pnl / prevTotal * 100) : 0;
-        deltaEl.innerHTML = (pnl >= 0 ? '▲' : '▼') + ' ' + (pnl >= 0 ? '+' : '') + pnlPct.toFixed(1) + '%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span>';
+        deltaEl.innerHTML = (pnl >= 0 ? '<svg style="vertical-align:-0.12em" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>' : '<svg style="vertical-align:-0.12em" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>') + ' ' + (pnl >= 0 ? '+' : '') + pnlPct.toFixed(1) + '%<span style="color:var(--ink-4);font-weight:400;margin-left:4px">较上月</span>';
       }
       const insightEl = document.getElementById('v2-kpi-pnl-insight');
-      if (insightEl) insightEl.textContent = pnl >= 0 ? '本月实现盈利' : '本月出现亏损';
+      if (insightEl) swapText(insightEl, pnl >= 0 ? '本月实现盈利' : '本月出现亏损');
     }
 
     // 本月净流入
@@ -5154,10 +5178,8 @@ function initScrollReveal() {
         deltaEl.className = 'v2-kpi-card-delta neutral';
         deltaEl.innerHTML = '● 本月统计';
       }
-      const waterline = flowEl.closest('.v2-kpi-card').querySelector('.v2-waterline .fill');
-      if (waterline) waterline.style.width = '45%';
       const insight = document.getElementById('v2-kpi-flow-insight');
-      if (insight) insight.textContent = flow > 0 ? '本月净流入为正' : flow < 0 ? '本月净流出' : '无净流入/流出';
+      if (insight) swapText(insight, flow > 0 ? '本月净流入为正' : flow < 0 ? '本月净流出' : '无净流入/流出');
     }
 
     // V2 图表 + 表格
@@ -5190,7 +5212,7 @@ function initScrollReveal() {
     var cBg     = cs.getPropertyValue('--bg-1').trim()   || '#fafafa';
 
     Chart.defaults.color = cMute;
-    Chart.defaults.font.family = "'Inter', -apple-system, sans-serif";
+    Chart.defaults.font.family = "'SF Pro Display', -apple-system, 'PingFang SC', sans-serif";
     Chart.defaults.font.size = 12;
 
     // --- 总资产曲线 ---
@@ -5443,6 +5465,13 @@ function initScrollReveal() {
       btn.classList.add('active');
       v2ReturnsSeries = buildV2ReturnsSeries();
       renderV2ReturnsChart(btn.dataset.indicator);
+      // text-swap: 指标说明文案过渡
+      var captionEl = document.getElementById('v2-returns-caption');
+      if (captionEl) {
+        captionEl.classList.add('is-swapping');
+        void captionEl.offsetHeight;
+        captionEl.classList.remove('is-swapping');
+      }
     });
   }
 
@@ -5493,10 +5522,10 @@ function initScrollReveal() {
       rows += '<tr>' +
         '<td style="font-weight:500;' + (a.type === 'liability' ? 'color:var(--red)' : '') + '">' + escHtml(a.name) + '</td>' +
         '<td><span class="v2-badge ' + tagClass + '">' + escHtml(a.group || '未分组') + '</span></td>' +
-        '<td style="text-align:right;font-family:JetBrains Mono,monospace;font-weight:500;color:' + balanceColor + '">¥' + Math.abs(balance).toLocaleString('zh-CN', {maximumFractionDigits:0}) + '</td>' +
-        '<td style="text-align:right;font-family:JetBrains Mono,monospace;color:var(--ink-3)">' + (prevBalance !== null ? '¥' + Math.abs(prevBalance).toLocaleString('zh-CN', {maximumFractionDigits:0}) : '—') + '</td>' +
-        '<td style="text-align:right;font-family:JetBrains Mono,monospace;font-size:12px;color:' + momColor + '">' + momText + '</td>' +
-        '<td style="text-align:right;font-family:JetBrains Mono,monospace;color:var(--ink-3)">' + pct.toFixed(1) + '%</td>' +
+        '<td style="text-align:right;font-family:var(--font-mono);font-weight:500;color:' + balanceColor + '">¥' + Math.abs(balance).toLocaleString('zh-CN', {maximumFractionDigits:0}) + '</td>' +
+        '<td style="text-align:right;font-family:var(--font-mono);color:var(--ink-3)">' + (prevBalance !== null ? '¥' + Math.abs(prevBalance).toLocaleString('zh-CN', {maximumFractionDigits:0}) : '—') + '</td>' +
+        '<td style="text-align:right;font-family:var(--font-mono);font-size:12px;color:' + momColor + '">' + momText + '</td>' +
+        '<td style="text-align:right;font-family:var(--font-mono);color:var(--ink-3)">' + pct.toFixed(1) + '%</td>' +
         '</tr>';
 	    });
 tbody.innerHTML = rows || '<tr><td colspan="6" style="text-align:center;color:var(--ink-4);padding:40px">暂无数据</td></tr>';
@@ -5509,6 +5538,8 @@ tbody.innerHTML = rows || '<tr><td colspan="6" style="text-align:center;color:va
     // 分页信息
     var pageInfo = document.getElementById('v2-table-page-info');
     if (pageInfo) pageInfo.textContent = '共 ' + accounts.length + ' 行';
+    var rowCount = document.getElementById('v2-row-count');
+    if (rowCount) rowCount.textContent = accounts.length + ' 行';
   }
 
   // 导出 CSV 按钮

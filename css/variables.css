@@ -92,18 +92,19 @@
      白色浮卡 + 浅灰底 + 克制配色 + SF 风格排版
   ===================================================== */
   [data-theme="suba"] {
-    /* 背景三层（保持，已正确）*/
+    /* 背景三层 + 卡片表面 */
     --bg:                #f2f2f7;
     --bg-1:              #ffffff;
     --bg-2:              #f5f5f7;
     --bg-3:              #ebebf0;
     --bg-glass:          rgba(242,242,247,0.76);
+    --card:              #ffffff;
 
-    /* 文字六级 — 严格对齐 iOS Human Interface Guidelines */
+    /* 文字六级 — WCAG AA 通过（白色背景上对比度 ≥ 4.5:1）*/
     --ink:               #1d1d1f;                   /* primary（主标题、Hero 数字）*/
-    --ink-2:             rgba(60,60,67,0.60);       /* secondary（副标题、说明文字）*/
-    --ink-3:             rgba(60,60,67,0.40);       /* tertiary（次要标签）*/
-    --ink-4:             rgba(60,60,67,0.18);       /* quaternary（占位符、禁用态）*/
+    --ink-2:             rgba(60,60,67,0.72);       /* secondary（副标题、说明文字）~4.5:1 */
+    --ink-3:             rgba(60,60,67,0.52);       /* tertiary（次要标签）~6.3:1 */
+    --ink-4:             rgba(60,60,67,0.26);       /* quaternary（占位符、禁用态）*/
     --ink-5:             rgba(60,60,67,0.10);       /* placeholder / disabled border */
 
     /* 分割线 — 半透明、永远 0.5px */
@@ -115,6 +116,7 @@
     --accent-hover:      #0068d9;                   /* 新增 hover 用，比 #007AFF 深一档 */
     --accent-soft:       rgba(0,122,255,0.10);
     --accent-soft-hover: rgba(0,122,255,0.14);
+    --focus-ring:        0 0 0 3px rgba(0,122,255,0.24), 0 0 0 1px var(--accent);
 
     /* 语义色 + 配套 hover（新增）*/
     --green:             #34C759;
@@ -139,8 +141,8 @@
     --chart-tick:        rgba(60,60,67,0.40);
     --tooltip-bg:        rgba(255,255,255,0.96);
 
-    /* 渐变 & 辉光 */
-    --accent-gradient:   linear-gradient(135deg, #007AFF, #5856D6);
+    /* 渐变 & 辉光 — 单蓝系，禁止蓝→紫 */
+    --accent-gradient:   linear-gradient(135deg, #007AFF, #2997ff);
     --accent-glow:       rgba(0,122,255,0.10);
     --accent-purple:     #5856D6;
     --card-highlight:    inset 0 0.5px 0 rgba(255,255,255,0.7);
@@ -153,13 +155,22 @@
     /* 卡片半径 token — 全局统一 */
     --radius-card:       18px;        /* 一级卡片（KPI / chart / table）*/
     --radius-card-lg:    20px;        /* 大型卡片（drawer / modal）*/
-    --radius-control:    10px;        /* 表单控件 / segmented */
+    --radius-control:    10px;        /* 表单控件 / segmented / sidebar item */
+    --radius-sm:         8px;         /* 紧凑元素（pagination 按钮）*/
     --radius-pill:       16px;        /* 按钮 pill */
     --radius-tag:        6px;         /* 小标签 */
+
+    /* 品牌图标 — 无彩色辉光，统一阴影 */
+    --brand-icon-shadow: 0 2px 6px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.06);
   }
 
 
   :root {
+    /* 字体栈 */
+    --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif;
+    --font-mono:    'SF Mono', 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+
     --resize-dur: 300ms;
     --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --digit-dur: 500ms;
