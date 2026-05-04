@@ -5092,6 +5092,30 @@ function initScrollReveal() {
         el.classList.remove('is-swapping');
       };
 
+      // 数字弹入动画
+      var animateKpiValue = function(el, newText) {
+        if (!el || el.textContent === newText) return;
+        var chars = newText.split('');
+        var html = '';
+        var stagger = 0;
+        for (var i = 0; i < chars.length; i++) {
+          if (chars[i] === ' ' || chars[i] === ',') {
+            html += '<span class="t-digit">' + chars[i] + '</span>';
+          } else {
+            html += '<span class="t-digit" data-stagger="' + stagger + '">' + chars[i] + '</span>';
+            stagger++;
+          }
+        }
+        el.classList.add('t-digit-group');
+        el.innerHTML = html;
+        void el.offsetHeight;
+        el.classList.add('is-animating');
+        el.addEventListener('animationend', function h() {
+          el.classList.remove('is-animating');
+          el.removeEventListener('animationend', h);
+        }, { once: true });
+      };
+
       const sorted = getSortedSnapshots();
       if (!sorted || sorted.length === 0) { console.warn('v2: no sorted snapshots'); return; }
 
@@ -5107,7 +5131,7 @@ function initScrollReveal() {
     // 总资产
     const totalEl = document.getElementById('v2-kpi-total');
     if (totalEl) {
-      totalEl.textContent = '¥' + total.toLocaleString('zh-CN', { maximumFractionDigits: 0 });
+      animateKpiValue(totalEl, '¥' + total.toLocaleString('zh-CN', { maximumFractionDigits: 0 }));
       const deltaEl = document.getElementById('v2-kpi-total-delta');
       if (deltaEl && prevTotal && prevTotal > 0) {
         const deltaPct = ((total - prevTotal) / prevTotal * 100);
@@ -5136,7 +5160,7 @@ function initScrollReveal() {
 
     const ratioEl = document.getElementById('v2-kpi-ratio');
     if (ratioEl) {
-      ratioEl.textContent = ratio.toFixed(1) + '%';
+      animateKpiValue(ratioEl, ratio.toFixed(1) + '%');
       const deltaEl = document.getElementById('v2-kpi-ratio-delta');
       if (deltaEl && prev) {
         const deltaPp = ratio - prevRatio;
@@ -5155,7 +5179,7 @@ function initScrollReveal() {
     const pnlEl = document.getElementById('v2-kpi-pnl');
     if (pnlEl) {
       const sign = pnl >= 0 ? '+' : '';
-      pnlEl.textContent = sign + '¥' + Math.abs(Math.round(pnl)).toLocaleString('zh-CN');
+      animateKpiValue(pnlEl, sign + '¥' + Math.abs(Math.round(pnl)).toLocaleString('zh-CN'));
       pnlEl.style.color = pnl >= 0 ? 'var(--green)' : 'var(--red)';
       const deltaEl = document.getElementById('v2-kpi-pnl-delta');
       if (deltaEl) {
@@ -5171,7 +5195,7 @@ function initScrollReveal() {
     const flowEl = document.getElementById('v2-kpi-flow');
     if (flowEl) {
       const sign = flow >= 0 ? '+' : '';
-      flowEl.textContent = sign + '¥' + Math.abs(Math.round(flow)).toLocaleString('zh-CN');
+      animateKpiValue(flowEl, sign + '¥' + Math.abs(Math.round(flow)).toLocaleString('zh-CN'));
       flowEl.style.color = flow >= 0 ? 'var(--ink)' : 'var(--red)';
       const deltaEl = document.getElementById('v2-kpi-flow-delta');
       if (deltaEl) {

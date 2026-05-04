@@ -12,6 +12,8 @@
     --bg-2:        #191a1b;
     --bg-3:        #28282c;
     --bg-glass:    rgba(15,16,17,0.85);
+    --card:        #0f1011;
+    --card-hover:  #141416;
     /* 前景 · near-white 防眼疲劳 */
     --ink:         #f7f8f8;
     --ink-2:       #d0d6e0;
@@ -20,8 +22,9 @@
     /* 分割线 · 半透明白 */
     --sep:         rgba(255,255,255,0.05);
     --sep-strong:  rgba(255,255,255,0.08);
-    /* 强调色 · Linear 招牌 indigo-violet */
+    /* 强调色 · Linear 招牌 indigo — 单色系渐变，无紫色漂移 */
     --accent:      #5e6ad2;
+    --accent-hover: #4f5bc0;
     --accent-soft: rgba(94,106,210,0.14);
     /* 语义色 */
     --green:       #27a644;
@@ -30,22 +33,24 @@
     --red-soft:    rgba(248,113,113,0.13);
     --yellow:      #fbbf24;
     --orange:      #fb923c;
-    /* 阴影 · 暗面亮度递进代替传统 drop shadow */
-    --shadow-sm:   0 1px 2px rgba(0,0,0,0.25);
-    --shadow-md:   0 4px 24px rgba(0,0,0,0.35);
-    --shadow-lg:   0 20px 60px rgba(0,0,0,0.50);
+    /* 阴影 · 背景色调着色，无纯黑 */
+    --shadow-sm:   0 1px 2px rgba(0,2,8,0.45);
+    --shadow-md:   0 4px 24px rgba(0,2,8,0.55), 0 1px 4px rgba(0,0,0,0.30);
+    --shadow-lg:   0 20px 60px rgba(0,2,8,0.65), 0 4px 16px rgba(0,0,0,0.40);
     /* 图表 */
     --chart-grid:  rgba(255,255,255,0.04);
     --chart-tick:  rgba(255,255,255,0.25);
     --tooltip-bg:  #191a1b;
-    /* 渐变 & 辉光 */
-    --accent-gradient: linear-gradient(135deg, #5e6ad2, #7170ff);
-    --accent-glow:     rgba(94,106,210,0.22);
-    --accent-purple:   #7170ff;
+    /* 渐变 & 辉光 — 单色系 indigo，无紫色 */
+    --accent-gradient: linear-gradient(135deg, #5e6ad2, #6b78e0);
+    --accent-glow:     rgba(94,106,210,0.16);
     --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.06);
-    --glow-blue:       rgba(94,106,210,0.05);
-    --glow-purple:     rgba(113,112,255,0.03);
+    --glow-blue:       rgba(94,106,210,0.04);
+    --glow-purple:     rgba(94,106,210,0.02);
     --hero-gradient:   linear-gradient(135deg, #0f1011 0%, #191a1b 100%);
+    /* 交互 */
+    --focus-ring:      0 0 0 3px rgba(94,106,210,0.28), 0 0 0 1px var(--accent);
+    --brand-icon-shadow: 0 2px 8px rgba(0,0,0,0.50), 0 0 0 0.5px rgba(255,255,255,0.06);
   }
 
   /* =====================================================
@@ -53,11 +58,13 @@
      灵感来源: Apple.com — 留白为主、SF 风格、蓝黑克制
   ===================================================== */
   [data-theme="light"] {
-    --bg:          #ffffff;
-    --bg-1:        #f5f5f7;
+    --bg:          #f5f5f7;
+    --bg-1:        #ffffff;
     --bg-2:        #e8e8ed;
     --bg-3:        #dcdce0;
     --bg-glass:    rgba(255,255,255,0.76);
+    --card:        #ffffff;
+    --card-hover:  #fafafa;
     --ink:         #1d1d1f;
     --ink-2:       rgba(29,29,31,0.82);
     --ink-3:       #6e6e73;
@@ -65,6 +72,7 @@
     --sep:         #d2d2d7;
     --sep-strong:  #86868b;
     --accent:      #0071e3;
+    --accent-hover: #005cbf;
     --accent-soft: rgba(0,113,227,0.10);
     --green:       #34c759;
     --green-soft:  rgba(52,199,89,0.10);
@@ -72,19 +80,21 @@
     --red-soft:    rgba(255,59,48,0.10);
     --yellow:      #ff9500;
     --orange:      #ff9f0a;
-    --shadow-sm:   0 1px 2px rgba(0,0,0,0.04), 0 1px 3px rgba(0,0,0,0.03);
-    --shadow-md:   0 4px 24px rgba(0,0,0,0.05), 0 1px 8px rgba(0,0,0,0.03);
-    --shadow-lg:   0 20px 60px rgba(0,0,0,0.08), 0 4px 24px rgba(0,0,0,0.04);
+    --shadow-sm:   0 1px 2px rgba(0,60,120,0.06), 0 1px 3px rgba(0,0,0,0.03);
+    --shadow-md:   0 4px 24px rgba(0,60,120,0.07), 0 1px 8px rgba(0,0,0,0.03);
+    --shadow-lg:   0 20px 60px rgba(0,60,120,0.09), 0 4px 24px rgba(0,0,0,0.04);
     --chart-grid:  rgba(0,0,0,0.04);
     --chart-tick:  rgba(0,0,0,0.35);
     --tooltip-bg:  #ffffff;
     --accent-gradient: linear-gradient(135deg, #0071e3, #2997ff);
-    --accent-glow:     rgba(0,113,227,0.14);
+    --accent-glow:     rgba(0,113,227,0.12);
     --accent-purple:   #2997ff;
     --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.7);
     --glow-blue:       rgba(0,113,227,0.04);
-    --glow-purple:     rgba(41,151,255,0.02);
-    --hero-gradient:   var(--bg-1);
+    --glow-purple:     rgba(0,113,227,0.02);
+    --hero-gradient:   linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%);
+    --focus-ring:      0 0 0 3px rgba(0,113,227,0.18), 0 0 0 1px var(--accent);
+    --brand-icon-shadow: 0 2px 8px rgba(0,90,180,0.18), 0 0 0 0.5px rgba(0,0,0,0.06);
   }
 
   /* =====================================================
@@ -152,24 +162,33 @@
     /* Hero 渐变 — 不再退化为纯色，加入轻微渐变让其浮起 */
     --hero-gradient:     linear-gradient(180deg, #ffffff 0%, #fafafc 100%);
 
-    /* 卡片半径 token — 全局统一 */
-    --radius-card:       18px;        /* 一级卡片（KPI / chart / table）*/
-    --radius-card-lg:    20px;        /* 大型卡片（drawer / modal）*/
-    --radius-control:    10px;        /* 表单控件 / segmented / sidebar item */
-    --radius-sm:         8px;         /* 紧凑元素（pagination 按钮）*/
-    --radius-pill:       16px;        /* 按钮 pill */
-    --radius-tag:        6px;         /* 小标签 */
-
     /* 品牌图标 — 无彩色辉光，统一阴影 */
     --brand-icon-shadow: 0 2px 6px rgba(0,0,0,0.06), 0 0 0 0.5px rgba(0,0,0,0.06);
   }
 
 
   :root {
-    /* 字体栈 */
-    --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
-    --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif;
+    /* 字体栈 — 高端无衬线，禁止 Inter */
+    --font-body:    'Geist', 'Outfit', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
+    --font-display: 'Geist', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif;
     --font-mono:    'SF Mono', 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+
+    /* 圆角 — 全局统一，不随主题变化 */
+    --radius-card:    18px;
+    --radius-card-lg: 20px;
+    --radius-control: 10px;
+    --radius-sm:       8px;
+    --radius-pill:    16px;
+    --radius-tag:      6px;
+
+    /* Z-index 层次 */
+    --z-base:      0;
+    --z-content:   1;
+    --z-dropdown:  10;
+    --z-sticky:    50;
+    --z-overlay:   100;
+    --z-modal:     200;
+    --z-toast:     500;
 
     --resize-dur: 300ms;
     --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
