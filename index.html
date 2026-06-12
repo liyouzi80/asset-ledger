@@ -91,6 +91,12 @@
 
   <!-- 概览 -->
   <section id="page-dashboard" class="page active">
+    <div class="dashboard-empty">
+      <span class="empty-brand">¥</span>
+      <h2>开始记录你的资产</h2>
+      <p>每月录入一次各账户余额，自动生成净值、盈亏与收益率分析。<br>所有数据端到端加密，只有你能看到。</p>
+      <button class="btn" id="empty-start-btn">录入第一笔快照</button>
+    </div>
     <div class="hero-block">
       <div class="hero-bg-1"></div>
       <div class="hero-bg-2"></div>
@@ -239,8 +245,7 @@
         </div>
       </div>
       <div class="hint">
-        每个月份对应一份快照，同月内多次更新即覆盖此月数据。<br>
-        <em>余额</em>一律输入正数，系统按账户性质自动处理。未填写则<em>沿用上月</em>。<em>净入金</em>本月转入此账户的金额（出金为负）
+        每月一份快照，重复保存覆盖当月 · 余额输入正数，留空<em>沿用上月</em> · <em>净入金</em>为本月转入（出金为负）
       </div>
       <div>
         <button class="btn btn-ghost btn-sm" id="entry-prefill">复制上月</button>

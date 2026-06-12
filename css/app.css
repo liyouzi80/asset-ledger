@@ -1075,8 +1075,8 @@
   .trend-arrow.dn  { color: var(--red); }
   .trend-arrow.flat{ color: var(--ink-4); }
 
-  .pnl-bg.pos { background: var(--green-soft); }
-  .pnl-bg.neg { background: var(--red-soft); }
+  /* 盈亏数字：文字着色 + 半粗，不用整格底色 */
+  .data-table td.pos, .data-table td.neg { font-weight: 600; }
 
   .data-table {
     width: 100%;
@@ -1276,6 +1276,21 @@
     transition: color 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
   }
   .icon-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+  /* 行级/组级次级操作：悬停设备上默认隐去，hover 或键盘聚焦时显现 */
+  @media (hover: hover) and (pointer: fine) {
+    .data-table td .icon-btn,
+    .group-actions,
+    .entry-row .row-actions {
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+    .data-table tr:hover .icon-btn,
+    .data-table tr:focus-within .icon-btn,
+    .group-title-bar:hover .group-actions,
+    .group-title-bar:focus-within .group-actions,
+    .entry-row:hover .row-actions,
+    .entry-row:focus-within .row-actions { opacity: 1; }
+  }
   .icon-btn.danger:hover { color: var(--red); border-color: var(--red); background: var(--red-soft); }
 
   .entry-row {
@@ -1371,8 +1386,10 @@
     font-family: var(--font-mono);
     font-size: var(--fs-sub);
     text-align: right;
-    color: var(--ink-4);
+    color: var(--ink-3);
     font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    align-self: center;
   }
   .entry-row .row-actions {
     display: flex;
@@ -1549,13 +1566,14 @@
   .lock-warning {
     margin-top: 20px;
     padding: 14px 16px;
-    background: rgba(255,159,10,0.1);
+    background: var(--bg-2);
     border-radius: var(--radius-md);
     font-size: var(--fs-sub);
     color: var(--ink-3);
     line-height: 1.55;
-    border: 1px solid rgba(255,159,10,0.2);
+    border: 0.5px solid var(--sep);
   }
+  .lock-warning strong { color: var(--ink-2); }
   .lock-mode-tabs {
     display: flex;
     background: var(--bg-2);
@@ -1807,6 +1825,44 @@
     gap: 12px;
   }
   footer .actions { display: flex; gap: 16px; flex-wrap: wrap; }
+  /* =====================================================
+     概览页空状态（首次使用引导）
+  ===================================================== */
+  .dashboard-empty { display: none; }
+  #page-dashboard.is-empty > *:not(.dashboard-empty) { display: none; }
+  #page-dashboard.is-empty .dashboard-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 12vh 24px 14vh;
+  }
+  .dashboard-empty .empty-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--fs-display);
+    font-weight: 700;
+    border-radius: var(--radius-card);
+    margin-bottom: 24px;
+  }
+  .dashboard-empty h2 {
+    font-size: var(--fs-title-2);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 10px;
+  }
+  .dashboard-empty p {
+    font-size: var(--fs-callout);
+    color: var(--ink-3);
+    line-height: 1.6;
+    margin-bottom: 28px;
+  }
+
   /* footer 主题切换器 — 仅窄屏显示（header 切换器隐藏时的替代入口）*/
   footer .footer-theme-toggle { display: none; }
   footer button {
@@ -1933,10 +1989,10 @@
   }
   .drawer-title {
     font-family: var(--font-mono);
-    font-size: var(--fs-body);
+    font-size: var(--fs-footnote);
     font-weight: 500;
-    color: var(--ink-2);
-    margin: 0 0 8px;
+    color: var(--ink-3);
+    margin: 0 0 10px;
   }
   .drawer-amount {
     font-family: var(--font-mono);

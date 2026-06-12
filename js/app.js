@@ -2727,6 +2727,7 @@ function renderDashboard() {
   destroyCharts();
   const sorted = getSortedSnapshots();
 
+  document.getElementById('page-dashboard').classList.toggle('is-empty', sorted.length === 0);
   if (sorted.length === 0) {
     document.getElementById('kpi-total').innerHTML = '<span class="hero-currency">¥</span>—';
     document.getElementById('kpi-total-sub').textContent = '尚无快照，请先到「录入」页创建第一份记录';
@@ -3533,6 +3534,7 @@ document.getElementById('entry-month-next').addEventListener('click', () => {
 });
 document.getElementById('show-archived').addEventListener('change', () => renderEntry());
 document.getElementById('refresh-btn').addEventListener('click', refreshFromCloud);
+document.getElementById('empty-start-btn').addEventListener('click', () => navTo('entry'));
 // 录入页事件委托：账户操作按钮 + 趋势图点击
 document.getElementById('entry-groups').addEventListener('click', (e) => {
   const actionBtn = e.target.closest('[data-action]');
@@ -3928,7 +3930,7 @@ function renderHistory() {
     const change = prevInAll ? total - snapshotTotal(prevInAll) : null;
     const pct = (change !== null && prevInAll) ? (change / snapshotTotal(prevInAll) * 100) : null;
     const trendArrow = pct !== null ? (pct > 0.5 ? '<span class="trend-arrow up">↗</span>' : (pct < -0.5 ? '<span class="trend-arrow dn">↘</span>' : '<span class="trend-arrow flat">→</span>')) : '';
-    const pnlClass = pnl > 0 ? 'pnl-bg pos' : (pnl < 0 ? 'pnl-bg neg' : '');
+    const pnlClass = pnl > 0 ? 'pos' : (pnl < 0 ? 'neg' : '');
     html += '<tr>' +
       '<td>' + trendArrow + '<span style="cursor:pointer;color:var(--accent)" title="查看明细" data-month-drill="' + s.month + '">' + s.month + '</span></td>' +
       '<td class="right">' + fmt(total) + '</td>' +
