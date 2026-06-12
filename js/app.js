@@ -1112,22 +1112,6 @@ function renderHeroValue(n) {
   }
 }
 
-// 次级 KPI 卡：弱化货币符号 + 正负号
-function renderKpiValue(elId, n, withSign) {
-  const el = document.getElementById(elId);
-  if (n === null || n === undefined || isNaN(n)) {
-    el.textContent = '—';
-    return;
-  }
-  const abs = Math.abs(n);
-  let symbol = '¥';
-  if (withSign) {
-    if (n > 0) symbol = '+¥';
-    else if (n < 0) symbol = '−¥';
-  }
-  el.innerHTML = '<span class="sym">' + symbol + '</span><span class="t-digit-group is-animating" id="kpi-' + elId + '-digits"></span>';
-  setDigits(document.getElementById('kpi-' + elId + '-digits'), abs.toLocaleString('zh-CN', { maximumFractionDigits: 0 }));
-}
 
 // Hero 内嵌统计值渲染
 function renderHeroStatValue(elId, n, withSign) {

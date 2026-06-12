@@ -225,8 +225,6 @@
   }
   .reveal-delay-1 { transition-delay: 0.05s; }
   .reveal-delay-2 { transition-delay: 0.12s; }
-  .reveal-delay-3 { transition-delay: 0.20s; }
-  .reveal-delay-4 { transition-delay: 0.28s; }
 
   /* =====================================================
      Transitions.dev · 动效 CSS
@@ -307,53 +305,6 @@
       transform var(--modal-close-dur) var(--modal-ease),
       opacity   var(--modal-close-dur) var(--modal-ease);
   }
-  /* Panel reveal */
-  .t-panel-slide {
-    transform: translateY(var(--panel-translate-y));
-    opacity: 0;
-    filter: blur(var(--panel-blur));
-    pointer-events: none;
-    transition:
-      transform var(--panel-close-dur) var(--panel-ease),
-      opacity   var(--panel-close-dur) var(--panel-ease),
-      filter    var(--panel-close-dur) var(--panel-ease);
-    will-change: transform, opacity, filter;
-  }
-  .t-panel-slide[data-open="true"] {
-    transform: translateY(0);
-    opacity: 1;
-    filter: blur(0);
-    pointer-events: auto;
-    transition:
-      transform var(--panel-open-dur) var(--panel-ease),
-      opacity   var(--panel-open-dur) var(--panel-ease),
-      filter    var(--panel-open-dur) var(--panel-ease);
-  }
-  /* Icon swap */
-  .t-icon-swap {
-    position: relative;
-    display: inline-grid;
-  }
-  .t-icon-swap .t-icon {
-    grid-area: 1 / 1;
-    transition:
-      opacity   var(--icon-swap-dur) var(--icon-swap-ease),
-      filter    var(--icon-swap-dur) var(--icon-swap-ease),
-      transform var(--icon-swap-dur) var(--icon-swap-ease);
-    will-change: opacity, filter, transform;
-  }
-  .t-icon-swap[data-state="a"] .t-icon[data-icon="a"],
-  .t-icon-swap[data-state="b"] .t-icon[data-icon="b"] {
-    opacity: 1;
-    filter: blur(0);
-    transform: scale(1);
-  }
-  .t-icon-swap[data-state="a"] .t-icon[data-icon="b"],
-  .t-icon-swap[data-state="b"] .t-icon[data-icon="a"] {
-    opacity: 0;
-    filter: blur(var(--icon-swap-blur));
-    transform: scale(var(--icon-swap-start-scale));
-  }
   /* Accessibility */
   /* Focus ring — 全局交互元素 */
   .nav button:focus-visible,
@@ -389,8 +340,6 @@
     .t-digit-group .t-digit,
     .t-text-swap,
     .t-modal,
-    .t-panel-slide,
-    .t-icon-swap .t-icon { animation: none !important; transition: none !important; }
     .page.active { animation: none !important; }
     .page.active .hero-block,
     .page.active .hero-stat-item,
@@ -909,11 +858,6 @@
   /* =====================================================
      区块标题
   ===================================================== */
-  .card-divider {
-    height: 1px;
-    background: var(--sep);
-    margin: 16px 0 20px;
-  }
   .section-head {
     display: flex;
     align-items: baseline;
@@ -1376,12 +1320,6 @@
     color: var(--ink-4);
     font-weight: 400;
   }
-  .entry-row .archived-badge {
-    font-size: var(--fs-caption);
-    color: var(--ink-4);
-    margin-left: 4px;
-    font-weight: 400;
-  }
   .entry-row .delta {
     font-family: var(--font-mono);
     font-size: var(--fs-sub);
@@ -1742,52 +1680,10 @@
   /* =====================================================
      Skeleton 加载动画
   ===================================================== */
-  @keyframes shimmer {
-    0% { background-position: -400px 0; }
-    100% { background-position: 400px 0; }
-  }
-  .skeleton {
-    background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3) 50%, var(--bg-2) 75%);
-    background-size: 800px 100%;
-    animation: shimmer 1.6s ease-in-out infinite;
-    border-radius: var(--radius-sm);
-    color: transparent !important;
-    user-select: none;
-    pointer-events: none;
-  }
-  .skeleton-hero {
-    height: 72px;
-    width: 60%;
-    margin-bottom: 12px;
-    border-radius: var(--radius-md);
-  }
-  .skeleton-text {
-    height: 16px;
-    width: 40%;
-    border-radius: var(--radius-xs);
-  }
-  .skeleton-kpi {
-    height: 52px;
-    width: 70%;
-    border-radius: var(--radius-md);
-  }
-  .skeleton-chart {
-    height: 280px;
-    border-radius: var(--radius-lg);
-  }
 
   /* =====================================================
      数字滚入动效
   ===================================================== */
-  @keyframes countUp {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .num-anim {
-    animation: countUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  .num-anim:nth-child(2) { animation-delay: 0.08s; }
-  .num-anim:nth-child(3) { animation-delay: 0.16s; }
 
   /* =====================================================
      加载指示器 (Spinner)
@@ -1885,41 +1781,10 @@
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-4px); }
-    40% { transform: translateX(4px); }
-    60% { transform: translateX(-3px); }
-    80% { transform: translateX(3px); }
-  }
-  .shake {
-    animation: shake 0.35s ease;
-  }
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-  }
-  .saving-dot {
-    display: inline-block;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: currentColor;
-    animation: pulse-dot 1s ease-in-out infinite;
-  }
-  .saving-dot:nth-child(2) { animation-delay: 0.15s; }
-  .saving-dot:nth-child(3) { animation-delay: 0.3s; }
 
   /* =====================================================
      drill 箭头 hint（其他地方仍用）
   ===================================================== */
-  .drill-hint {
-    color: var(--ink-4);
-    font-weight: 600;
-    font-size: var(--fs-body);
-    line-height: 1;
-    transition: transform 0.2s, color 0.2s;
-  }
 
   /* =====================================================
      钻取弹窗 · 苹果 Sheet 风格
@@ -2060,12 +1925,6 @@
     overflow-y: auto;
     flex: 1;
     -webkit-overflow-scrolling: touch;
-  }
-  .drawer-divider {
-    margin: 0 32px;
-    border: none;
-    border-top: 1px solid var(--sep);
-    flex-shrink: 0;
   }
   .drawer-section {
     margin-bottom: 24px;
@@ -2312,7 +2171,6 @@
     .entry-actions { flex-direction: column; }
     .entry-actions .btn { width: 100%; }
     .hero-stat-item:active { opacity: 0.6; }
-    .hero-block.clickable:active { transform: translateY(-1px); }
   }
 
   @media (min-width: 1400px) {

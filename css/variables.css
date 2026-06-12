@@ -215,13 +215,5 @@
     --modal-scale: 0.96;
     --modal-scale-close: 0.96;
     --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
-    --panel-open-dur: 400ms;
-    --panel-close-dur: 350ms;
-    --panel-translate-y: 100px;
     --panel-blur: 2px;
-    --panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
-    --icon-swap-dur: 200ms;
-    --icon-swap-blur: 2px;
-    --icon-swap-start-scale: 0.25;
-    --icon-swap-ease: ease-in-out;
   }

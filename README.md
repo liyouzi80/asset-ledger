@@ -52,7 +52,7 @@
 
 | 安全 | Dashboard | 录入 | 历史 |
 |:--|:--|:--|:--|
-| 主密码 / Passkey 双解锁 | Hero 巨幅资产 + 月对月变化 | 月度快照批量录入 | 列表 + 矩阵双视图 |
+| 主密码 / Passkey 双解锁 | Hero 巨幅资产 + 月对月变化 | 月度快照批量录入 | 列表 + 对比双视图 |
 | PBKDF2 250K → AES-256-GCM | KPI 三连：盈亏 / 净流 / 年内 | 一键复制上月数据 | TWR / 简单 / XIRR 三种收益率 |
 | 服务端全程零明文 | 收益率走势 + 期间切换 | 账户 CRUD + 分组管理 | 月份比较 + 异常变化提醒 |
 | 浏览器本地镜像备份 | 资产分布饼图 + 钻取 | 写入回读校验 | CSV 导出 + 断月检测 |
@@ -103,7 +103,7 @@
 | 加密 | Web Crypto API · AES-256-GCM · PBKDF2 250K · WebAuthn PRF |
 | 图表 | Chart.js 4.x（本地 vendor，无 CDN）· 折线 + 饼图 + 柱状 · 自定义十字准星 |
 | 运算 | Big.js（本地 vendor）· 任意精度十进制（避免浮点误差）|
-| 后端 | Cloudflare Workers · 5 文件 |
+| 后端 | Cloudflare Workers · 4 文件（index / vault / meta / shared）|
 | 数据库 | Cloudflare D1（SQLite）· 键值模式 |
 | 主题 | 素白 · 浅色 · 深色 · 统一布局 + CSS 设计 token 驱动 |
 | 部署 | GitHub Actions → `wrangler deploy` · push 即上线 |
