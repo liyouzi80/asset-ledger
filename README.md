@@ -69,6 +69,7 @@
 │  │  ├─ css/variables.css  (设计 token) │    │
 │  │  ├─ css/app.css        (全部样式)   │    │
 │  │  ├─ js/app.js          (应用逻辑)   │    │
+│  │  ├─ js/finance.js      (金融计算核心)│    │
 │  │  └─ js/vendor/         (Chart/Big)  │    │
 │  └────────────────┬────────────────────┘    │
 │                   │                          │
@@ -107,7 +108,7 @@
 | 数据库 | Cloudflare D1（SQLite）· 键值模式 |
 | 主题 | 素白 · 浅色 · 深色 · 统一布局 + CSS 设计 token 驱动 |
 | 写保护 | TOFU 令牌（随加密 vault 同步，服务端只存哈希）· 严格 CSP |
-| 测试 | `node:test` 原生测试 · Worker 写保护单元测试 · 零依赖 |
+| 测试 | `node:test` 原生测试 · 金融计算（XIRR/盈亏）+ 写保护单元测试 · 零依赖 |
 | 部署 | GitHub Actions → `wrangler deploy` · push 即上线 |
 
 ---
@@ -136,7 +137,7 @@ cp wrangler.example.toml wrangler.toml
 # 3. 启动本地服务（默认 http://localhost:8787）
 npx wrangler dev
 
-# 运行测试（Worker 写保护单元测试，零依赖）
+# 运行测试（金融计算 + Worker 写保护单元测试，零依赖）
 npm test
 ```
 
