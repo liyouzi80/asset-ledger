@@ -12,8 +12,6 @@
     --bg-2:        #191a1b;
     --bg-3:        #28282c;
     --bg-glass:    rgba(15,16,17,0.85);
-    --card:        #0f1011;
-    --card-hover:  #141416;
     /* 前景 · near-white 防眼疲劳 */
     --ink:         #f7f8f8;
     --ink-2:       #d0d6e0;
@@ -24,7 +22,6 @@
     --sep-strong:  rgba(255,255,255,0.08);
     /* 强调色 · Linear 招牌 indigo — 单色系渐变，无紫色漂移 */
     --accent:      #5e6ad2;
-    --accent-hover: #4f5bc0;
     --accent-soft: rgba(94,106,210,0.14);
     /* 语义色 */
     --green:       #27a644;
@@ -32,22 +29,27 @@
     --red:         #f87171;
     --red-soft:    rgba(248,113,113,0.13);
     --yellow:      #fbbf24;
-    --orange:      #fb923c;
     /* 阴影 · 背景色调着色，无纯黑 */
     --shadow-sm:   0 1px 2px rgba(0,2,8,0.45);
     --shadow-md:   0 4px 24px rgba(0,2,8,0.55), 0 1px 4px rgba(0,0,0,0.30);
     --shadow-lg:   0 20px 60px rgba(0,2,8,0.65), 0 4px 16px rgba(0,0,0,0.40);
     /* 图表 */
     --chart-grid:  rgba(255,255,255,0.04);
-    --chart-tick:  rgba(255,255,255,0.25);
     --tooltip-bg:  #191a1b;
     /* 渐变 & 辉光 — 单色系 indigo，无紫色 */
     --accent-gradient: linear-gradient(135deg, #5e6ad2, #6b78e0);
+    --accent-purple:   #7c8aff;   /* 次级强调 · 图表第二序列（投资）*/
     --accent-glow:     rgba(94,106,210,0.16);
     --card-highlight:  inset 0 0.5px 0 rgba(255,255,255,0.06);
     --glow-blue:       rgba(94,106,210,0.04);
     --glow-purple:     rgba(94,106,210,0.02);
     --hero-gradient:   linear-gradient(135deg, #0f1011 0%, #191a1b 100%);
+    /* 分段控件（导航/主题切换/筛选 tab）*/
+    --control-bg:        var(--bg-2);
+    --control-active-bg: var(--bg-1);
+    /* Hero 卡片 */
+    --hero-border:     1px solid var(--sep-strong);
+    --hero-shadow:     var(--shadow-lg);
     /* Hero 前景（深色渐变上的白系文字）*/
     --hero-ink:        #ffffff;
     --hero-ink-2:      rgba(255,255,255,0.45);
@@ -68,8 +70,6 @@
     --bg-2:        #e8e8ed;
     --bg-3:        #dcdce0;
     --bg-glass:    rgba(255,255,255,0.76);
-    --card:        #ffffff;
-    --card-hover:  #fafafa;
     --ink:         #1d1d1f;
     --ink-2:       rgba(29,29,31,0.82);
     --ink-3:       #6e6e73;
@@ -77,19 +77,16 @@
     --sep:         #d2d2d7;
     --sep-strong:  #86868b;
     --accent:      #0071e3;
-    --accent-hover: #005cbf;
     --accent-soft: rgba(0,113,227,0.10);
     --green:       #34c759;
     --green-soft:  rgba(52,199,89,0.10);
     --red:         #ff3b30;
     --red-soft:    rgba(255,59,48,0.10);
     --yellow:      #ff9500;
-    --orange:      #ff9f0a;
     --shadow-sm:   0 1px 2px rgba(0,60,120,0.06), 0 1px 3px rgba(0,0,0,0.03);
     --shadow-md:   0 4px 24px rgba(0,60,120,0.07), 0 1px 8px rgba(0,0,0,0.03);
     --shadow-lg:   0 20px 60px rgba(0,60,120,0.09), 0 4px 24px rgba(0,0,0,0.04);
     --chart-grid:  rgba(0,0,0,0.04);
-    --chart-tick:  rgba(0,0,0,0.35);
     --tooltip-bg:  #ffffff;
     --accent-gradient: linear-gradient(135deg, #0071e3, #2997ff);
     --accent-glow:     rgba(0,113,227,0.12);
@@ -98,6 +95,10 @@
     --glow-blue:       rgba(0,113,227,0.04);
     --glow-purple:     rgba(0,113,227,0.02);
     --hero-gradient:   linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%);
+    --control-bg:        var(--bg-3);
+    --control-active-bg: #ffffff;
+    --hero-border:     0.5px solid var(--sep);
+    --hero-shadow:     0 8px 48px rgba(0,0,0,0.04);
     --hero-ink:        #001530;
     --hero-ink-2:      rgba(0,0,0,0.45);
     --hero-ink-3:      rgba(0,0,0,0.25);
@@ -111,48 +112,39 @@
      白色浮卡 + 浅灰底 + 克制配色 + SF 风格排版
   ===================================================== */
   [data-theme="suba"] {
-    /* 背景三层 + 卡片表面 */
     --bg:                #f2f2f7;
     --bg-1:              #ffffff;
     --bg-2:              #f5f5f7;
     --bg-3:              #ebebf0;
     --bg-glass:          rgba(242,242,247,0.76);
-    --card:              #ffffff;
 
-    /* 文字六级 — WCAG AA 通过（白色背景上对比度 ≥ 4.5:1）*/
-    --ink:               #1d1d1f;                   /* primary（主标题、Hero 数字）*/
-    --ink-2:             rgba(60,60,67,0.72);       /* secondary（副标题、说明文字）~4.5:1 */
-    --ink-3:             rgba(60,60,67,0.52);       /* tertiary（次要标签）~6.3:1 */
+    /* 文字层级 — 仿 iOS Label 体系（ink/ink-2 满足正文 AA；ink-3/4 仅用于辅助标签）*/
+    --ink:               #1d1d1f;                   /* primary（主标题、Hero 数字）≈15.4:1 */
+    --ink-2:             rgba(60,60,67,0.72);       /* secondary（副标题、说明文字）≈4.9:1 */
+    --ink-3:             rgba(60,60,67,0.56);       /* tertiary（次要标签）≈3.4:1 */
     --ink-4:             rgba(60,60,67,0.26);       /* quaternary（占位符、禁用态）*/
-    --ink-5:             rgba(60,60,67,0.10);       /* placeholder / disabled border */
 
     /* 分割线 — 半透明、永远 0.5px */
     --sep:               rgba(60,60,67,0.10);       /* 卡片内分隔 */
     --sep-strong:        rgba(60,60,67,0.18);       /* 区块边缘 */
 
-    /* 强调色（保持）*/
     --accent:            #007AFF;
-    --accent-hover:      #0068d9;                   /* 新增 hover 用，比 #007AFF 深一档 */
     --accent-soft:       rgba(0,122,255,0.10);
-    --accent-soft-hover: rgba(0,122,255,0.14);
     --focus-ring:        0 0 0 3px rgba(0,122,255,0.24), 0 0 0 1px var(--accent);
+    --control-bg:        var(--bg-3);
+    --control-active-bg: #ffffff;
+    --hero-border:       0.5px solid var(--sep);
+    --hero-shadow:       0 8px 48px rgba(0,0,0,0.04);
     --hero-ink:          #001530;
     --hero-ink-2:        rgba(0,0,0,0.45);
     --hero-ink-3:        rgba(0,0,0,0.25);
     --hero-sep:          rgba(0,0,0,0.06);
 
-    /* 语义色 + 配套 hover（新增）*/
     --green:             #34C759;
-    --green-hover:       #2EB350;
     --green-soft:        rgba(52,199,89,0.10);
     --red:               #FF3B30;
-    --red-hover:         #E13328;
     --red-soft:          rgba(255,59,48,0.10);
     --yellow:            #FFB800;
-    --orange:            #FF9500;
-    --orange-soft:       rgba(255,149,0,0.10);
-    --purple:            #5856D6;
-    --purple-soft:       rgba(88,86,214,0.10);
 
     /* 阴影 — 苹果级别的克制；2 层叠加，主光源左上 */
     --shadow-sm:         0 1px 2px rgba(0,0,0,0.04), 0 0 0 0.5px rgba(0,0,0,0.05);
@@ -161,7 +153,6 @@
 
     /* 图表 / 工具 */
     --chart-grid:        rgba(0,0,0,0.04);
-    --chart-tick:        rgba(60,60,67,0.40);
     --tooltip-bg:        rgba(255,255,255,0.96);
 
     /* 渐变 & 辉光 — 单蓝系，禁止蓝→紫 */
@@ -207,17 +198,7 @@
     --radius-card: 20px;   /* 卡片、抽屉、表格容器 */
     --radius-xl:   28px;   /* Hero、锁屏卡、大面板 */
 
-    /* Z-index 层次 */
-    --z-base:      0;
-    --z-content:   1;
-    --z-dropdown:  10;
-    --z-sticky:    50;
-    --z-overlay:   100;
-    --z-modal:     200;
-    --z-toast:     500;
 
-    --resize-dur: 300ms;
-    --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --digit-dur: 500ms;
     --digit-distance: 8px;
     --digit-stagger: 70ms;
@@ -225,26 +206,10 @@
     --digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
     --digit-dir-x: 0;
     --digit-dir-y: 1;
-    --badge-slide-dur: 260ms;
-    --badge-pop-dur: 500ms;
-    --badge-pop-close-dur: 180ms;
-    --badge-fade-dur: 400ms;
-    --badge-fade-close-dur: 180ms;
-    --badge-blur: 2px;
-    --badge-offset-x: -8.2px;
-    --badge-offset-y: 12.4px;
-    --badge-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
-    --badge-pop-ease: cubic-bezier(0.34, 1.36, 0.64, 1);
-    --badge-close-ease: cubic-bezier(0.4, 0, 0.2, 1);
     --text-swap-dur: 200ms;
     --text-swap-translate-y: 8px;
     --text-swap-blur: 2px;
     --text-swap-ease: ease-out;
-    --dropdown-open-dur: 250ms;
-    --dropdown-close-dur: 150ms;
-    --dropdown-pre-scale: 0.97;
-    --dropdown-closing-scale: 0.99;
-    --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --modal-open-dur: 250ms;
     --modal-close-dur: 150ms;
     --modal-scale: 0.96;
@@ -255,14 +220,6 @@
     --panel-translate-y: 100px;
     --panel-blur: 2px;
     --panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
-    --page-slide-dur: 200ms;
-    --page-fade-dur: 200ms;
-    --page-slide-distance: 8px;
-    --page-blur: 3px;
-    --page-stagger: 0ms;
-    --page-exit-enabled: 1;
-    --page-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
-    --page-fade-ease: cubic-bezier(0.22, 1, 0.36, 1);
     --icon-swap-dur: 200ms;
     --icon-swap-blur: 2px;
     --icon-swap-start-scale: 0.25;

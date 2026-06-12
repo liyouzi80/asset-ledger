@@ -121,14 +121,10 @@
   /* 分段控制器（苹果标志性控件）*/
   .nav, .theme-toggle {
     display: flex;
-    background: var(--bg-2);
+    background: var(--control-bg);
     border-radius: var(--radius-md);
     padding: 2px;
     gap: 0;
-  }
-  [data-theme="light"] .nav, [data-theme="suba"] .nav,
-  [data-theme="light"] .theme-toggle, [data-theme="suba"] .theme-toggle{
-    background: var(--bg-3);
   }
   .nav button, .theme-toggle button {
     background: none;
@@ -148,14 +144,10 @@
   }
   .nav button:hover, .theme-toggle button:hover { color: var(--ink-2); }
   .nav button.active, .theme-toggle button.active {
-    background: var(--bg-1);
+    background: var(--control-active-bg);
     color: var(--ink);
     font-weight: 600;
     box-shadow: var(--shadow-sm);
-  }
-  [data-theme="light"] .nav button.active, [data-theme="suba"] .nav button.active,
-  [data-theme="light"] .theme-toggle button.active, [data-theme="suba"] .theme-toggle button.active{
-    background: var(--bg);
   }
   .nav button.dirty::after {
     content: '';
@@ -430,8 +422,8 @@
     margin-bottom: 14px;
     overflow: hidden;
     cursor: pointer;
-    box-shadow: var(--shadow-lg);
-    border: 1px solid var(--sep-strong);
+    box-shadow: var(--hero-shadow);
+    border: var(--hero-border);
     transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
                 box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     will-change: transform;
@@ -459,11 +451,6 @@
     box-shadow: var(--shadow-lg);
   }
   .hero-block:active { transform: translateY(-2px); }
-  [data-theme="light"] .hero-block, [data-theme="suba"] .hero-block{
-    background: var(--bg-1);
-    box-shadow: 0 8px 48px rgba(0,0,0,0.04);
-    border: 0.5px solid var(--sep);
-  }
   .hero-bg-1, .hero-bg-2 {
     position: absolute;
     border-radius: 50%;
@@ -480,12 +467,6 @@
     width: 320px; height: 320px;
     background: radial-gradient(circle, var(--glow-purple), transparent 65%);
     animation: heroGlow 5s ease-in-out infinite 1s;
-  }
-  [data-theme="light"] .hero-bg-1, [data-theme="suba"] .hero-bg-1{
-    background: radial-gradient(circle, var(--accent-glow), transparent 65%);
-  }
-  [data-theme="light"] .hero-bg-2, [data-theme="suba"] .hero-bg-2{
-    background: radial-gradient(circle, var(--glow-purple), transparent 65%);
   }
   .hero-content { position: relative; }
   .hero-label {
@@ -513,7 +494,6 @@
     line-height: 0.95;
     font-variant-numeric: tabular-nums;
   }
-  [data-theme="light"] .hero-value, [data-theme="suba"] .hero-value{ color: var(--ink); }
   .hero-currency {
     font-size: 40px;
     font-weight: 300;
@@ -521,13 +501,11 @@
     margin-right: 6px;
     vertical-align: 0.5em;
   }
-  [data-theme="light"] .hero-currency, [data-theme="suba"] .hero-currency{ color: var(--ink-3); }
   .hero-decimal {
     font-size: 40px;
     font-weight: 300;
     color: var(--ink-3);
   }
-  [data-theme="light"] .hero-decimal, [data-theme="suba"] .hero-decimal{ color: var(--ink-3); }
   /* 资产水位线 */
   .waterline-container {
     display: flex;
@@ -606,13 +584,11 @@
   .returns-period-tabs,
   .returns-indicator-pick {
     display: inline-flex;
-    background: var(--bg-2);
+    background: var(--control-bg);
     border-radius: var(--radius-sm);
     padding: 2px;
     gap: 0;
   }
-  [data-theme="light"] .returns-period-tabs, [data-theme="suba"] .returns-period-tabs,
-  [data-theme="light"] .returns-indicator-pick, [data-theme="suba"] .returns-indicator-pick{ background: var(--bg-3); }
   .returns-period-tabs button,
   .returns-indicator-pick button {
     background: none;
@@ -634,13 +610,11 @@
   .returns-indicator-pick button:hover { color: var(--ink-2); }
   .returns-period-tabs button.active,
   .returns-indicator-pick button.active {
-    background: var(--bg-1);
+    background: var(--control-active-bg);
     color: var(--ink);
     font-weight: 600;
     box-shadow: var(--shadow-sm);
   }
-  [data-theme="light"] .returns-period-tabs button.active, [data-theme="suba"] .returns-period-tabs button.active,
-  [data-theme="light"] .returns-indicator-pick button.active, [data-theme="suba"] .returns-indicator-pick button.active{ background: var(--bg); }
 
   .returns-summary {
     display: flex;
@@ -800,20 +774,16 @@
     border-color: var(--sep-strong);
     box-shadow: var(--card-highlight), var(--shadow-lg);
   }
-  [data-theme="light"] .chart-card:hover, [data-theme="suba"] .chart-card:hover{
-    box-shadow: var(--card-highlight), var(--shadow-lg);
-  }
 
 
   /* 投资视图切换 */
   .view-toggle {
     display: inline-flex;
-    background: var(--bg-2);
+    background: var(--control-bg);
     border-radius: var(--radius-md);
     padding: 2px;
     margin-bottom: 20px;
   }
-  [data-theme="light"] .view-toggle, [data-theme="suba"] .view-toggle{ background: var(--bg-3); }
   .view-toggle button {
     background: none;
     border: none;
@@ -832,12 +802,11 @@
   }
   .view-toggle button:hover { color: var(--ink-2); }
   .view-toggle button.active {
-    background: var(--bg-1);
+    background: var(--control-active-bg);
     color: var(--ink);
     font-weight: 600;
     box-shadow: var(--shadow-sm);
   }
-  [data-theme="light"] .view-toggle button.active, [data-theme="suba"] .view-toggle button.active{ background: var(--bg); }
 
   /* 标签徽章 */
   .tag-badge {
@@ -1832,6 +1801,8 @@
     gap: 12px;
   }
   footer .actions { display: flex; gap: 16px; flex-wrap: wrap; }
+  /* footer 主题切换器 — 仅窄屏显示（header 切换器隐藏时的替代入口）*/
+  footer .footer-theme-toggle { display: none; }
   footer button {
     background: none;
     border: none;
@@ -1994,7 +1965,7 @@
   }
   .drawer-mode-tabs {
     display: flex;
-    background: var(--bg-2);
+    background: var(--control-bg);
     border-radius: var(--radius-md);
     padding: 2px;
     gap: 0;
@@ -2016,13 +1987,11 @@
   }
   .drawer-mode-tabs button:hover { color: var(--ink-2); }
   .drawer-mode-tabs button.active {
-    background: var(--bg-1);
+    background: var(--control-active-bg);
     color: var(--ink);
     font-weight: 600;
     box-shadow: var(--shadow-sm);
   }
-  [data-theme="light"] .drawer-mode-tabs, [data-theme="suba"] .drawer-mode-tabs{ background: var(--bg-3); }
-  [data-theme="light"] .drawer-mode-tabs button.active, [data-theme="suba"] .drawer-mode-tabs button.active{ background: #fff; }
 
   .drawer-body {
     padding: 0 32px 32px;
@@ -2257,6 +2226,7 @@
     .nav::-webkit-scrollbar { display: none; }
     .nav button { padding: 6px 12px; font-size: var(--fs-sub); white-space: nowrap; flex-shrink: 0; }
     .theme-toggle { display: none; }
+    footer .footer-theme-toggle { display: flex; }
     .lock-card { padding: 28px 24px 24px; }
     .lock-card h2 { font-size: var(--fs-title-3); }
     .glyph-icon { width: 52px; height: 52px; font-size: var(--fs-title-2); border-radius: var(--radius-lg); }

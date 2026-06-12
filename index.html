@@ -291,6 +291,12 @@
 
   <footer>
     <div>资产负债表</div>
+    <div class="theme-toggle footer-theme-toggle" role="group">
+      <button data-theme-set="light">浅色</button>
+      <button data-theme-set="suba">素白</button>
+      <button data-theme-set="dark">深色</button>
+      <button data-theme-set="system">系统</button>
+    </div>
     <div class="actions">
       <button id="manage-passkey">管理 Passkey</button>
       <span class="btn-badge-wrap" id="export-data-wrap"><button id="export-data">导出加密备份</button></span>
@@ -408,7 +414,7 @@
 <div class="modal-backdrop" id="passkey-modal">
   <div class="modal">
     <h3>Passkey 管理</h3>
-    <div id="passkey-status" style="font-size:14px;color:var(--ink-soft);line-height:1.6;margin-bottom:16px"></div>
+    <div id="passkey-status" style="font-size:14px;color:var(--ink-2);line-height:1.6;margin-bottom:16px"></div>
     <div class="modal-actions">
       <button class="btn btn-ghost btn-sm" id="passkey-modal-cancel">关闭</button>
       <button class="btn btn-sm" id="passkey-add" style="display:none">＋ 添加 Passkey</button>
@@ -446,8 +452,8 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/big.js@6.2.1/big.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="js/vendor/big.min.js"></script>
+<script src="js/vendor/chart.umd.min.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

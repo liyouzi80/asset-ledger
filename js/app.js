@@ -1607,7 +1607,7 @@ function openAccountTrend(accId) {
     if (accountTrendChart) { accountTrendChart.destroy(); accountTrendChart = null; }
     const valid = labels.map((l, i) => ({ l, v: data[i] })).filter(d => d.v !== null);
     if (valid.length < 2) {
-      canvas.parentNode.innerHTML = '<div style="text-align:center;padding:60px 0;color:var(--ink-mute);font-size:14px">数据不足，至少需要 2 个月</div>';
+      canvas.parentNode.innerHTML = '<div style="text-align:center;padding:60px 0;color:var(--ink-3);font-size:14px">数据不足，至少需要 2 个月</div>';
       return;
     }
     accountTrendChart = new Chart(canvas, {
@@ -3338,7 +3338,7 @@ function renderEntry() {
     if (accs.length === 0) {
       const empty = document.createElement('div');
       empty.style.padding = '14px 0';
-      empty.style.color = 'var(--ink-mute)';
+      empty.style.color = 'var(--ink-3)';
       empty.style.fontSize = '14px';
       empty.textContent = '此分组下尚无账户';
       section.appendChild(empty);
@@ -4324,7 +4324,7 @@ document.getElementById('manage-passkey').addEventListener('click', async () => 
     addBtn.style.display = 'none';
     removeBtn.style.display = 'none';
   } else if (meta && meta.passkeyCredId) {
-    status.innerHTML = '✅ 已注册 Passkey。可用 Touch ID / Face ID 解锁。<br><br><span style="color:var(--ink-mute);font-size:13px">删除后将无法用 Passkey 解锁，确保你还记得密码。</span>';
+    status.innerHTML = '✅ 已注册 Passkey。可用 Touch ID / Face ID 解锁。<br><br><span style="color:var(--ink-3);font-size:13px">删除后将无法用 Passkey 解锁，确保你还记得密码。</span>';
     addBtn.style.display = 'none';
     removeBtn.style.display = '';
   } else if (meta && meta.wrappedKeyByPassword) {

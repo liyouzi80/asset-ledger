@@ -10,6 +10,28 @@
 
 ---
 
+## 界面
+
+| 素白 | 深色 |
+|:--:|:--:|
+| ![素白主题](assets/screenshots/suba.png) | ![深色主题](assets/screenshots/dark.png) |
+
+三套主题共用一套布局与设计 token，由 CSS 变量驱动，一键切换：
+
+| 主题 | 定位 | 风格 |
+|:--|:--|:--|
+| **素白** | 默认推荐 | iOS 系统设置质感 — 白色浮卡 + 浅灰底，`#007AFF` 强调 |
+| **浅色** | 经典 | Apple.com 风格 — 留白为主、蓝黑克制 |
+| **深色** | 夜间 | Linear.app 风格 — 极暗画布、半透白边框、indigo 强调 |
+
+设计系统的几个约束：
+
+- **零外部请求**：系统字体栈（SF Pro / PingFang）、Chart.js 与 Big.js 本地 vendor，运行时不向任何第三方发起请求
+- **token 收敛**：6 档圆角、11 档字号 type scale、语义色全部走 CSS 变量，新增主题只需定义一个变量块
+- **细节**：0.5px 细分割线、毛玻璃导航、`tabular-nums` 数字、`prefers-reduced-motion` 适配、`theme-color` 随主题同步 iOS 顶栏
+
+---
+
 ## 它是什么
 
 一个**只为你自己用**的资产记账工具。每月手动录入各账户余额，自动计算总资产、市场盈亏、收益率。所有数据在浏览器里加密后才上传，服务器只看到密文——即便数据库被脱库，没有你的密码或 Passkey，也无法解密。
@@ -44,9 +66,10 @@
 │  浏览器                                      │
 │  ┌─────────────────────────────────────┐    │
 │  │  index.html  (SPA · 零框架)         │    │
-│  │  ├─ css/variables.css   (主题变量)  │    │
-│  │  ├─ css/app.css         (全部样式)  │    │
-│  │  └─ js/app.js           (应用逻辑)  │    │
+│  │  ├─ css/variables.css  (设计 token) │    │
+│  │  ├─ css/app.css        (全部样式)   │    │
+│  │  ├─ js/app.js          (应用逻辑)   │    │
+│  │  └─ js/vendor/         (Chart/Big)  │    │
 │  └────────────────┬────────────────────┘    │
 │                   │                          │
 │  ┌────────────────▼────────────────────┐    │
@@ -77,13 +100,13 @@
 
 | 层 | 技术 |
 |:--|:--|
-| 前端 | Vanilla JS · 单文件 SPA · 零构建工具链 |
+| 前端 | Vanilla JS · 零框架 · 零构建 · 运行时零第三方请求 |
 | 加密 | Web Crypto API · AES-256-GCM · PBKDF2 250K · WebAuthn PRF |
-| 图表 | Chart.js 4.x · 折线 + 饼图 + 柱状 · 自定义十字准星 |
-| 运算 | Big.js · 任意精度十进制（避免浮点误差）|
+| 图表 | Chart.js 4.x（本地 vendor，无 CDN）· 折线 + 饼图 + 柱状 · 自定义十字准星 |
+| 运算 | Big.js（本地 vendor）· 任意精度十进制（避免浮点误差）|
 | 后端 | Cloudflare Workers · 5 文件 |
 | 数据库 | Cloudflare D1（SQLite）· 键值模式 |
-| 主题 | Apple 浅色 · 素白 · Linear 深色 · CSS 变量驱动 |
+| 主题 | 素白 · 浅色 · 深色 · 统一布局 + CSS 设计 token 驱动 |
 | 部署 | GitHub Actions → `wrangler deploy` · push 即上线 |
 
 ---
@@ -202,7 +225,7 @@ vault 在浏览器解密后是一个 JSON 对象，结构稳定（accounts / sna
 ## 致谢
 
 - **Cloudflare Workers + D1** — 免费的边缘计算 + SQLite，是这个项目能存在的物理基础
-- **Chart.js** — 唯一的运行时依赖
+- **Chart.js** — 图表渲染（本地 vendor，与 Big.js 是仅有的两个运行时依赖）
 - **Big.js** — 处理金融小数的最佳工具
 - **WebAuthn PRF 规范** — 让 Passkey 不仅是认证手段、也能派生加密密钥
 
