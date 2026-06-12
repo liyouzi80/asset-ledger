@@ -611,29 +611,6 @@ function setLockUI(mode, isFirstTime, hasPasskey) {
 
 
 
-// ============================================================
-// Bing 每日壁纸 — 锁屏 + 主界面背景
-// ============================================================
-async function loadBingWallpaper() {
-  const targets = ['lock-screen-bg'];
-  try {
-    const resp = await fetch('/api/bg');
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    if (!data.url) throw new Error('No URL');
-    const img = new Image();
-    img.onload = () => {
-      const url = 'url(' + data.url + ')';
-      targets.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.style.backgroundImage = url; el.classList.add('loaded'); }
-      });
-    };
-    img.onerror = () => { /* 静默降级 */ };
-    img.src = data.url;
-  } catch { /* 静默降级 */ }
-}
-
 async function unlockOrInit() {
   // 先尝试从 localStorage 恢复密钥 → 直接进入
   const cached = await loadCachedMasterKey();
@@ -4422,7 +4399,6 @@ function initScrollReveal() {
 (async function init() {
   const savedTheme = localStorage.getItem('asset-theme') || 'system';
   applyTheme(savedTheme);
-  loadBingWallpaper();
   await unlockOrInit();
   // 首次加载后激活滚动浮现
   requestAnimationFrame(() => { requestAnimationFrame(initScrollReveal); });

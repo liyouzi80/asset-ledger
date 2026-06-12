@@ -1428,21 +1428,25 @@
     overflow: hidden;
   }
   .lock-screen.active { display: flex; }
-  .lock-screen-bg {
+  /* 主题渐变背景 — 两团柔光，呼吸感由 heroGlow 提供 */
+  .lock-screen::before,
+  .lock-screen::after {
+    content: '';
     position: absolute;
-    inset: 0;
-    background-size: cover;
-    background-position: center;
-    opacity: 0;
-    transition: opacity 0.8s ease;
+    border-radius: 50%;
+    pointer-events: none;
   }
-  .lock-screen-bg.loaded { opacity: 1; }
-  .lock-screen-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(0,0,0,0.40);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+  .lock-screen::before {
+    width: 60vmax; height: 60vmax;
+    top: -25vmax; right: -15vmax;
+    background: radial-gradient(circle, var(--accent-glow), transparent 65%);
+    animation: heroGlow 6s ease-in-out infinite;
+  }
+  .lock-screen::after {
+    width: 50vmax; height: 50vmax;
+    bottom: -20vmax; left: -12vmax;
+    background: radial-gradient(circle, var(--glow-purple), transparent 65%);
+    animation: heroGlow 7s ease-in-out infinite 1.5s;
   }
 
   .lock-card {
@@ -1455,8 +1459,8 @@
     backdrop-filter: blur(40px) saturate(180%);
     border-radius: var(--radius-xl);
     padding: 40px 32px 32px;
-    box-shadow: 0 32px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
-    border: 1px solid var(--sep);
+    box-shadow: var(--shadow-lg);
+    border: 0.5px solid var(--sep);
   }
   .lock-card .glyph {
     text-align: center;
@@ -1471,6 +1475,8 @@
     background: var(--accent-gradient);
     border-radius: var(--radius-card);
     font-size: var(--fs-title-1);
+    font-weight: 700;
+    color: #fff;
     box-shadow: var(--brand-icon-shadow);
   }
   .lock-card h2 {
@@ -2246,7 +2252,6 @@
     .month-row .m-label { font-size: var(--fs-footnote); }
     .month-row .m-amount { font-size: var(--fs-footnote); min-width: 70px; }
     .lock-warning { font-size: var(--fs-footnote); padding: 12px 14px; }
-    .lock-screen-overlay { backdrop-filter: blur(1px); -webkit-backdrop-filter: blur(1px); }
     .empty { padding: 40px 16px; }
     .entry-actions { flex-direction: column; }
     .entry-actions .btn { width: 100%; }
