@@ -48,6 +48,11 @@
     --glow-blue:       rgba(94,106,210,0.04);
     --glow-purple:     rgba(94,106,210,0.02);
     --hero-gradient:   linear-gradient(135deg, #0f1011 0%, #191a1b 100%);
+    /* Hero 前景（深色渐变上的白系文字）*/
+    --hero-ink:        #ffffff;
+    --hero-ink-2:      rgba(255,255,255,0.45);
+    --hero-ink-3:      rgba(255,255,255,0.25);
+    --hero-sep:        rgba(255,255,255,0.08);
     /* 交互 */
     --focus-ring:      0 0 0 3px rgba(94,106,210,0.28), 0 0 0 1px var(--accent);
     --brand-icon-shadow: 0 2px 8px rgba(0,0,0,0.50), 0 0 0 0.5px rgba(255,255,255,0.06);
@@ -93,6 +98,10 @@
     --glow-blue:       rgba(0,113,227,0.04);
     --glow-purple:     rgba(0,113,227,0.02);
     --hero-gradient:   linear-gradient(180deg, #ffffff 0%, #f5f5f7 100%);
+    --hero-ink:        #001530;
+    --hero-ink-2:      rgba(0,0,0,0.45);
+    --hero-ink-3:      rgba(0,0,0,0.25);
+    --hero-sep:        rgba(0,0,0,0.06);
     --focus-ring:      0 0 0 3px rgba(0,113,227,0.18), 0 0 0 1px var(--accent);
     --brand-icon-shadow: 0 2px 8px rgba(0,90,180,0.18), 0 0 0 0.5px rgba(0,0,0,0.06);
   }
@@ -127,6 +136,10 @@
     --accent-soft:       rgba(0,122,255,0.10);
     --accent-soft-hover: rgba(0,122,255,0.14);
     --focus-ring:        0 0 0 3px rgba(0,122,255,0.24), 0 0 0 1px var(--accent);
+    --hero-ink:          #001530;
+    --hero-ink-2:        rgba(0,0,0,0.45);
+    --hero-ink-3:        rgba(0,0,0,0.25);
+    --hero-sep:          rgba(0,0,0,0.06);
 
     /* 语义色 + 配套 hover（新增）*/
     --green:             #34C759;
@@ -168,18 +181,31 @@
 
 
   :root {
-    /* 字体栈 — 高端无衬线，禁止 Inter */
-    --font-body:    'Geist', 'Outfit', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', sans-serif;
-    --font-display: 'Geist', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', sans-serif;
-    --font-mono:    'SF Mono', 'JetBrains Mono', 'Menlo', 'Consolas', monospace;
+    /* 字体栈 — 纯系统字体（SF Pro / PingFang），零下载、零闪动 */
+    --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --font-mono:    'SF Mono', ui-monospace, 'Menlo', 'Consolas', monospace;
 
-    /* 圆角 — 全局统一，不随主题变化 */
-    --radius-card:    18px;
-    --radius-card-lg: 20px;
-    --radius-control: 10px;
-    --radius-sm:       8px;
-    --radius-pill:    16px;
-    --radius-tag:      6px;
+    /* 字号 — 类 Apple HIG 的 type scale，全局唯一来源 */
+    --fs-caption:  11px;   /* 微标签、图例、辅助说明 */
+    --fs-footnote: 12px;   /* 次要说明、表格备注 */
+    --fs-sub:      13px;   /* 副文本、标签 */
+    --fs-body:     14px;   /* 正文、按钮 */
+    --fs-callout:  15px;   /* 强调正文、卡片标题 */
+    --fs-base:     16px;   /* 根字号 */
+    --fs-headline: 17px;   /* 小标题 */
+    --fs-title-3:  20px;   /* 三级标题 */
+    --fs-title-2:  22px;   /* 二级标题 */
+    --fs-title-1:  28px;   /* 一级标题、KPI 数值 */
+    --fs-display:  32px;   /* 大号展示数字 */
+
+    /* 圆角 — 全局 6 档，不随主题变化 */
+    --radius-xs:    6px;   /* 标签、小芯片 */
+    --radius-sm:    8px;   /* 分段控件内层按钮 */
+    --radius-md:   10px;   /* 按钮、输入框、下拉 */
+    --radius-lg:   16px;   /* 横幅、Toast、小卡片 */
+    --radius-card: 20px;   /* 卡片、抽屉、表格容器 */
+    --radius-xl:   28px;   /* Hero、锁屏卡、大面板 */
 
     /* Z-index 层次 */
     --z-base:      0;
