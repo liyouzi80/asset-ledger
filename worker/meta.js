@@ -1,7 +1,7 @@
 // /api/meta — 加密元信息（salt + verifier）
 // 注意：所有数据在浏览器加密后才传过来，这里看到的全是密文
 
-import { addCorsHeaders, handleOptions, checkBodySize, noCacheHeaders } from './shared.js';
+import { addCorsHeaders, handleOptions, checkBodySize, noCacheHeaders, checkWriteAuth, clearWriteAuth } from './shared.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -22,11 +22,17 @@ export async function onRequest(context) {
   }
 
   if (request.method === 'DELETE') {
+    const denied = await checkWriteAuth(request, env);
+    if (denied) return new Response(JSON.stringify({ error: denied }), { status: 401, headers });
+    // 重置全部：连同写入令牌一起清除，下次初始化重新绑定
     await env.DB.prepare('DELETE FROM meta WHERE id = ?').bind('main').run();
+    await clearWriteAuth(env);
     return new Response(JSON.stringify({ ok: true }), { headers });
   }
 
   if (request.method === 'POST') {
+    const denied = await checkWriteAuth(request, env, true);
+    if (denied) return new Response(JSON.stringify({ error: denied }), { status: 401, headers });
     const tooLarge = await checkBodySize(request);
     if (tooLarge) return tooLarge;
 

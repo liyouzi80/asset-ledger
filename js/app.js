@@ -164,6 +164,15 @@ async function getPasskeyPRF(credentialIdBuf) {
 // API 基址：默认走同源（部署到 Pages 后是 /api/*）
 const API_BASE = location.hostname === 'localhost' ? 'http://localhost:8787' : '';
 
+// 写保护令牌：首次生成后藏进加密 vault 随密文同步；服务端只存哈希。
+// 新设备解锁 → 解密 vault → 自动拿到令牌，无需任何手动配置。
+function ensureApiToken() {
+  if (!state.apiToken) {
+    state.apiToken = bufToB64(crypto.getRandomValues(new Uint8Array(32)));
+  }
+  return state.apiToken;
+}
+
 async function apiGet(path) {
   // 加时间戳避免任何中间缓存
   const sep = path.includes('?') ? '&' : '?';
@@ -173,9 +182,11 @@ async function apiGet(path) {
   return r.json();
 }
 async function apiPost(path, body) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (state.apiToken) headers['Authorization'] = 'Bearer ' + state.apiToken;
   const r = await fetch(API_BASE + path, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(body),
     cache: 'no-store',
   });
@@ -191,7 +202,8 @@ async function apiPost(path, body) {
 // meta 对象除了 salt/verifier，还可能有 wrappedKeyByPassword/wrappedKeyByPasskey/passkeyCredId/kdf
 // 服务端把这些扩展字段统一存进 verifier 的 _extra 里
 async function apiDelete(path) {
-  const r = await fetch(API_BASE + path, { method: 'DELETE', cache: 'no-store' });
+  const headers = state.apiToken ? { 'Authorization': 'Bearer ' + state.apiToken } : {};
+  const r = await fetch(API_BASE + path, { method: 'DELETE', headers, cache: 'no-store' });
   if (!r.ok) throw new Error('API ' + path + ' 删除失败: ' + r.status);
   return r.json();
 }
@@ -225,6 +237,7 @@ async function dbPut(store, obj) {
 async function dbClearAll() {
   await apiDelete('/api/meta');
   await apiDelete('/api/vault');
+  state.apiToken = null;
   clearLocalMirror();
 }
 
@@ -348,6 +361,7 @@ function buildDefaultData() {
 // ============================================================
 let state = {
   masterKey: null,        // CryptoKey: 真正的数据加密主密钥
+  apiToken: null,         // 写保护令牌：随加密 vault 同步，服务端只存哈希
   unlocked: false,
   accounts: [],
   snapshots: [],
@@ -455,11 +469,13 @@ async function persistVault() {
     if (userCancelled) return;
   }
 
+  ensureApiToken();
   const payload = await encryptJSON({
     accounts: state.accounts,
     snapshots: state.snapshots,
     groupOrder: state.groupOrder,
     targetAllocation: state.targetAllocation,
+    apiToken: state.apiToken,
   }, state.masterKey);
   await dbPut('vault', { id: 'main', payload });
 
@@ -541,6 +557,7 @@ async function refreshFromCloud() {
     state.snapshots = decrypted.snapshots || [];
     state.groupOrder = decrypted.groupOrder || [];
     state.targetAllocation = decrypted.targetAllocation || {};
+    if (decrypted.apiToken) state.apiToken = decrypted.apiToken;
     state.lastKnownUpdatedAt = vaultResp.updated_at || 0;
 
     if (state.current === 'dashboard') renderDashboard();
@@ -624,6 +641,7 @@ async function unlockOrInit() {
         state.snapshots = data.snapshots || [];
         state.groupOrder = data.groupOrder && data.groupOrder.length ? data.groupOrder : [...DEFAULT_GROUP_ORDER];
         state.targetAllocation = data.targetAllocation || {};
+        if (data.apiToken) state.apiToken = data.apiToken;
         await enterApp();
         return;
       }
@@ -640,6 +658,7 @@ async function unlockOrInit() {
         state.snapshots = data.snapshots || [];
         state.groupOrder = data.groupOrder && data.groupOrder.length ? data.groupOrder : [...DEFAULT_GROUP_ORDER];
         state.targetAllocation = data.targetAllocation || {};
+        if (data.apiToken) state.apiToken = data.apiToken;
         await enterApp();
         return;
       }
@@ -920,6 +939,7 @@ async function loadVaultIntoState() {
     state.snapshots = data.snapshots || [];
     state.groupOrder = data.groupOrder && data.groupOrder.length ? data.groupOrder : [...DEFAULT_GROUP_ORDER];
     state.targetAllocation = data.targetAllocation || {};
+    if (data.apiToken) state.apiToken = data.apiToken;
 
     // 自动修复历史月份格式不规范的快照（如 '2026-4' → '2026-04'）
     let needRepersist = false;
@@ -3519,6 +3539,7 @@ document.getElementById('entry-month-next').addEventListener('click', () => {
 document.getElementById('show-archived').addEventListener('change', () => renderEntry());
 document.getElementById('refresh-btn').addEventListener('click', refreshFromCloud);
 document.getElementById('empty-start-btn').addEventListener('click', () => navTo('entry'));
+document.getElementById('hero-label').addEventListener('click', () => openDrawer('assets'));
 // 录入页事件委托：账户操作按钮 + 趋势图点击
 document.getElementById('entry-groups').addEventListener('click', (e) => {
   const actionBtn = e.target.closest('[data-action]');

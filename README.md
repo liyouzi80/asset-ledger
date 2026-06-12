@@ -106,6 +106,8 @@
 | 后端 | Cloudflare Workers · 4 文件（index / vault / meta / shared）|
 | 数据库 | Cloudflare D1（SQLite）· 键值模式 |
 | 主题 | 素白 · 浅色 · 深色 · 统一布局 + CSS 设计 token 驱动 |
+| 写保护 | TOFU 令牌（随加密 vault 同步，服务端只存哈希）· 严格 CSP |
+| 测试 | `node:test` 原生测试 · Worker 写保护单元测试 · 零依赖 |
 | 部署 | GitHub Actions → `wrangler deploy` · push 即上线 |
 
 ---
@@ -133,6 +135,9 @@ cp wrangler.example.toml wrangler.toml
 
 # 3. 启动本地服务（默认 http://localhost:8787）
 npx wrangler dev
+
+# 运行测试（Worker 写保护单元测试，零依赖）
+npm test
 ```
 
 ### 建表 SQL
@@ -179,6 +184,24 @@ CREATE TABLE IF NOT EXISTS meta (
 - 服务器只看到 `{ iv: "...", cipher: "...base64..." }`——即便整个 D1 数据库被泄露，密文仍然不可解
 - Passkey PRF 是 WebAuthn 扩展，密钥派生发生在硬件层（Mac 的 Secure Enclave / iPhone 的 Secure Element / Windows Hello），**无法被恶意软件读取**
 
+### 写保护（防篡改 / 防删除）
+
+加密只保证**机密性**——密文偷不开。但若 API 完全裸奔，任何拿到部署 URL 的人都能覆盖或清空你的云端数据。为此加了一层**写令牌（TOFU）**：
+
+- 客户端首次保存时生成一个 32 字节随机令牌，**藏进加密 vault** 随密文一起同步；服务端只存它的 SHA-256 哈希
+- 之后所有写操作（`POST` / `DELETE`）必须出示 `Authorization: Bearer <token>`，否则返回 401
+- 新设备解锁 → 解密 vault → 自动拿到同一令牌，**无需任何手动配置**
+- **读取保持公开**：密文本身由 AES-GCM 保护，不需要令牌
+- 首个携带令牌的写入完成绑定（信任首次使用 / TOFU）。理论窗口：在你完成初始化**之前**，抢先访问该 URL 的人可写入垃圾数据——但部署后立刻初始化即可关闭这个窗口，且匿名写入不会建立绑定，你携带令牌的首次写入永远能接管
+
+### XSS 防线（CSP）
+
+对端到端加密应用，脚本注入能直接偷主密钥，是最致命的攻击面。因此：
+
+- 一条严格的 **Content-Security-Policy**：`script-src 'self'`（禁内联脚本、禁 `eval`）、`object-src 'none'`、`base-uri 'self'`
+- 全部资源本地化（无 CDN、无 Google Fonts），`connect-src 'self'` 锁定只能回连自己的 API
+- 代码中无内联事件处理器，所有 `innerHTML` 注入点经 `escapeHtml` 转义
+
 ### 三道防覆盖防线
 
 为了防止"加密数据被错误覆盖永久丢失"这种灾难：
@@ -196,6 +219,7 @@ CREATE TABLE IF NOT EXISTS meta (
 - **Passkey PRF 浏览器要求**：Safari 18+ / Chrome 132+ / Edge 132+
 - **加密 API 要求**：HTTPS 或 localhost（Web Crypto 不在 HTTP 下工作）
 - **手动录入颗粒度**：月度快照（更细颗粒度需要对接券商 API，本工具不做这件事）
+- **TOFU 写保护窗口**：部署后到首次初始化之间存在理论抢占窗口（见上文「写保护」），部署后立即初始化即可关闭
 
 ---
 

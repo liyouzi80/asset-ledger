@@ -2,11 +2,13 @@
   "name": "asset-ledger",
   "private": true,
   "scripts": {
-    "sync": "mkdir -p static/css && cp index.html static/ && cp css/*.css static/css/",
+    "sync": "rm -rf static && mkdir -p static && cp index.html static/ && cp -r css js assets static/",
     "dev": "npm run sync && wrangler dev",
-    "deploy": "npm run sync && wrangler deploy"
+    "deploy": "npm run sync && wrangler deploy",
+    "test": "node --test test/*.test.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"
-  }
+  },
+  "type": "module"
 }

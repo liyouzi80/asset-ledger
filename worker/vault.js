@@ -1,7 +1,7 @@
 // /api/vault — 加密的账本数据
 // payload 是浏览器端 AES-GCM 加密的 { iv, cipher }，服务端无法解密
 
-import { addCorsHeaders, handleOptions, checkBodySize, noCacheHeaders } from './shared.js';
+import { addCorsHeaders, handleOptions, checkBodySize, noCacheHeaders, checkWriteAuth } from './shared.js';
 
 export async function onRequest(context) {
   const { request, env } = context;
@@ -22,11 +22,15 @@ export async function onRequest(context) {
   }
 
   if (request.method === 'DELETE') {
+    const denied = await checkWriteAuth(request, env);
+    if (denied) return new Response(JSON.stringify({ error: denied }), { status: 401, headers });
     await env.DB.prepare('DELETE FROM vault WHERE id = ?').bind('main').run();
     return new Response(JSON.stringify({ ok: true }), { headers });
   }
 
   if (request.method === 'POST') {
+    const denied = await checkWriteAuth(request, env, true);
+    if (denied) return new Response(JSON.stringify({ error: denied }), { status: 401, headers });
     const tooLarge = await checkBodySize(request);
     if (tooLarge) return tooLarge;
 

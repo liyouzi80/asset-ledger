@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:8787; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
 <title>资产负债表</title>
 <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#08090a" media="(prefers-color-scheme: dark)">
@@ -105,7 +106,7 @@
           <button data-view="all" class="active">总览</button>
           <button data-view="investment">仅投资资产</button>
         </div>
-        <div class="hero-label" onclick="openDrawer('assets')" style="cursor:pointer"><span class="t-text-swap" id="hero-label-text">总 资 产</span> <span class="hero-arrow">›</span></div>
+        <div class="hero-label" id="hero-label" style="cursor:pointer"><span class="t-text-swap" id="hero-label-text">总 资 产</span> <span class="hero-arrow">›</span></div>
         <div class="hero-value" id="kpi-total"><span class="hero-currency">¥</span>—</div>
         <div id="waterline-render-target"></div>
         <div class="hero-meta">
