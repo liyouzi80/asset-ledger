@@ -1208,10 +1208,52 @@ function evalFormula(str) {
   const expr = str.slice(1).trim();
   if (!expr || !/^[\d+\-*/().%\s]+$/.test(expr)) return null;
   try {
-    const result = Function('"use strict"; return (' + expr + ')')();
+    const result = safeEval(expr);
     if (typeof result !== 'number' || !isFinite(result)) return null;
     return Number(result.toFixed(10));
   } catch { return null; }
+}
+function safeEval(expr) {
+  let pos = 0;
+  const ch = () => expr[pos] || '';
+  const skip = () => { while (expr[pos] === ' ') pos++; };
+  function num() {
+    skip();
+    if (ch() === '(') { pos++; const v = add(); skip(); if (ch() === ')') pos++; return v; }
+    if (ch() === '-') { pos++; return -num(); }
+    if (ch() === '+') { pos++; return +num(); }
+    let s = '';
+    while (/[\d.]/.test(ch())) s += expr[pos++];
+    if (!s) throw 0;
+    const n = Number(s);
+    skip();
+    if (ch() === '%') { pos++; return n / 100; }
+    return n;
+  }
+  function mul() {
+    let v = num();
+    for (;;) {
+      skip();
+      if (ch() === '*') { pos++; v *= num(); }
+      else if (ch() === '/') { pos++; v /= num(); }
+      else break;
+    }
+    return v;
+  }
+  function add() {
+    let v = mul();
+    for (;;) {
+      skip();
+      if (ch() === '+') { pos++; v += mul(); }
+      else if (ch() === '-') { pos++; v -= mul(); }
+      else break;
+    }
+    return v;
+  }
+  const result = add();
+  skip();
+  if (pos < expr.length) throw 0;
+  return result;
 }
 function debounce(fn, ms) {
   let timer;
