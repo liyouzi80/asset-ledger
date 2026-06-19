@@ -16,35 +16,7 @@
 |:--:|:--:|
 | ![素白主题](assets/screenshots/suba.png) | ![深色主题](assets/screenshots/dark.png) |
 
-三套主题共用一套布局与设计 token，由 CSS 变量驱动，一键切换：
-
-| 主题 | 定位 | 风格 |
-|:--|:--|:--|
-| **素白** | 默认推荐 | iOS 系统设置质感 — 白色浮卡 + 浅灰底，`#007AFF` 强调 |
-| **浅色** | 经典 | Apple.com 风格 — 留白为主、蓝黑克制 |
-| **深色** | 夜间 | Linear.app 风格 — 极暗画布、半透白边框、indigo 强调 |
-
-设计系统的几个约束：
-
-- **零外部请求**：系统字体栈（SF Pro / PingFang）、Chart.js 与 Big.js 本地 vendor，运行时不向任何第三方发起请求
-- **token 收敛**：6 档圆角、11 档字号 type scale、语义色全部走 CSS 变量，新增主题只需定义一个变量块
-- **细节**：0.5px 细分割线、毛玻璃导航、`tabular-nums` 数字、`prefers-reduced-motion` 适配、`theme-color` 随主题同步 iOS 顶栏
-
----
-
-## 它是什么
-
-一个**只为你自己用**的资产记账工具。每月手动录入各账户余额，自动计算总资产、市场盈亏、收益率。所有数据在浏览器里加密后才上传，服务器只看到密文——即便数据库被脱库，没有你的密码或 Passkey，也无法解密。
-
-适合谁：
-- 跨券商 / 跨银行 / 跨币种的个人投资者
-- 不想把财务数据交给第三方 App 的人
-- 喜欢"自己的数据自己管"的工程师
-
-不适合：
-- 需要多人协作的家庭账本
-- 需要自动同步交易明细的高频交易者
-- 不愿意每月花 5 分钟手动录入的人
+三套主题（素白 / 浅色 / 深色）共用一套布局，CSS 变量驱动，一键切换。
 
 ---
 
@@ -54,68 +26,22 @@
 |:--|:--|:--|:--|
 | 主密码 / Passkey 双解锁 | Hero 巨幅资产 + 月对月变化 | 月度快照批量录入 | 列表 + 对比双视图 |
 | PBKDF2 250K → AES-256-GCM | KPI 三连：盈亏 / 净流 / 年内 | 一键复制上月数据 | TWR / 简单 / XIRR 三种收益率 |
-| 服务端全程零明文 | 收益率走势 + 期间切换 | 账户 CRUD + 分组管理 | 月份比较 + 异常变化提醒 |
-| 浏览器本地镜像备份 | 资产分布饼图 + 钻取 | 写入回读校验 | CSV 导出 + 断月检测 |
+| TOFU 写保护 + 严格 CSP | 收益率走势 + 资产分布钻取 | 账户 CRUD + 分组管理 | 异常变化提醒 + CSV 导出 |
 
 ---
 
-## 架构
-
-```
-┌─────────────────────────────────────────────┐
-│  浏览器                                      │
-│  ┌─────────────────────────────────────┐    │
-│  │  index.html  (SPA · 零框架)         │    │
-│  │  ├─ css/variables.css  (设计 token) │    │
-│  │  ├─ css/app.css        (全部样式)   │    │
-│  │  ├─ js/app.js          (应用逻辑)   │    │
-│  │  ├─ js/finance.js      (金融计算核心)│    │
-│  │  └─ js/vendor/         (Chart/Big)  │    │
-│  └────────────────┬────────────────────┘    │
-│                   │                          │
-│  ┌────────────────▼────────────────────┐    │
-│  │  Web Crypto API                      │    │
-│  │  · AES-256-GCM  encrypt / decrypt    │    │
-│  │  · PBKDF2 250K  deriveKey            │    │
-│  │  · WebAuthn PRF passkey unlock       │    │
-│  └────────────────┬────────────────────┘    │
-└───────────────────┼─────────────────────────┘
-                    │  { iv, cipher } 密文
-                    ▼
-┌─────────────────────────────────────────────┐
-│  Cloudflare Workers                          │
-│  · /api/vault  存取加密账本                  │
-│  · /api/meta   存取认证信息                  │
-│  · 写入回读校验 + 缓存禁用                    │
-└────────────────┬────────────────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────────────────┐
-│  Cloudflare D1 (SQLite)                      │
-│  · vault 表  加密 payload 存储                │
-│  · meta 表   salt + verifier + 包装密钥       │
-│  · 7 天 Time Travel 自动备份                  │
-└─────────────────────────────────────────────┘
-```
+## 技术栈
 
 | 层 | 技术 |
 |:--|:--|
 | 前端 | Vanilla JS · 零框架 · 零构建 · 运行时零第三方请求 |
 | 加密 | Web Crypto API · AES-256-GCM · PBKDF2 250K · WebAuthn PRF |
-| 图表 | Chart.js 4.x（本地 vendor，无 CDN）· 折线 + 饼图 + 柱状 · 自定义十字准星 |
-| 运算 | Big.js（本地 vendor）· 任意精度十进制（避免浮点误差）|
-| 后端 | Cloudflare Workers · 4 文件（index / vault / meta / shared）|
-| 数据库 | Cloudflare D1（SQLite）· 键值模式 |
-| 主题 | 素白 · 浅色 · 深色 · 统一布局 + CSS 设计 token 驱动 |
-| 写保护 | TOFU 令牌（随加密 vault 同步，服务端只存哈希）· 严格 CSP |
-| 测试 | `node:test` 原生测试 · 金融计算（XIRR/盈亏）+ 写保护单元测试 · 零依赖 |
-| 部署 | GitHub Actions → `wrangler deploy` · push 即上线 |
+| 后端 | Cloudflare Workers + D1（SQLite） |
+| 运行时依赖 | Chart.js 4.x + Big.js（本地 vendor，无 CDN） |
 
 ---
 
 ## 部署
-
-**3 步上线：**
 
 | # | 操作 | 说明 |
 |:-:|:--|:--|
@@ -126,19 +52,11 @@
 ### 本地开发
 
 ```bash
-# 1. 克隆仓库
 git clone https://github.com/<你的用户名>/asset-ledger.git
 cd asset-ledger
-
-# 2. 配置 wrangler
-cp wrangler.example.toml wrangler.toml
-# 编辑 wrangler.toml，填入你的 D1 database_id
-
-# 3. 启动本地服务（默认 http://localhost:8787）
-npx wrangler dev
-
-# 运行测试（金融计算 + Worker 写保护单元测试，零依赖）
-npm test
+cp wrangler.example.toml wrangler.toml   # 填入 D1 database_id
+npx wrangler dev                          # http://localhost:8787
+npm test                                  # 金融计算 + 写保护单元测试
 ```
 
 ### 建表 SQL
@@ -161,97 +79,19 @@ CREATE TABLE IF NOT EXISTS meta (
 
 ## 安全模型
 
-### 加密链路
-
-```
-用户输入                  浏览器                      网络                    服务器
-   │                        │                          │                       │
-   │ 主密码 / Passkey  ─────▶│                          │                       │
-   │                        │ PBKDF2 250K              │                       │
-   │                        │ → 包装密钥                │                       │
-   │                        │ ↓                        │                       │
-   │                        │ 主密钥 (AES-256)          │                       │
-   │                        │ ↓ 加密                    │                       │
-   │                        │ { iv, cipher } ──────────▶│ HTTPS ──────────────▶│ D1 存储密文
-   │                        │                          │                       │
-   │                        │◀── { iv, cipher } ───────│◀──────────────────────│ 取回密文
-   │                        │ ↓ 解密                    │                       │
-   │ 看到自己的数据  ◀──────│                          │                       │
-```
-
-**关键点：**
-
-- 主密钥**永不离开浏览器**——它是用主密码或 Passkey PRF 派生出来的，没有原始凭证就生成不出来
-- 服务器只看到 `{ iv: "...", cipher: "...base64..." }`——即便整个 D1 数据库被泄露，密文仍然不可解
-- Passkey PRF 是 WebAuthn 扩展，密钥派生发生在硬件层（Mac 的 Secure Enclave / iPhone 的 Secure Element / Windows Hello），**无法被恶意软件读取**
-
-### 写保护（防篡改 / 防删除）
-
-加密只保证**机密性**——密文偷不开。但若 API 完全裸奔，任何拿到部署 URL 的人都能覆盖或清空你的云端数据。为此加了一层**写令牌（TOFU）**：
-
-- 客户端首次保存时生成一个 32 字节随机令牌，**藏进加密 vault** 随密文一起同步；服务端只存它的 SHA-256 哈希
-- 之后所有写操作（`POST` / `DELETE`）必须出示 `Authorization: Bearer <token>`，否则返回 401
-- 新设备解锁 → 解密 vault → 自动拿到同一令牌，**无需任何手动配置**
-- **读取保持公开**：密文本身由 AES-GCM 保护，不需要令牌
-- 首个携带令牌的写入完成绑定（信任首次使用 / TOFU）。理论窗口：在你完成初始化**之前**，抢先访问该 URL 的人可写入垃圾数据——但部署后立刻初始化即可关闭这个窗口，且匿名写入不会建立绑定，你携带令牌的首次写入永远能接管
-
-### XSS 防线（CSP）
-
-对端到端加密应用，脚本注入能直接偷主密钥，是最致命的攻击面。因此：
-
-- 一条严格的 **Content-Security-Policy**：`script-src 'self'`（禁内联脚本、禁 `eval`）、`object-src 'none'`、`base-uri 'self'`
-- 全部资源本地化（无 CDN、无 Google Fonts），`connect-src 'self'` 锁定只能回连自己的 API
-- 代码中无内联事件处理器，所有 `innerHTML` 注入点经 `escapeHtml` 转义
-
-### 三道防覆盖防线
-
-为了防止"加密数据被错误覆盖永久丢失"这种灾难：
-
-1. **本地镜像**：每次解锁/保存时，浏览器 localStorage 留一份当前 vault 的加密副本
-2. **写入回读校验**：每次保存后从 D1 读回比对 IV，不一致就抛错
-3. **首次注册前检查**：检测到 D1 空但本地有镜像时，禁止"创建新账本"，强制走"从镜像恢复"
+- **端到端加密**：主密钥在浏览器内由密码 / Passkey PRF 派生，永不离开客户端；服务器只存 `{ iv, cipher }` 密文
+- **写保护（TOFU）**：首次保存时生成 32 字节随机令牌，藏进加密 vault 同步；服务端只存 SHA-256 哈希，之后所有写操作必须出示令牌
+- **CSP**：`script-src 'self'`，禁内联脚本 / eval；全部资源本地化，`connect-src 'self'`
+- **防覆盖三重保障**：浏览器 localStorage 镜像 → 写入回读校验 → 空库检测强制恢复
 
 ---
 
 ## 边界
 
-- **D1 免费额度**：5GB 存储 / 每天 500 万次读 / 每天 10 万次写 — 个人使用绰绰有余
-- **单用户设计**：所有数据用同一组凭证加密，不支持多用户隔离
-- **Passkey PRF 浏览器要求**：Safari 18+ / Chrome 132+ / Edge 132+
-- **加密 API 要求**：HTTPS 或 localhost（Web Crypto 不在 HTTP 下工作）
-- **手动录入颗粒度**：月度快照（更细颗粒度需要对接券商 API，本工具不做这件事）
-- **TOFU 写保护窗口**：部署后到首次初始化之间存在理论抢占窗口（见上文「写保护」），部署后立即初始化即可关闭
-
----
-
-## 数据管理
-
-### 备份
-
-页脚的 `导出加密备份` 会下载一个 `.json` 文件——内容是密文。即便你把它发到任何地方，没有主密码也解不开。建议定期：
-
-- 每次大幅录入数据后导出一份
-- 保存到 iCloud Drive / OneDrive / Google Drive 任意一个
-
-### 恢复
-
-通过页脚的 `导入加密备份` 上传 `.json` 文件，配合主密码或 Passkey 即可还原。
-
-### 数据迁移
-
-vault 在浏览器解密后是一个 JSON 对象，结构稳定（accounts / snapshots / groupOrder），可以：
-
-- 通过浏览器控制台 `console.log(state)` 导出明文
-- 用脚本批量处理后再加密回写
-
----
-
-## 致谢
-
-- **Cloudflare Workers + D1** — 免费的边缘计算 + SQLite，是这个项目能存在的物理基础
-- **Chart.js** — 图表渲染（本地 vendor，与 Big.js 是仅有的两个运行时依赖）
-- **Big.js** — 处理金融小数的最佳工具
-- **WebAuthn PRF 规范** — 让 Passkey 不仅是认证手段、也能派生加密密钥
+- 单用户设计，不支持多人协作
+- 月度手动录入（不对接券商 API）
+- Passkey PRF 需 Safari 18+ / Chrome 132+
+- 需要 HTTPS 或 localhost（Web Crypto 要求）
 
 ---
 
