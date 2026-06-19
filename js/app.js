@@ -2739,8 +2739,6 @@ function renderDashboard() {
     document.getElementById('returns-period-range').textContent = '—';
     if (returnsModuleChart) { returnsModuleChart.destroy(); returnsModuleChart = null; }
     document.getElementById('returns-chart-empty').style.display = 'flex';
-    const chEl = document.getElementById('ch-total');
-    if (chEl) chEl.innerHTML = '<span class="ch-currency">¥</span>—';
     return;
   }
 
